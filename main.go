@@ -92,13 +92,16 @@ func main() {
 		log.Println("Error creation bot session... ", err)
 		return
 	}
+	// Open the bot session
+	session.Open()
 
-	// Create the bot system, add commands to its router
-	// and begin listening for commands.
-	sys := system.New(session)
+	sys := system.New(session, conf.System)
+
+	sys.CommandRouter.On("ping", func(ctx *system.Context) {
+		ctx.ReplyStatus(system.StatusNotify, "Pong")
+	}).Set("ping", "responds with pong", "general")
+
 	sys.ListenForCommands()
-
-	<-make(chan struct{})
 }
 
 //////////////////////////////////////////////
@@ -119,7 +122,7 @@ func LoadConfig(path string) (*Config, error) {
 
 // SaveConfig ...
 func SaveConfig(path string, conf Config) error {
-	f, err := os.OpenFile(path, os.O_WRONLY, 0600)
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		return err
 	}

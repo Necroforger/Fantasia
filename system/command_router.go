@@ -14,7 +14,7 @@ type HandlerFunc func(*Context)
 
 // CommandRouter ...
 type CommandRouter struct {
-	*sync.Mutex
+	sync.Mutex
 	Prefix string
 	Routes []*CommandRoute
 }
@@ -23,6 +23,10 @@ type CommandRouter struct {
 //		matcher: The regular expression to use when searching for this route.
 //		handler: The handler function for this command route.
 func (c *CommandRouter) On(matcher string, handler HandlerFunc) *CommandRoute {
+
+	// Specify that the matched text must be at the beginning of the command
+	// And include the router prefix
+	matcher = c.Prefix + matcher + `(\s|$)`
 
 	route := &CommandRoute{
 		Matcher: regexp.MustCompile(matcher),

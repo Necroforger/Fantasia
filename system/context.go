@@ -11,10 +11,11 @@ import (
 
 // Context contains information about the command.
 type Context struct {
-	Msg    *discordgo.Message
-	Ses    *dream.Bot
-	System *System
-	Args   Args
+	Msg          *discordgo.Message
+	Ses          *dream.Bot
+	System       *System
+	CommandRoute *CommandRoute
+	Args         Args
 }
 
 // ReplyStatus sends an embed to the message channel the command was received on

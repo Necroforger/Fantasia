@@ -32,10 +32,13 @@ type System struct {
 
 // New returns a pointer to a new bot struct
 //		session: Dream session to run the bot off.
-func New(session *dream.Bot) *System {
+func New(session *dream.Bot, config Config) *System {
 	return &System{
-		Dream:         session,
-		CommandRouter: &CommandRouter{},
+		Dream:  session,
+		Config: config,
+		CommandRouter: &CommandRouter{
+			Prefix: config.Prefix,
+		},
 	}
 }
 
@@ -44,12 +47,27 @@ func (s *System) ListenForCommands() {
 	if s.listening {
 		return
 	}
-	s.listening = true
+
 	s.Dream.AddHandler(s.messageHandler)
+	s.listening = true
+
+	<-make(chan int)
 }
 
-// Handles commands
+// messageHandler handles incoming messageCreate events and routes them to commands.
 func (s *System) messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
+
+	// If the bot is a selfbot, do not respond to users that do not have the
+	// State user's ID.
+	if s.Config.Selfbot && b.DG.State.User != nil && m.Author.ID != b.DG.State.User.ID {
+		return
+
+		// Prevent the bot from responding to itself
+	} else if !s.Config.Selfbot && b.DG.State.User != nil && m.Author.ID == b.DG.State.User.ID {
+		return
+	}
+
+	// Search for the first route match and execute the command If it exists.
 	if route := s.CommandRouter.FindMatch(m.Content); route != nil {
 		args, err := parseargs.Parse(m.Content)
 
@@ -59,10 +77,11 @@ func (s *System) messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
 		}
 
 		ctx := &Context{
-			Msg:    m.Message,
-			System: s,
-			Args:   args,
-			Ses:    b,
+			Msg:          m.Message,
+			System:       s,
+			Args:         args,
+			Ses:          b,
+			CommandRoute: route,
 		}
 
 		route.Handler(ctx)
