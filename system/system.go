@@ -2,6 +2,7 @@ package system
 
 import (
 	"github.com/Necroforger/dream"
+	"github.com/bwmarrin/discordgo"
 )
 
 // Status constants used for colouring embeds.
@@ -35,8 +36,16 @@ func New(session *dream.Bot) *Bot {
 	}
 }
 
-// Listen starts listening for commands.
-func (b *Bot) Listen() {
+// ListenForCommands starts listening for commands on MessageCreate events.
+func (b *Bot) ListenForCommands() {
+	if b.listening {
+		return
+	}
+	b.listening = true
+	b.Dream.AddHandler(messageHandler)
+}
+
+func messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
 
 }
 
@@ -46,7 +55,6 @@ func (b *Bot) Listen() {
 
 // Config is the configuration for the bot
 type Config struct {
-	Token   string
 	Prefix  string
 	Selfbot bool
 }
