@@ -11,9 +11,10 @@ import (
 
 // Context contains information about the command.
 type Context struct {
-	*discordgo.Message
-	Ses  *dream.Bot
-	Args Args
+	Msg    *discordgo.Message
+	Ses    *dream.Bot
+	System *System
+	Args   Args
 }
 
 // ReplyStatus sends an embed to the message channel the command was received on
@@ -21,7 +22,7 @@ type Context struct {
 //		status: 		Colour code of the message to send
 //  	notification: 	The content of the status message
 func (c *Context) ReplyStatus(status int, notification string) (*discordgo.Message, error) {
-	return c.Ses.DG.ChannelMessageSendEmbed(c.ChannelID,
+	return c.Ses.DG.ChannelMessageSendEmbed(c.Msg.ChannelID,
 		dream.
 			NewEmbed().
 			SetDescription(notification).
@@ -32,7 +33,7 @@ func (c *Context) ReplyStatus(status int, notification string) (*discordgo.Messa
 // Reply replys to the channel the context originated from
 //		text: Content of the message to send
 func (c *Context) Reply(text string) (*discordgo.Message, error) {
-	return c.Ses.DG.ChannelMessageSend(c.ChannelID, text)
+	return c.Ses.DG.ChannelMessageSend(c.Msg.ChannelID, text)
 }
 
 // SendStatus sends a status embed to the given channel

@@ -20,13 +20,31 @@ type CommandRouter struct {
 }
 
 // On adds a command router to the list of routes.
-//		matcher: The regular expression to use when searching for this route
+//		matcher: The regular expression to use when searching for this route.
 //		handler: The handler function for this command route.
 func (c *CommandRouter) On(matcher string, handler HandlerFunc) *CommandRoute {
 
 	route := &CommandRoute{
 		Matcher: regexp.MustCompile(matcher),
 		Handler: handler,
+		Name:    matcher,
+	}
+
+	c.Lock()
+	c.Routes = append(c.Routes, route)
+	c.Unlock()
+
+	return route
+}
+
+// OnReg allows you to supply a custom regular expression as the route matcher.
+//		matcher: The regular expression to use when searching for this route
+//		handler: The handler function for this command route.
+func (c *CommandRouter) OnReg(matcher string, handler HandlerFunc) *CommandRoute {
+	route := &CommandRoute{
+		Matcher: regexp.MustCompile(matcher),
+		Handler: handler,
+		Name:    matcher,
 	}
 
 	c.Lock()
@@ -98,13 +116,23 @@ type CommandRoute struct {
 //		3:  Category
 func (c *CommandRoute) Set(values ...string) {
 	switch {
+
 	case len(values) > 2:
-		c.Category = values[2]
+		if values[2] != "" {
+			c.Category = values[2]
+		}
 		fallthrough
+
 	case len(values) > 1:
-		c.Desc = values[1]
+		if values[1] != "" {
+			c.Desc = values[1]
+		}
 		fallthrough
+
 	case len(values) > 0:
-		c.Name = values[0]
+		if values[0] != "" {
+			c.Name = values[0]
+		}
 	}
+
 }

@@ -1,8 +1,11 @@
 package system
 
 import (
+	"log"
+
+	"github.com/Necroforger/discordgo"
 	"github.com/Necroforger/dream"
-	"github.com/bwmarrin/discordgo"
+	"github.com/txgruppi/parseargs-go"
 )
 
 // Status constants used for colouring embeds.
@@ -17,8 +20,8 @@ const (
 // 		SYSTEM
 /////////////////////////////////
 
-// Bot contains everything related to the bot
-type Bot struct {
+// System  contains everything related to the bot
+type System struct {
 	Dream         *dream.Bot
 	CommandRouter *CommandRouter
 	Config        Config
@@ -29,24 +32,41 @@ type Bot struct {
 
 // New returns a pointer to a new bot struct
 //		session: Dream session to run the bot off.
-func New(session *dream.Bot) *Bot {
-	return &Bot{
+func New(session *dream.Bot) *System {
+	return &System{
 		Dream:         session,
 		CommandRouter: &CommandRouter{},
 	}
 }
 
 // ListenForCommands starts listening for commands on MessageCreate events.
-func (b *Bot) ListenForCommands() {
-	if b.listening {
+func (s *System) ListenForCommands() {
+	if s.listening {
 		return
 	}
-	b.listening = true
-	b.Dream.AddHandler(messageHandler)
+	s.listening = true
+	s.Dream.AddHandler(s.messageHandler)
 }
 
-func messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
+// Handles commands
+func (s *System) messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
+	if route := s.CommandRouter.FindMatch(m.Content); route != nil {
+		args, err := parseargs.Parse(m.Content)
 
+		if err != nil {
+			log.Println("Error parsing arguments: ", args)
+			args = Args{}
+		}
+
+		ctx := &Context{
+			Msg:    m.Message,
+			System: s,
+			Args:   args,
+			Ses:    b,
+		}
+
+		route.Handler(ctx)
+	}
 }
 
 //////////////////////////////////
