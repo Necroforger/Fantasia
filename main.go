@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/Necroforger/Fantasia/system"
@@ -97,9 +98,15 @@ func main() {
 
 	sys := system.New(session, conf.System)
 
-	sys.CommandRouter.On("ping", func(ctx *system.Context) {
-		ctx.ReplyStatus(system.StatusNotify, "Pong")
+	// Errors will only occur if you supply an incorrect regex,
+	// So I ignore it here.
+	subrouter, _ := system.NewSubCommandRouter(`get`)
+	subrouter.Router.On("ping", func(ctx *system.Context) {
+		start := time.Now()
+		msg, _ := ctx.ReplyStatus(system.StatusNotify, "Pong")
+		ctx.Ses.DG.ChannelMessageEdit(ctx.Msg.ChannelID, msg.ID, time.Since(start).String())
 	}).Set("ping", "responds with pong", "general")
+	sys.CommandRouter.AddSubrouter(subrouter)
 
 	sys.ListenForCommands()
 }
