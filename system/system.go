@@ -4,7 +4,7 @@ import (
 	"github.com/Necroforger/dream"
 )
 
-// Status constants
+// Status constants used for colouring embeds.
 const (
 	StatusNotify  = 0x00ffff
 	StatusWarning = 0xffff00
@@ -18,13 +18,26 @@ const (
 
 // Bot contains everything related to the bot
 type Bot struct {
-	Dream  *dream.Bot
-	Config Config
+	Dream         *dream.Bot
+	CommandRouter *CommandRouter
+	Config        Config
+
+	// listening : True if the bot is already listening for commands.
+	listening bool
 }
 
 // New returns a pointer to a new bot struct
-func New() *Bot {
-	return &Bot{}
+//		session: Dream session to run the bot off.
+func New(session *dream.Bot) *Bot {
+	return &Bot{
+		Dream:         session,
+		CommandRouter: &CommandRouter{},
+	}
+}
+
+// Listen starts listening for commands.
+func (b *Bot) Listen() {
+
 }
 
 //////////////////////////////////
@@ -36,12 +49,4 @@ type Config struct {
 	Token   string
 	Prefix  string
 	Selfbot bool
-}
-
-func LoadConfigFromFile() {
-
-}
-
-func EditConfigFile() {
-
 }
