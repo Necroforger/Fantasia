@@ -21,7 +21,7 @@ type Context struct {
 // ReplyStatus sends an embed to the message channel the command was received on
 // Coloured with the given status code.
 //		status: 		Colour code of the message to send
-//  	notification: 	The content of the status message
+// 		notification: 	The content of the status message
 func (c *Context) ReplyStatus(status int, notification string) (*discordgo.Message, error) {
 	return c.Ses.DG.ChannelMessageSendEmbed(c.Msg.ChannelID,
 		dream.
@@ -39,8 +39,8 @@ func (c *Context) Reply(text string) (*discordgo.Message, error) {
 
 // SendStatus sends a status embed to the given channel
 //		Status:			The colour code of the embed to send
-//		channelID: 		The ID of the channel to send to
-//  	notification:	The content of the status message
+//		channelID:		The ID of the channel to send to
+//		notification:	The content of the status message
 func (c *Context) SendStatus(status int, channelID, notification string) (*discordgo.Message, error) {
 	return c.Ses.DG.ChannelMessageSendEmbed(channelID,
 		dream.
