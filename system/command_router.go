@@ -258,3 +258,53 @@ func (c *CommandRoute) Set(values ...string) {
 	}
 
 }
+
+//////////////////////////////////
+// 		SORTING BY CATEGORY
+/////////////////////////////////
+
+// CommandRoutersByCategory implements the sort.Sortable interface
+// To allow CommandRouters to be sorted in alphabetical order based on their
+// Category.
+type CommandRoutersByCategory []*CommandRoute
+
+func (c CommandRoutersByCategory) Swap(a, b int) {
+	c[a], c[b] = c[b], c[a]
+}
+
+// Len implements the sorter.Sortable interface
+func (c CommandRoutersByCategory) Len() int {
+	return len(c)
+}
+
+// Less implements the sorter.Sortable interface
+func (c CommandRoutersByCategory) Less(a, b int) bool {
+	return c[a].Category < c[b].Category
+}
+
+// Group splits the CommandRouters into separate slices according to group
+func (c CommandRoutersByCategory) Group() [][]*CommandRoute {
+	var (
+		groups       = [][]*CommandRoute{}
+		lastCategory string
+		currentGroup = []*CommandRoute{}
+	)
+
+	for _, v := range c {
+
+		if v.Category != lastCategory {
+			if len(currentGroup) > 0 {
+				groups = append(groups, currentGroup)
+				currentGroup = []*CommandRoute{}
+			}
+		}
+
+		currentGroup = append(currentGroup, v)
+	}
+
+	if len(currentGroup) > 0 {
+		groups = append(groups, currentGroup)
+	}
+
+	return groups
+}
