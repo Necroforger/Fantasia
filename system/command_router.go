@@ -53,6 +53,14 @@ func (c *CommandRouter) On(matcher string, handler HandlerFunc) *CommandRoute {
 	return route
 }
 
+// SetCategory sets the routers current category
+//		name: the name of the category to add new routes to by default
+func (c *CommandRouter) SetCategory(name string) {
+	c.Lock()
+	c.CurrentCategory = name
+	c.Unlock()
+}
+
 // OnReg allows you to supply a custom regular expression as the route matcher.
 //		matcher: The regular expression to use when searching for this route
 //		handler: The handler function for this command route.

@@ -2,6 +2,7 @@ package system
 
 import (
 	"log"
+	"sync"
 
 	"github.com/Necroforger/discordgo"
 	"github.com/Necroforger/dream"
@@ -22,6 +23,7 @@ const (
 
 // System  contains everything related to the bot
 type System struct {
+	sync.Mutex
 	Dream         *dream.Bot
 	CommandRouter *CommandRouter
 	Config        Config
@@ -52,6 +54,16 @@ func (s *System) ListenForCommands() {
 	s.listening = true
 
 	<-make(chan int)
+}
+
+// BuildModule adds a modules commands to the system
+func (s *System) BuildModule(modules ...Module) {
+	s.Lock()
+	defer s.Unlock()
+
+	for _, module := range modules {
+		module.Build(s)
+	}
 }
 
 // messageHandler handles incoming messageCreate events and routes them to commands.
@@ -96,4 +108,13 @@ func (s *System) messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
 type Config struct {
 	Prefix  string
 	Selfbot bool
+}
+
+//////////////////////////////////
+// 		Module
+/////////////////////////////////
+
+// Module is the interface for building a module
+type Module interface {
+	Build(*System)
 }
