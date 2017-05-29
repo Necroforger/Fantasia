@@ -1,6 +1,8 @@
 package system
 
 import (
+	"fmt"
+
 	"github.com/Necroforger/discordgo"
 	"github.com/Necroforger/dream"
 )
@@ -41,6 +43,11 @@ func (c *Context) Reply(text string) (*discordgo.Message, error) {
 //		embed: the discordgo messageembed to reply with
 func (c *Context) ReplyEmbed(embed *discordgo.MessageEmbed) (*discordgo.Message, error) {
 	return c.Ses.DG.ChannelMessageSendEmbed(c.Msg.ChannelID, embed)
+}
+
+// ReplyError replys with the given error value
+func (c *Context) ReplyError(err error) (*discordgo.Message, error) {
+	return c.ReplyStatus(StatusError, fmt.Sprint(err))
 }
 
 // SendStatus sends a status embed to the given channel
