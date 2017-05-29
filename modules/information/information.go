@@ -7,7 +7,7 @@ import (
 	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/discordgo"
 	"github.com/Necroforger/dream"
-	"github.com/rylio/ytdl"
+	"github.com/Necroforger/ytdl"
 )
 
 // Module ...
@@ -18,7 +18,8 @@ func (m *Module) Build(s *system.System) {
 	r := s.CommandRouter
 	r.SetCategory("information")
 
-	// Testing subrouter
+	// Subrouter must be added before adding commands because it sets the current category
+	// For the commands to be added to as the parent routers category.
 	test, _ := system.NewSubCommandRouter("^"+r.Prefix+"test", "test")
 	r.AddSubrouter(test)
 
@@ -55,7 +56,7 @@ func (m *Module) Depthmap(ctx *system.Context) {
 		if subrouter {
 			quote = "**"
 		}
-		return strings.Repeat("\t", depth) + quote + text + quote + "\n"
+		return strings.Repeat("  ", depth) + quote + text + quote + "\n"
 	}
 
 	var depthcharge func(r *system.CommandRouter, embed *dream.Embed, depth int) *dream.Embed
@@ -84,7 +85,7 @@ func (m *Module) Depthmap(ctx *system.Context) {
 		}
 
 		for _, v := range r.Subrouters {
-			field := getField(v.Category)
+			field := getField(v.Category())
 			field.Value += depthString(v.Name, depth, true)
 			embed = depthcharge(v.Router, embed, depth+1)
 		}

@@ -1,6 +1,7 @@
 package system
 
 import (
+	"log"
 	"strings"
 	"sync"
 
@@ -52,6 +53,7 @@ func (s *System) ListenForCommands() {
 	}
 
 	s.Dream.AddHandler(s.messageHandler)
+	s.Dream.AddHandler(s.readyHandler)
 	s.listening = true
 
 	<-make(chan int)
@@ -102,6 +104,10 @@ func (s *System) messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
 			route.Handler(ctx)
 		}
 	}
+}
+
+func (s *System) readyHandler(b *dream.Bot, e *discordgo.Ready) {
+	log.Printf("Bot connected as user [%s] and is serving in [%d] guilds\n", b.DG.State.User.Username, len(e.Guilds))
 }
 
 //////////////////////////////////

@@ -109,7 +109,7 @@ func (c *CommandRouter) SetDisabled(name string, disabled bool) error {
 func (c *CommandRouter) AddSubrouter(subrouter *SubCommandRouter) *SubCommandRouter {
 
 	// Set the default category to this routers current category.
-	if subrouter.Category == "" {
+	if subrouter.Category() == "" {
 		subrouter.SetCategory(c.CurrentCategory)
 	}
 
@@ -203,10 +203,9 @@ func (c *CommandRouter) GetAllRoutes() []*CommandRoute {
 
 // SubCommandRouter is a subrouter for commands
 type SubCommandRouter struct {
-	Matcher  *regexp.Regexp
-	Router   *CommandRouter
-	Category string
-	Name     string
+	Matcher *regexp.Regexp
+	Router  *CommandRouter
+	Name    string
 
 	// CommandRoute is retrieved when there are no matching routes found under the subrouter,
 	// But the subrouter was matched.
@@ -237,8 +236,15 @@ func NewSubCommandRouter(matcher string, name string) (*SubCommandRouter, error)
 
 // SetCategory sets the current category of the routers
 func (s *SubCommandRouter) SetCategory(name string) {
-	s.Category = name
 	s.Router.SetCategory(name)
+}
+
+// Category returns the category of the subrouter
+func (s *SubCommandRouter) Category() string {
+	if s.Router != nil {
+		return s.Router.CurrentCategory
+	}
+	return ""
 }
 
 //////////////////////////////////

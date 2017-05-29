@@ -7,10 +7,11 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
-	"github.com/Necroforger/Fantasia/modules/information"
 	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/dream"
 )
+
+//go:generate go run tools/genmodules/main.go
 
 // Errors
 var (
@@ -55,11 +56,8 @@ func main() {
 
 			// Create a config file with the default options.
 			err = SaveConfig(ConfigPath, Config{
-				Dream: dream.NewConfig(),
-				Modules: ModuleConfig{
-					General:     true,
-					Information: true,
-				},
+				Dream:   dream.NewConfig(),
+				Modules: *NewModuleConfig(),
 				System: system.Config{
 					Selfbot: false,
 					Prefix:  "!",
@@ -97,9 +95,7 @@ func main() {
 	session.Open()
 
 	sys := system.New(session, conf.System)
-
-	// Build modules
-	sys.BuildModule(&information.Module{})
+	RegisterModules(sys, conf.Modules)
 
 	sys.ListenForCommands()
 }
