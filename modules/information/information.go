@@ -16,7 +16,7 @@ func (m *Module) Build(s *system.System) {
 	r := s.CommandRouter
 	r.SetCategory("information")
 
-	r.On("help", m.Help).Set("", "help", "displays a help menu with the available commands")
+	r.On("help", m.Help).Set("", "Displays a help menu with the available commands")
 }
 
 // Help maps a list of available commands and descends into subrouters.
