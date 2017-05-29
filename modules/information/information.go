@@ -22,9 +22,8 @@ func (m *Module) Build(s *system.System) {
 // Help maps a list of available commands and descends into subrouters.
 func (m *Module) Help(ctx *system.Context) {
 
-	var depthcharge func(r *system.CommandRouter, embed *dream.Embed, depth int) *dream.Embed
-
-	_, err := ctx.ReplyEmbed(depthcharge(ctx.System.CommandRouter, nil, 0).SetColor(system.StatusNotify).
+	_, err := ctx.ReplyEmbed(depthcharge(ctx.System.CommandRouter, nil, 0).
+		SetColor(system.StatusNotify).
 		SetThumbnail(ctx.Ses.DG.State.User.AvatarURL("2048")).
 		InlineAllFields().
 		SetDescription("subcommands are represented by indentation.").
