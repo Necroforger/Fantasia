@@ -32,14 +32,6 @@ func NewCommandRouter(prefix string) *CommandRouter {
 	}
 }
 
-// SetDisabled sets the specified command to disabled
-func (c *CommandRouter) SetDisabled(name string, disabled bool) error {
-	if route, _ := c.FindMatch(name); route != nil {
-		route.Disabled = disabled
-	}
-	return errors.New("route not found")
-}
-
 // On adds a command router to the list of routes.
 //		matcher: The regular expression to use when searching for this route.
 //		handler: The handler function for this command route.
@@ -47,10 +39,10 @@ func (c *CommandRouter) On(matcher string, handler HandlerFunc) *CommandRoute {
 
 	// Specify that the matched text must be at the beginning of the command
 	// And include the router prefix
-	matcher = c.Prefix + matcher + `(\s|$)`
+	reg := c.Prefix + matcher + `(\s|$)`
 
 	route := &CommandRoute{
-		Matcher:  regexp.MustCompile(matcher),
+		Matcher:  regexp.MustCompile(reg),
 		Handler:  handler,
 		Name:     matcher,
 		Category: c.CurrentCategory,
@@ -105,6 +97,14 @@ func (c *CommandRouter) Off(name string) *CommandRoute {
 	return nil
 }
 
+// SetDisabled sets the specified command to disabled
+func (c *CommandRouter) SetDisabled(name string, disabled bool) error {
+	if route, _ := c.FindMatch(name); route != nil {
+		route.Disabled = disabled
+	}
+	return errors.New("route not found")
+}
+
 // AddSubrouter adds a subrouter to the list of subrouters.
 func (c *CommandRouter) AddSubrouter(subrouter *SubCommandRouter) *SubCommandRouter {
 	c.Lock()
@@ -131,7 +131,7 @@ func (c *CommandRouter) FindMatch(name string) (*CommandRoute, []int) {
 			}
 
 			// Return the subrouters command route if nothing is found
-			return v.CommandRoute, nil
+			return v.CommandRoute, loc
 		}
 	}
 
@@ -142,29 +142,29 @@ func (c *CommandRouter) FindMatch(name string) (*CommandRoute, []int) {
 
 // FindMatches will return all commands matching the given string
 //		name: The name of the route to find
-func (c *CommandRouter) FindMatches(name string) []*CommandRoute {
-	matches := []*CommandRoute{}
+// func (c *CommandRouter) FindMatches(name string) []*CommandRoute {
+// 	matches := []*CommandRoute{}
 
-	// Search routes
-	for _, route := range c.Routes {
-		if route.Matcher.MatchString(name) {
-			matches = append(matches, route)
-		}
-	}
+// 	// Search routes
+// 	for _, route := range c.Routes {
+// 		if route.Matcher.MatchString(name) {
+// 			matches = append(matches, route)
+// 		}
+// 	}
 
-	// Search subrouters
-	for _, v := range c.Subrouters {
-		if v.Matcher.MatchString(name) {
-			if route, _ := v.Router.FindMatch(name); route != nil {
-				matches = append(matches, route)
-			} else if v.CommandRoute != nil {
-				matches = append(matches, v.CommandRoute)
-			}
-		}
-	}
+// 	// Search subrouters
+// 	for _, v := range c.Subrouters {
+// 		if v.Matcher.MatchString(name) {
+// 			if route, _ := v.Router.FindMatch(name); route != nil {
+// 				matches = append(matches, route)
+// 			} else if v.CommandRoute != nil {
+// 				matches = append(matches, v.CommandRoute)
+// 			}
+// 		}
+// 	}
 
-	return matches
-}
+// 	return matches
+// }
 
 // GetAllRoutes returns all routes including the routes
 // of this routers subrouters.
@@ -172,7 +172,6 @@ func (c *CommandRouter) GetAllRoutes() []*CommandRoute {
 
 	var find func(router *CommandRouter) []*CommandRoute
 	find = func(router *CommandRouter) []*CommandRoute {
-
 		routes := []*CommandRoute{}
 
 		for _, v := range router.Routes {
@@ -183,9 +182,6 @@ func (c *CommandRouter) GetAllRoutes() []*CommandRoute {
 			if v.CommandRoute != nil {
 				routes = append(routes, v.CommandRoute)
 			}
-		}
-
-		for _, v := range router.Subrouters {
 			routes = append(routes, find(v.Router)...)
 		}
 

@@ -21,7 +21,7 @@ func (a Args) Get(n int) string {
 
 // After is a shortcut to AfterN(1)
 func (a Args) After() string {
-	return a.AfterN(1)
+	return a.AfterN(0)
 }
 
 // AfterN returns the arguments after positi

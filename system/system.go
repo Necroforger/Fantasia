@@ -1,7 +1,7 @@
 package system
 
 import (
-	"log"
+	"strings"
 	"sync"
 
 	"github.com/Necroforger/discordgo"
@@ -84,9 +84,9 @@ func (s *System) messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
 	if route, loc := s.CommandRouter.FindMatch(m.Content); route != nil && !route.Disabled {
 		args, err := parseargs.Parse(m.Content[loc[1]:])
 
+		// If there is a misplaced quotation, resort to an alternative argument parsing method.
 		if err != nil {
-			log.Println("Error parsing arguments: ", args)
-			args = Args{}
+			args = strings.Split(m.Content[loc[1]:], " ")
 		}
 
 		ctx := &Context{
@@ -97,7 +97,10 @@ func (s *System) messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
 			CommandRoute: route,
 		}
 
-		route.Handler(ctx)
+		// Check for nil Handler as it is possible to create a route with no handler.
+		if route.Handler != nil {
+			route.Handler(ctx)
+		}
 	}
 }
 
