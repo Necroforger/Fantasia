@@ -24,9 +24,9 @@ type CommandRouter struct {
 }
 
 // NewCommandRouter ..,
-func NewCommandRouter() *CommandRouter {
+func NewCommandRouter(prefix string) *CommandRouter {
 	return &CommandRouter{
-		Prefix:     "",
+		Prefix:     prefix,
 		Routes:     []*CommandRoute{},
 		Subrouters: []*SubCommandRouter{},
 	}
@@ -218,11 +218,11 @@ func NewSubCommandRouter(matcher string) (*SubCommandRouter, error) {
 		return nil, err
 	}
 
+	router := NewCommandRouter("^ ")
+
 	return &SubCommandRouter{
-		Matcher: reg,
-		Router: &CommandRouter{
-			Prefix: "^ ",
-		},
+		Matcher:      reg,
+		Router:       router,
 		Name:         matcher,
 		CommandRoute: nil,
 	}, nil

@@ -35,12 +35,13 @@ type System struct {
 // New returns a pointer to a new bot struct
 //		session: Dream session to run the bot off.
 func New(session *dream.Bot, config Config) *System {
+
+	router := NewCommandRouter(config.Prefix)
+
 	return &System{
-		Dream:  session,
-		Config: config,
-		CommandRouter: &CommandRouter{
-			Prefix: config.Prefix,
-		},
+		Dream:         session,
+		Config:        config,
+		CommandRouter: router,
 	}
 }
 
