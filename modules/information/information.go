@@ -3,6 +3,7 @@ package information
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/discordgo"
@@ -23,10 +24,20 @@ func (m *Module) Build(s *system.System) {
 	test, _ := system.NewSubCommandRouter("^"+r.Prefix+"test", "test")
 	r.AddSubrouter(test)
 
-	test.Router.On("help", m.Help).Set("", "Lists the available commands")
+	test.Router.On("help", m.Depthmap).Set("", "Lists the available commands")
 	test.Router.On("args", m.Argtest).Set("", "Displays your arguments")
-	test.Router.On("depthcharge", m.Depthmap).Set("", "Displays the depth of the command routers commands")
 	test.Router.On("play", m.Play).Set("", "plays the given youtube URL")
+	test.Router.On("ping", func(ctx *system.Context) {
+		start := time.Now()
+		m, err := ctx.ReplyStatus(system.StatusNotify, "pinging...")
+		if err == nil {
+			ctx.Ses.DG.ChannelMessageEditEmbed(m.ChannelID, m.ID, dream.NewEmbed().
+				SetDescription(fmt.Sprint(time.Since(start))).
+				SetTitle("pong").
+				SetColor(system.StatusSuccess).
+				MessageEmbed)
+		}
+	})
 
 	sub, _ := system.NewSubCommandRouter("^ meme", "meme")
 	test.Router.AddSubrouter(sub)
@@ -43,18 +54,18 @@ func (m *Module) Help(ctx *system.Context) {
 func (m *Module) Argtest(ctx *system.Context) {
 	var text string
 	for i, v := range ctx.Args {
-		text += fmt.Sprintf("%d:\t%s\n", i, v)
+		text += fmt.Sprintf("%d:\t[%s]\n", i, v)
 	}
 	ctx.ReplyStatus(system.StatusNotify, text)
 }
 
-// Depthmap maps the depth of subrouters and their commands
+// Depthmap maps the depth of subrouters and their commands to an embed
 func (m *Module) Depthmap(ctx *system.Context) {
 
 	depthString := func(text string, depth int, subrouter bool) string {
 		quote := ""
 		if subrouter {
-			quote = "**"
+			quote = "`"
 		}
 		return strings.Repeat("  ", depth) + quote + text + quote + "\n"
 	}
@@ -93,7 +104,11 @@ func (m *Module) Depthmap(ctx *system.Context) {
 		return embed
 	}
 
-	_, err := ctx.ReplyEmbed(depthcharge(ctx.System.CommandRouter, nil, 0).MessageEmbed)
+	_, err := ctx.ReplyEmbed(depthcharge(ctx.System.CommandRouter, nil, 0).SetColor(system.StatusNotify).
+		SetThumbnail(ctx.Ses.DG.State.User.AvatarURL("2048")).
+		InlineAllFields().
+		SetDescription("subcommands are represented by indentation.").
+		MessageEmbed)
 	if err != nil {
 		ctx.Reply(fmt.Sprint(err))
 	}
