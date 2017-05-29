@@ -138,6 +138,8 @@ func (c *CommandRouter) FindMatch(name string) (*CommandRoute, []int) {
 	return nil, nil
 }
 
+// TODO Return an array of match locations
+
 // FindMatches will return all commands matching the given string
 //		name: The name of the route to find
 func (c *CommandRouter) FindMatches(name string) []*CommandRoute {
@@ -204,7 +206,7 @@ type SubCommandRouter struct {
 	Name    string
 
 	// CommandRoute is retrieved when there are no matching routes found under the subrouter,
-	// But the subrouter was found.s
+	// But the subrouter was matched.
 	CommandRoute *CommandRoute
 }
 
