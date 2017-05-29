@@ -37,6 +37,12 @@ func (c *Context) Reply(text string) (*discordgo.Message, error) {
 	return c.Ses.DG.ChannelMessageSend(c.Msg.ChannelID, text)
 }
 
+// ReplyEmbed replys to the channel the context originated from with the given embed
+//		embed: the discordgo messageembed to reply with
+func (c *Context) ReplyEmbed(embed *discordgo.MessageEmbed) (*discordgo.Message, error) {
+	return c.Ses.DG.ChannelMessageSendEmbed(c.Msg.ChannelID, embed)
+}
+
 // SendStatus sends a status embed to the given channel
 //		Status:			The colour code of the embed to send
 //		channelID:		The ID of the channel to send to

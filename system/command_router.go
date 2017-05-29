@@ -107,6 +107,12 @@ func (c *CommandRouter) SetDisabled(name string, disabled bool) error {
 
 // AddSubrouter adds a subrouter to the list of subrouters.
 func (c *CommandRouter) AddSubrouter(subrouter *SubCommandRouter) *SubCommandRouter {
+
+	// Set the default category to this routers current category.
+	if subrouter.Category == "" {
+		subrouter.SetCategory(c.CurrentCategory)
+	}
+
 	c.Lock()
 	c.Subrouters = append(c.Subrouters, subrouter)
 	c.Unlock()
@@ -197,9 +203,10 @@ func (c *CommandRouter) GetAllRoutes() []*CommandRoute {
 
 // SubCommandRouter is a subrouter for commands
 type SubCommandRouter struct {
-	Matcher *regexp.Regexp
-	Router  *CommandRouter
-	Name    string
+	Matcher  *regexp.Regexp
+	Router   *CommandRouter
+	Category string
+	Name     string
 
 	// CommandRoute is retrieved when there are no matching routes found under the subrouter,
 	// But the subrouter was matched.
@@ -210,7 +217,9 @@ type SubCommandRouter struct {
 //		matcher: The regular expression to use when matching for commands.
 //				 Use the expression '.' and set the prefix to an empty string.
 //				 to match everything..
-func NewSubCommandRouter(matcher string) (*SubCommandRouter, error) {
+//
+//		name: 	 The name to give the subrouter.
+func NewSubCommandRouter(matcher string, name string) (*SubCommandRouter, error) {
 	reg, err := regexp.Compile(matcher)
 	if err != nil {
 		return nil, err
@@ -221,9 +230,15 @@ func NewSubCommandRouter(matcher string) (*SubCommandRouter, error) {
 	return &SubCommandRouter{
 		Matcher:      reg,
 		Router:       router,
-		Name:         matcher,
+		Name:         name,
 		CommandRoute: nil,
 	}, nil
+}
+
+// SetCategory sets the current category of the routers
+func (s *SubCommandRouter) SetCategory(name string) {
+	s.Category = name
+	s.Router.SetCategory(name)
 }
 
 //////////////////////////////////
