@@ -6,6 +6,7 @@ import (
 
 	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/discordgo"
+	"github.com/Necroforger/dream"
 	"github.com/rylio/ytdl"
 )
 
@@ -18,9 +19,7 @@ func (m *Module) Build(s *system.System) {
 	r.SetCategory("information")
 
 	// Testing subrouter
-	test, _ := system.NewSubCommandRouter("^" + r.Prefix + "test")
-	test.Name = "test"
-	test.CommandRoute = &system.CommandRoute{Name: "test"}
+	test, _ := system.NewSubCommandRouter("^"+r.Prefix+"test", "test")
 	r.AddSubrouter(test)
 
 	test.Router.On("help", m.Help).Set("", "Lists the available commands")
@@ -28,11 +27,10 @@ func (m *Module) Build(s *system.System) {
 	test.Router.On("depthcharge", m.Depthmap).Set("", "Displays the depth of the command routers commands")
 	test.Router.On("play", m.Play).Set("", "plays the given youtube URL")
 
-	sub, _ := system.NewSubCommandRouter("^ meme")
-	sub.Name = "meme"
-	sub.Router.On("cachigga", func(ctx *system.Context) { ctx.ReplyStatus(system.StatusWarning, "warning you have been cachiggad") })
-
+	sub, _ := system.NewSubCommandRouter("^ meme", "meme")
 	test.Router.AddSubrouter(sub)
+
+	sub.Router.On("cachigga", func(ctx *system.Context) { ctx.ReplyStatus(system.StatusWarning, "warning you have been cachiggad") })
 }
 
 // Help ...
@@ -52,27 +50,52 @@ func (m *Module) Argtest(ctx *system.Context) {
 // Depthmap maps the depth of subrouters and their commands
 func (m *Module) Depthmap(ctx *system.Context) {
 
-	indent := "\t"
+	depthString := func(text string, depth int, subrouter bool) string {
+		quote := ""
+		if subrouter {
+			quote = "**"
+		}
+		return strings.Repeat("\t", depth) + quote + text + quote + "\n"
+	}
 
-	var charge func(*system.CommandRouter, int) string
-	charge = func(r *system.CommandRouter, depth int) string {
-		var text string
+	var depthcharge func(r *system.CommandRouter, embed *dream.Embed, depth int) *dream.Embed
+	depthcharge = func(r *system.CommandRouter, embed *dream.Embed, depth int) *dream.Embed {
+		if embed == nil {
+			embed = dream.NewEmbed()
+		}
+
+		getField := func(name string) *discordgo.MessageEmbedField {
+			for _, v := range embed.Fields {
+				if v.Name == name {
+					return v
+				}
+			}
+			if name == "" {
+				name = "undefined"
+			}
+			field := &discordgo.MessageEmbedField{Name: name}
+			embed.Fields = append(embed.Fields, field)
+			return field
+		}
 
 		for _, v := range r.Routes {
-			text += strings.Repeat(indent, depth) + v.Name + "\n"
+			field := getField(v.Category)
+			field.Value += depthString(v.Name, depth, false)
 		}
 
 		for _, v := range r.Subrouters {
-			text += strings.Repeat(indent, depth) + v.Name + "\n"
-			text += charge(v.Router, depth+1)
+			field := getField(v.Category)
+			field.Value += depthString(v.Name, depth, true)
+			embed = depthcharge(v.Router, embed, depth+1)
 		}
 
-		return text
+		return embed
 	}
 
-	text := charge(ctx.System.CommandRouter, 0)
-
-	ctx.ReplyStatus(system.StatusNotify, text)
+	_, err := ctx.ReplyEmbed(depthcharge(ctx.System.CommandRouter, nil, 0).MessageEmbed)
+	if err != nil {
+		ctx.Reply(fmt.Sprint(err))
+	}
 }
 
 // Play plays the given song
