@@ -159,10 +159,10 @@ func (c *CommandRouter) FindMatches(name string) []*CommandRoute {
 // of this routers subrouters.
 func (c *CommandRouter) GetAllRoutes() []*CommandRoute {
 
-	routes := []*CommandRoute{}
+	var find func(router *CommandRouter) []*CommandRoute
+	find = func(router *CommandRouter) []*CommandRoute {
 
-	var find func(router *CommandRouter)
-	find = func(router *CommandRouter) {
+		routes := []*CommandRoute{}
 
 		for _, v := range router.Routes {
 			routes = append(routes, v)
@@ -175,13 +175,13 @@ func (c *CommandRouter) GetAllRoutes() []*CommandRoute {
 		}
 
 		for _, v := range router.Subrouters {
-			find(v.Router)
+			routes = append(routes, find(v.Router)...)
 		}
 
+		return routes
 	}
 
-	find(c)
-	return routes
+	return find(c)
 }
 
 //////////////////////////////////
