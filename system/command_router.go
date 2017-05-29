@@ -2,6 +2,7 @@ package system
 
 import (
 	"regexp"
+	"sort"
 	"sync"
 )
 
@@ -263,32 +264,34 @@ func (c *CommandRoute) Set(values ...string) {
 // 		SORTING BY CATEGORY
 /////////////////////////////////
 
-// CommandRoutersByCategory implements the sort.Sortable interface
+// CommandRoutesByCategory implements the sort.Sortable interface
 // To allow CommandRouters to be sorted in alphabetical order based on their
 // Category.
-type CommandRoutersByCategory []*CommandRoute
+type CommandRoutesByCategory []*CommandRoute
 
-func (c CommandRoutersByCategory) Swap(a, b int) {
+func (c CommandRoutesByCategory) Swap(a, b int) {
 	c[a], c[b] = c[b], c[a]
 }
 
 // Len implements the sorter.Sortable interface
-func (c CommandRoutersByCategory) Len() int {
+func (c CommandRoutesByCategory) Len() int {
 	return len(c)
 }
 
 // Less implements the sorter.Sortable interface
-func (c CommandRoutersByCategory) Less(a, b int) bool {
+func (c CommandRoutesByCategory) Less(a, b int) bool {
 	return c[a].Category < c[b].Category
 }
 
 // Group splits the CommandRouters into separate slices according to group
-func (c CommandRoutersByCategory) Group() [][]*CommandRoute {
+func (c CommandRoutesByCategory) Group() [][]*CommandRoute {
 	var (
 		groups       = [][]*CommandRoute{}
-		lastCategory string
+		lastCategory = "__undefined__"
 		currentGroup = []*CommandRoute{}
 	)
+
+	sort.Sort(c)
 
 	for _, v := range c {
 
