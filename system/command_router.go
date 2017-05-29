@@ -1,6 +1,7 @@
 package system
 
 import (
+	"errors"
 	"regexp"
 	"sort"
 	"sync"
@@ -29,6 +30,14 @@ func NewCommandRouter() *CommandRouter {
 		Routes:     []*CommandRoute{},
 		Subrouters: []*SubCommandRouter{},
 	}
+}
+
+// SetDisabled sets the specified command to disabled
+func (c *CommandRouter) SetDisabled(name string, disabled bool) error {
+	if route, _ := c.FindMatch(name); route != nil {
+		route.Disabled = disabled
+	}
+	return errors.New("route not found")
 }
 
 // On adds a command router to the list of routes.
@@ -212,7 +221,7 @@ func NewSubCommandRouter(matcher string) (*SubCommandRouter, error) {
 	return &SubCommandRouter{
 		Matcher: reg,
 		Router: &CommandRouter{
-			Prefix: " ",
+			Prefix: "^ ",
 		},
 		Name:         matcher,
 		CommandRoute: nil,
@@ -230,6 +239,7 @@ type CommandRoute struct {
 	Name     string
 	Desc     string
 	Category string
+	Disabled bool
 }
 
 // Set sets the field values of the CommandRoute
