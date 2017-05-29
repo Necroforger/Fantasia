@@ -80,8 +80,8 @@ func (s *System) messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
 	}
 
 	// Search for the first route match and execute the command If it exists.
-	if route := s.CommandRouter.FindMatch(m.Content); route != nil {
-		args, err := parseargs.Parse(m.Content)
+	if route, loc := s.CommandRouter.FindMatch(m.Content); route != nil {
+		args, err := parseargs.Parse(m.Content[loc[1]:])
 
 		if err != nil {
 			log.Println("Error parsing arguments: ", args)

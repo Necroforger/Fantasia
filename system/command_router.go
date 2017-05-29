@@ -107,26 +107,26 @@ func (c *CommandRouter) AddSubrouter(subrouter *SubCommandRouter) *SubCommandRou
 
 // FindMatch returns the first match found
 //		name: The name of the route to find
-func (c *CommandRouter) FindMatch(name string) *CommandRoute {
+func (c *CommandRouter) FindMatch(name string) (*CommandRoute, []int) {
 
 	for _, route := range c.Routes {
 		if route.Matcher.MatchString(name) {
-			return route
+			return route, nil
 		}
 	}
 
 	for _, v := range c.Subrouters {
 		if loc := v.Matcher.FindStringIndex(name); loc != nil {
-			if match := v.Router.FindMatch(name[loc[1]:]); match != nil {
-				return match
+			if match, loc2 := v.Router.FindMatch(name[loc[1]:]); match != nil {
+				return match, []int{loc[0], loc[1] + loc2[1]}
 			}
 
 			// Return the subrouters command route if nothing is found
-			return v.CommandRoute
+			return v.CommandRoute, nil
 		}
 	}
 
-	return nil
+	return nil, nil
 }
 
 // FindMatches will return all commands matching the given string
