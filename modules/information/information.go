@@ -15,8 +15,6 @@ type Module struct{}
 // Build adds this modules commands to the system's router
 func (m *Module) Build(s *system.System) {
 	r := s.CommandRouter
-	r.SetCategory("Information")
-
 	r.On("help", m.Help).Set("", "Displays a help menu with the available commands")
 }
 

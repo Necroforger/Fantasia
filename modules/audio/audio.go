@@ -17,6 +17,8 @@ func (m *Module) Build(s *system.System) {
 	r.On("stop", func(ctx *system.Context) { ctx.Ses.GuildAudioDispatcherStop(ctx.Msg) }).Set("", "Stops the guilds currently playing audio dispatcher")
 	r.On("pause", func(ctx *system.Context) { ctx.Ses.GuildAudioDispatcherPause(ctx.Msg) }).Set("", "Pauses the guild's currently playing audio dispatcher")
 	r.On("resume", func(ctx *system.Context) { ctx.Ses.GuildAudioDispatcherResume(ctx.Msg) }).Set("", "resumes the guild's currently playing audio dispatcher")
+	r.On("join", func(ctx *system.Context) { ctx.Ses.UserVoiceStateJoin(ctx.Msg.Author.ID, false, true) }).Set("", "Joins the calling user's voice channel")
+	r.On("leave", func(ctx *system.Context) { ctx.Ses.GuildVoiceConnectionDisconnect(ctx.Msg) }).Set("", "Disconnects from the current guild voice channel")
 }
 
 func (m *Module) playHandler(ctx *system.Context) {

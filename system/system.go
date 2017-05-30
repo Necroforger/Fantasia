@@ -37,7 +37,7 @@ type System struct {
 //		session: Dream session to run the bot off.
 func New(session *dream.Bot, config Config) *System {
 
-	router := NewCommandRouter(config.Prefix)
+	router := NewCommandRouter()
 
 	return &System{
 		Dream:         session,
@@ -69,6 +69,14 @@ func (s *System) BuildModule(modules ...Module) {
 	}
 }
 
+// removePrefix removes a prefix from the beginning of a string if it exists
+func removePrefix(text, prefix string) string {
+	if strings.HasPrefix(text, prefix) {
+		text = text[len(prefix):]
+	}
+	return text
+}
+
 // messageHandler handles incoming messageCreate events and routes them to commands.
 func (s *System) messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
 
@@ -82,13 +90,21 @@ func (s *System) messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
 		return
 	}
 
+	// It is not a command if it does not contain a prefix
+	if !strings.HasPrefix(m.Content, s.Config.Prefix) {
+		return
+	}
+
+	// Remove the prefix from the text if it exists.
+	searchText := removePrefix(m.Content, s.Config.Prefix)
+
 	// Search for the first route match and execute the command If it exists.
-	if route, loc := s.CommandRouter.FindEnabledMatch(m.Content); route != nil && !route.Disabled {
-		args, err := parseargs.Parse(m.Content[loc[1]:])
+	if route, loc := s.CommandRouter.FindEnabledMatch(searchText); route != nil && !route.Disabled {
+		args, err := parseargs.Parse(searchText[loc[1]:])
 
 		// If there is a misplaced quotation, resort to an alternative argument parsing method.
 		if err != nil {
-			args = strings.Split(m.Content[loc[1]:], " ")
+			args = strings.Split(searchText[loc[1]:], " ")
 		}
 
 		ctx := &Context{

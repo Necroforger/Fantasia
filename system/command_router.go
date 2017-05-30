@@ -18,15 +18,19 @@ type HandlerFunc func(*Context)
 type CommandRouter struct {
 	sync.Mutex
 	CurrentCategory string
-	Prefix          string
-	Routes          []*CommandRoute
-	Subrouters      []*SubCommandRouter
+
+	// Prefix is appended to the beginning of each command added with On
+	Prefix string
+	// Suffix is appended to the end of each command added with On
+	Suffix string
+
+	Routes     []*CommandRoute
+	Subrouters []*SubCommandRouter
 }
 
 // NewCommandRouter ..,
-func NewCommandRouter(prefix string) *CommandRouter {
+func NewCommandRouter() *CommandRouter {
 	return &CommandRouter{
-		Prefix:     prefix,
 		Routes:     []*CommandRoute{},
 		Subrouters: []*SubCommandRouter{},
 	}
@@ -37,9 +41,9 @@ func NewCommandRouter(prefix string) *CommandRouter {
 //		handler: The handler function for this command route.
 func (c *CommandRouter) On(matcher string, handler HandlerFunc) *CommandRoute {
 
-	// Specify that the matched text must be at the beginning of the command
-	// And include the router prefix
-	reg := c.Prefix + matcher + `(\s|$)`
+	// Specify that the matched text must be at the beginning and end in a whitespace character
+	// Or end of line.
+	reg := "^" + c.Prefix + matcher + c.Suffix + `(\s|$)`
 
 	route := &CommandRoute{
 		Matcher:  regexp.MustCompile(reg),
@@ -233,7 +237,6 @@ type SubCommandRouter struct {
 
 // NewSubCommandRouter returns a pointer to a new SubCommandRouter
 //		matcher: The regular expression to use when matching for commands.
-//				 Use the expression '.' and set the prefix to an empty string.
 //				 to match everything..
 //
 //		name: 	 The name to give the subrouter.
@@ -243,7 +246,9 @@ func NewSubCommandRouter(matcher string, name string) (*SubCommandRouter, error)
 		return nil, err
 	}
 
-	router := NewCommandRouter("^ ")
+	router := NewCommandRouter()
+	router.Prefix = " "
+	// Set the prefix to be space separated by default.
 
 	return &SubCommandRouter{
 		Matcher:      reg,
