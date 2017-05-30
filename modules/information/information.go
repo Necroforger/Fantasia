@@ -1,6 +1,7 @@
 package information
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/Necroforger/Fantasia/system"
@@ -22,11 +23,24 @@ func (m *Module) Build(s *system.System) {
 // Help maps a list of available commands and descends into subrouters.
 func (m *Module) Help(ctx *system.Context) {
 
+	if cmd := ctx.Args.After(); cmd != "" {
+		if route, _ := ctx.System.CommandRouter.FindMatch(ctx.System.CommandRouter.Prefix + cmd); route != nil {
+			ctx.ReplyEmbed(dream.NewEmbed().
+				SetTitle(route.Name).
+				SetDescription(route.Desc).
+				SetColor(system.StatusNotify).
+				MessageEmbed)
+			return
+		}
+		ctx.ReplyError(errors.New("Command not found"))
+		return
+	}
+
 	_, err := ctx.ReplyEmbed(depthcharge(ctx.System.CommandRouter, nil, 0).
 		SetColor(system.StatusNotify).
 		SetThumbnail(ctx.Ses.DG.State.User.AvatarURL("2048")).
 		InlineAllFields().
-		SetDescription("subcommands are represented by indentation.").
+		SetDescription("type `help [command]` to view the commands description").
 		MessageEmbed)
 	if err != nil {
 		ctx.ReplyError(err)

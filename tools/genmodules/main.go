@@ -20,7 +20,7 @@ import (
 
 	{{range . -}}
 	"github.com/Necroforger/Fantasia/modules/{{.}}"
-	{{- end}}
+	{{end}}
 	"github.com/Necroforger/Fantasia/system"
 )
 
@@ -34,7 +34,7 @@ type ModuleConfig struct {
 	Inverted bool
 	{{range . -}}
 	{{title .}} bool
-	{{- end}}
+	{{end}}
 }
 
 // NewModuleConfig returns a new module configuration
@@ -43,7 +43,7 @@ func NewModuleConfig() *ModuleConfig {
 		Inverted: false,
 		{{range . -}}
 		{{title .}}: true,
-		{{- end}}
+		{{end}}
 	}
 }
 
@@ -55,7 +55,7 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 		s.BuildModule(&{{.}}.Module{})
 		log.Println("loaded {{.}} module...")
 	}
-	{{- end}}
+	{{end}}
 }
 
 `))
@@ -88,6 +88,7 @@ func main() {
 	src, err := format.Source(output.Bytes())
 	if err != nil {
 		fmt.Println("error: invalid Go generated")
+		fmt.Println(string(output.Bytes()))
 		return
 	}
 
