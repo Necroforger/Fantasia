@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/Necroforger/Fantasia/modules/audio"
+	"github.com/Necroforger/Fantasia/modules/booru"
 	"github.com/Necroforger/Fantasia/modules/information"
 	"github.com/Necroforger/Fantasia/modules/roles"
 
@@ -19,6 +20,7 @@ import (
 type ModuleConfig struct {
 	Inverted    bool
 	Audio       bool
+	Booru       bool
 	Information bool
 	Roles       bool
 }
@@ -28,6 +30,7 @@ func NewModuleConfig() *ModuleConfig {
 	return &ModuleConfig{
 		Inverted:    false,
 		Audio:       true,
+		Booru:       true,
 		Information: true,
 		Roles:       true,
 	}
@@ -39,6 +42,11 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 		s.CommandRouter.SetCategory("Audio")
 		s.BuildModule(&audio.Module{})
 		log.Println("loaded audio module...")
+	}
+	if (config.Inverted && !config.Booru) || config.Booru {
+		s.CommandRouter.SetCategory("Booru")
+		s.BuildModule(&booru.Module{})
+		log.Println("loaded booru module...")
 	}
 	if (config.Inverted && !config.Information) || config.Information {
 		s.CommandRouter.SetCategory("Information")
