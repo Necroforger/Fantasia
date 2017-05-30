@@ -263,6 +263,37 @@ func (s *SubCommandRouter) SetCategory(name string) {
 	s.Router.SetCategory(name)
 }
 
+// Set sets the field values of the CommandRoute
+// Accepts three fields:
+//		1:	Name
+//		2:  Description
+//		3:  Category
+func (s *SubCommandRouter) Set(values ...string) {
+	if s.CommandRoute == nil {
+		s.CommandRoute = &CommandRoute{}
+	}
+
+	switch {
+
+	case len(values) > 2:
+		if values[2] != "" {
+			s.CommandRoute.Category = values[2]
+		}
+		fallthrough
+
+	case len(values) > 1:
+		if values[1] != "" {
+			s.CommandRoute.Desc = values[1]
+		}
+		fallthrough
+
+	case len(values) > 0:
+		if values[0] != "" {
+			s.CommandRoute.Name = values[0]
+		}
+	}
+}
+
 // Category returns the category of the subrouter
 func (s *SubCommandRouter) Category() string {
 	if s.Router != nil {
