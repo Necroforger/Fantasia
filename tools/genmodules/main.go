@@ -50,7 +50,8 @@ func NewModuleConfig() *ModuleConfig {
 // RegisterModules builds a list of modules into the given system
 func RegisterModules(s *system.System, config ModuleConfig) {
 	{{range . -}}
-	if (config.Inverted && config.{{title .}}) || config.{{title .}} {
+	if (config.Inverted && !config.{{title .}}) || config.{{title .}} {
+		s.CommandRouter.SetCategory("{{title .}}")
 		s.BuildModule(&{{.}}.Module{})
 		log.Println("loaded {{.}} module...")
 	}

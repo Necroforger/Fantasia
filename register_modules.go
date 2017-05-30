@@ -28,7 +28,8 @@ func NewModuleConfig() *ModuleConfig {
 
 // RegisterModules builds a list of modules into the given system
 func RegisterModules(s *system.System, config ModuleConfig) {
-	if (config.Inverted && config.Information) || config.Information {
+	if (config.Inverted && !config.Information) || config.Information {
+		s.CommandRouter.SetCategory("Information")
 		s.BuildModule(&information.Module{})
 		log.Println("loaded information module...")
 	}
