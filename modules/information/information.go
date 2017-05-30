@@ -22,7 +22,7 @@ func (m *Module) Build(s *system.System) {
 func (m *Module) Help(ctx *system.Context) {
 
 	if cmd := ctx.Args.After(); cmd != "" {
-		if route, _ := ctx.System.CommandRouter.FindMatch(ctx.System.CommandRouter.Prefix + cmd); route != nil {
+		if route, _ := ctx.System.CommandRouter.FindMatch(cmd); route != nil {
 			ctx.ReplyEmbed(dream.NewEmbed().
 				SetTitle(route.Name).
 				SetDescription(route.Desc).
