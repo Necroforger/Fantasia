@@ -14,7 +14,7 @@ type Module struct{}
 // Build adds this modules commands to the system's router
 func (m *Module) Build(s *system.System) {
 	r := s.CommandRouter
-	r.SetCategory("information")
+	r.SetCategory("Information")
 
 	r.On("help", m.Help).Set("", "Displays a help menu with the available commands")
 }
@@ -33,6 +33,7 @@ func (m *Module) Help(ctx *system.Context) {
 	}
 }
 
+// Depthcharge recursively generates a help embed from a CommandRouter and its subrouters
 func depthcharge(r *system.CommandRouter, embed *dream.Embed, depth int) *dream.Embed {
 	if embed == nil {
 		embed = dream.NewEmbed()
