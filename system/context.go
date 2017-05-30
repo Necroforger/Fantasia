@@ -35,8 +35,8 @@ func (c *Context) ReplyStatus(status int, notification string) (*discordgo.Messa
 
 // Reply replys to the channel the context originated from
 //		text: Content of the message to send
-func (c *Context) Reply(text string) (*discordgo.Message, error) {
-	return c.Ses.DG.ChannelMessageSend(c.Msg.ChannelID, text)
+func (c *Context) Reply(i ...interface{}) (*discordgo.Message, error) {
+	return c.Ses.DG.ChannelMessageSend(c.Msg.ChannelID, fmt.Sprint(i...))
 }
 
 // ReplyEmbed replys to the channel the context originated from with the given embed
@@ -46,8 +46,8 @@ func (c *Context) ReplyEmbed(embed *discordgo.MessageEmbed) (*discordgo.Message,
 }
 
 // ReplyError replys with the given error value
-func (c *Context) ReplyError(err error) (*discordgo.Message, error) {
-	return c.ReplyStatus(StatusError, fmt.Sprint(err))
+func (c *Context) ReplyError(i interface{}) (*discordgo.Message, error) {
+	return c.ReplyStatus(StatusError, fmt.Sprint(i))
 }
 
 // SendStatus sends a status embed to the given channel

@@ -28,10 +28,11 @@ var (
 
 // Config ...
 type Config struct {
-	Token   string
-	System  system.Config
-	Modules ModuleConfig
-	Dream   dream.Config
+	Token            string
+	DisabledCommands []string
+	System           system.Config
+	Modules          ModuleConfig
+	Dream            dream.Config
 }
 
 func parseFlags() {
@@ -96,6 +97,12 @@ func main() {
 
 	sys := system.New(session, conf.System)
 	RegisterModules(sys, conf.Modules)
+
+	// Remove disabled commands
+	for _, v := range conf.DisabledCommands {
+		log.Println("Removing command: ", sys.CommandRouter.Prefix+v)
+		sys.CommandRouter.Off(sys.CommandRouter.Prefix + v)
+	}
 
 	sys.ListenForCommands()
 }
