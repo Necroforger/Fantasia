@@ -87,7 +87,6 @@ func main() {
 
 	src, err := format.Source(output.Bytes())
 	if err != nil {
-		ioutil.WriteFile(filepath.Join(currentDir, "broken_source.go"), src, 0644)
 		fmt.Println("error: invalid Go generated")
 		return
 	}
