@@ -83,7 +83,7 @@ func (s *System) messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
 	}
 
 	// Search for the first route match and execute the command If it exists.
-	if route, loc := s.CommandRouter.FindMatch(m.Content); route != nil && !route.Disabled {
+	if route, loc := s.CommandRouter.FindEnabledMatch(m.Content); route != nil && !route.Disabled {
 		args, err := parseargs.Parse(m.Content[loc[1]:])
 
 		// If there is a misplaced quotation, resort to an alternative argument parsing method.

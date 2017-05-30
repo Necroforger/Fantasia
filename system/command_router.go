@@ -122,9 +122,12 @@ func (c *CommandRouter) AddSubrouter(subrouter *SubCommandRouter) *SubCommandRou
 
 // FindMatch returns the first match found
 //		name: The name of the route to find
-func (c *CommandRouter) FindMatch(name string) (*CommandRoute, []int) {
+func (c *CommandRouter) findMatch(name string, skipDisabled bool) (*CommandRoute, []int) {
 
 	for _, route := range c.Routes {
+		if skipDisabled && route.Disabled == true {
+			continue
+		}
 		if loc := route.Matcher.FindStringIndex(name); loc != nil {
 			return route, loc
 		}
@@ -132,8 +135,12 @@ func (c *CommandRouter) FindMatch(name string) (*CommandRoute, []int) {
 
 	for _, v := range c.Subrouters {
 		if loc := v.Matcher.FindStringIndex(name); loc != nil {
-			if match, loc2 := v.Router.FindMatch(name[loc[1]:]); match != nil {
+			if match, loc2 := v.Router.findMatch(name[loc[1]:], skipDisabled); match != nil {
 				return match, []int{loc[0], loc[1] + loc2[1]}
+			}
+
+			if skipDisabled && v.CommandRoute != nil && v.CommandRoute.Disabled == true {
+				continue
 			}
 
 			// Return the subrouters command route if nothing is found
@@ -142,6 +149,18 @@ func (c *CommandRouter) FindMatch(name string) (*CommandRoute, []int) {
 	}
 
 	return nil, nil
+}
+
+// FindMatch returns the first non-disabled match that matches the given string
+//		name: The name of the route to find
+func (c *CommandRouter) FindMatch(name string) (*CommandRoute, []int) {
+	return c.findMatch(name, false)
+}
+
+// FindEnabledMatch returns the first non-disabled route that matches the given string
+//		name: The name of the route to find
+func (c *CommandRouter) FindEnabledMatch(name string) (*CommandRoute, []int) {
+	return c.findMatch(name, true)
 }
 
 // TODO Return an array of match locations

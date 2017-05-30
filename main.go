@@ -100,8 +100,8 @@ func main() {
 
 	// Remove disabled commands
 	for _, v := range conf.DisabledCommands {
-		log.Println("Removing command: ", sys.CommandRouter.Prefix+v)
-		sys.CommandRouter.Off(sys.CommandRouter.Prefix + v)
+		log.Println("Disabling command: ", sys.CommandRouter.Prefix+v)
+		sys.CommandRouter.SetDisabled(sys.CommandRouter.Prefix+v, true)
 	}
 
 	sys.ListenForCommands()

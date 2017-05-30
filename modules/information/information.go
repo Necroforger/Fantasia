@@ -40,7 +40,7 @@ func (m *Module) Help(ctx *system.Context) {
 		SetColor(system.StatusNotify).
 		SetThumbnail(ctx.Ses.DG.State.User.AvatarURL("2048")).
 		InlineAllFields().
-		SetDescription("type `help [command]` to view the commands description").
+		SetDescription("type `help [command]` for more information").
 		MessageEmbed)
 	if err != nil {
 		ctx.ReplyError(err)
@@ -75,9 +75,26 @@ func depthcharge(r *system.CommandRouter, embed *dream.Embed, depth int) *dream.
 		return field
 	}
 
+	removeField := func(name string) {
+		for i, v := range embed.Fields {
+			if v.Name == name {
+				embed.Fields = append(embed.Fields[:i], embed.Fields[i+1:]...)
+				return
+			}
+		}
+	}
+
 	for _, v := range r.Routes {
 		field := getField(v.Category)
-		field.Value += depthString(v.Name, depth, false)
+
+		var tag string
+		if !v.Disabled {
+			field.Value += depthString(tag+v.Name+tag, depth, false)
+		}
+
+		if field.Value == "" {
+			removeField(v.Category)
+		}
 	}
 
 	for _, v := range r.Subrouters {
