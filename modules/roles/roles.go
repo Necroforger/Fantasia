@@ -20,7 +20,7 @@ func (m *Module) Build(s *system.System) {
 	r.Set("role", "subrouter for role commands. example useage: `role color [hex]`")
 	s.CommandRouter.AddSubrouter(r)
 
-	r.Router.On("color", m.Color).Set("", "Changes your role colour to the supplied hex code")
+	r.Router.On("color|colour", m.Color).Set("", "Changes your role colour to the supplied hex code")
 }
 
 // Color ...
@@ -87,11 +87,9 @@ func editOrCreateRoleIfNotExist(b *dream.Bot, guild *discordgo.Guild, rolename s
 
 	for _, v := range guildRoles {
 		if v.Name == rolename {
-			_, err = b.GuildRoleEdit(dream.RoleSettings{
-				RoleID:  v.ID,
-				GuildID: guild.ID,
-				Name:    v.Name,
-				Color:   roleColor,
+			_, err = b.GuildRoleEdit(guild.ID, v.ID, dream.RoleSettings{
+				Name:  v.Name,
+				Color: roleColor,
 			})
 			if err != nil {
 				return nil, err
@@ -100,10 +98,9 @@ func editOrCreateRoleIfNotExist(b *dream.Bot, guild *discordgo.Guild, rolename s
 		}
 	}
 
-	role, err := b.GuildRoleCreate(dream.RoleSettings{
-		Name:    rolename,
-		Color:   roleColor,
-		GuildID: guild.ID,
+	role, err := b.GuildRoleCreate(guild.ID, dream.RoleSettings{
+		Name:  rolename,
+		Color: roleColor,
 	})
 	if err != nil {
 		return nil, err
