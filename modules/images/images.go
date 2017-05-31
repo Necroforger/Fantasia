@@ -1,4 +1,4 @@
-package booru
+package images
 
 import (
 	"strconv"
@@ -7,6 +7,8 @@ import (
 	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/dream"
 )
+
+// Images uses the boorudl extractor to retrieve images from boorus
 
 // Module ...
 type Module struct{}
@@ -17,6 +19,7 @@ func (m *Module) Build(s *system.System) {
 
 	AddBooru(r, "http://danbooru.donmai.us", "danbooru")
 	AddBooru(r, "https://safebooru.org/", "safebooru")
+	AddBooru(r, "http://google.com", "googleimg")
 
 }
 
