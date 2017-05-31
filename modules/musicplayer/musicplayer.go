@@ -1,5 +1,12 @@
 package musicplayer
 
+/*
+	WIP
+	Musicplayer is a more advanced audio module with the ability to queue and
+	manage playlists using youtube-dl.
+
+*/
+
 import "github.com/Necroforger/Fantasia/system"
 
 // Module ...
