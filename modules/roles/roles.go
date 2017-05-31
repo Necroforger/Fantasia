@@ -145,7 +145,6 @@ func moveRoleToTop(b *dream.Bot, guildID, roleID string) error {
 
 	// Sort roles and set positions accordingly
 	sort.Sort(roles)
-	roles.UpdatePositions()
 
 	// Move colour role to the one below the client's highest role
 	err = roles.MoveByID(roleID, clientHighest-1)
