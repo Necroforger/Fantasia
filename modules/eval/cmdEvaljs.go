@@ -18,7 +18,8 @@ func (m *Module) EvalJS(ctx *system.Context) {
 	vm := otto.New()
 	b := ctx.Ses
 
-	evalJSSetFunctions(ctx, vm)
+	// Dangerous: Gives full access to Command router, discordgo session, tokens etc...
+	//evalJSSetFunctions(ctx, vm)
 
 	if len(script) != 0 {
 		ctx.ReplyEmbed(evalJSEmbed(vm, script, time.Second*1).MessageEmbed)
