@@ -2,3 +2,4 @@ debug
 Fantasia.exe
 config.toml
 dca-rs.exe
+*.toml
