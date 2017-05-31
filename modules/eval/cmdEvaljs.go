@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/Necroforger/Fantasia/system"
-	"github.com/Necroforger/discordgo"
 	"github.com/Necroforger/dream"
 	"github.com/robertkrimen/otto"
 )
@@ -19,7 +18,7 @@ func (m *Module) EvalJS(ctx *system.Context) {
 	vm := otto.New()
 	b := ctx.Ses
 
-	//evalJSSetFunctions(b, r.Message, vm)
+	evalJSSetFunctions(ctx, vm)
 
 	if len(script) != 0 {
 		ctx.ReplyEmbed(evalJSEmbed(vm, script, time.Second*1).MessageEmbed)
@@ -108,11 +107,7 @@ func evalJS(vm *otto.Otto, script string, timeout time.Duration) (result string,
 	return
 }
 
-func evalJSSetFunctions(b *dream.Bot, message *discordgo.Message, vm *otto.Otto) {
-	vm.Set("msg", message)
-	vm.Set("getChannel", b.Channel)
-	vm.Set("getGuild", b.Guild)
-	vm.Set("sendMessage", b.SendMessage)
-	vm.Set("sendEmbed", b.SendEmbed)
+func evalJSSetFunctions(ctx *system.Context, vm *otto.Otto) {
+	vm.Set("ctx", ctx)
 	vm.Run(`function view(data) { return JSON.stringify(data, "", "\t"); }`)
 }

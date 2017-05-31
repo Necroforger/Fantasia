@@ -5,6 +5,7 @@ import (
 
 	"github.com/Necroforger/Fantasia/modules/audio"
 	"github.com/Necroforger/Fantasia/modules/eval"
+	"github.com/Necroforger/Fantasia/modules/general"
 	"github.com/Necroforger/Fantasia/modules/images"
 	"github.com/Necroforger/Fantasia/modules/information"
 	"github.com/Necroforger/Fantasia/modules/roles"
@@ -22,6 +23,7 @@ type ModuleConfig struct {
 	Inverted    bool
 	Audio       bool
 	Eval        bool
+	General     bool
 	Images      bool
 	Information bool
 	Roles       bool
@@ -33,6 +35,7 @@ func NewModuleConfig() *ModuleConfig {
 		Inverted:    false,
 		Audio:       true,
 		Eval:        true,
+		General:     true,
 		Images:      true,
 		Information: true,
 		Roles:       true,
@@ -50,6 +53,11 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 		s.CommandRouter.SetCategory("Eval")
 		s.BuildModule(&eval.Module{})
 		log.Println("loaded eval module...")
+	}
+	if (config.Inverted && !config.General) || config.General {
+		s.CommandRouter.SetCategory("General")
+		s.BuildModule(&general.Module{})
+		log.Println("loaded general module...")
 	}
 	if (config.Inverted && !config.Images) || config.Images {
 		s.CommandRouter.SetCategory("Images")

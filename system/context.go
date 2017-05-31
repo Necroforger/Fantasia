@@ -46,8 +46,27 @@ func (c *Context) ReplyEmbed(embed *discordgo.MessageEmbed) (*discordgo.Message,
 }
 
 // ReplyError replys with the given error value
-func (c *Context) ReplyError(i interface{}) (*discordgo.Message, error) {
-	return c.ReplyStatus(StatusError, fmt.Sprint(i))
+//	i... : The objects to send through the embed
+func (c *Context) ReplyError(i ...interface{}) (*discordgo.Message, error) {
+	return c.ReplyStatus(StatusError, fmt.Sprint(i...))
+}
+
+// ReplyNotify replys with the given error value
+//	i... : The objects to send through the embed
+func (c *Context) ReplyNotify(i ...interface{}) (*discordgo.Message, error) {
+	return c.ReplyStatus(StatusNotify, fmt.Sprint(i...))
+}
+
+// ReplyWarning replys with the given error value
+//	i... : The objects to send through the embed
+func (c *Context) ReplyWarning(i ...interface{}) (*discordgo.Message, error) {
+	return c.ReplyStatus(StatusWarning, fmt.Sprint(i...))
+}
+
+// ReplySuccess replys with the given error value
+//	i... : The objects to send through the embed
+func (c *Context) ReplySuccess(i ...interface{}) (*discordgo.Message, error) {
+	return c.ReplyStatus(StatusSuccess, fmt.Sprint(i...))
 }
 
 // SendStatus sends a status embed to the given channel
