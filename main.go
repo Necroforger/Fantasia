@@ -63,6 +63,7 @@ func main() {
 					Selfbot: false,
 					Prefix:  "!",
 				},
+				DisabledCommands: []string{},
 			})
 			if err != nil {
 				log.Println("Error saving the configuration file: ", err)
