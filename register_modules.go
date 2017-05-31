@@ -8,6 +8,7 @@ import (
 	"github.com/Necroforger/Fantasia/modules/general"
 	"github.com/Necroforger/Fantasia/modules/images"
 	"github.com/Necroforger/Fantasia/modules/information"
+	"github.com/Necroforger/Fantasia/modules/musicplayer"
 	"github.com/Necroforger/Fantasia/modules/roles"
 
 	"github.com/Necroforger/Fantasia/system"
@@ -26,6 +27,7 @@ type ModuleConfig struct {
 	General     bool
 	Images      bool
 	Information bool
+	Musicplayer bool
 	Roles       bool
 }
 
@@ -38,6 +40,7 @@ func NewModuleConfig() *ModuleConfig {
 		General:     true,
 		Images:      true,
 		Information: true,
+		Musicplayer: true,
 		Roles:       true,
 	}
 }
@@ -68,6 +71,11 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 		s.CommandRouter.SetCategory("Information")
 		s.BuildModule(&information.Module{})
 		log.Println("loaded information module...")
+	}
+	if (config.Inverted && !config.Musicplayer) || config.Musicplayer {
+		s.CommandRouter.SetCategory("Musicplayer")
+		s.BuildModule(&musicplayer.Module{})
+		log.Println("loaded musicplayer module...")
 	}
 	if (config.Inverted && !config.Roles) || config.Roles {
 		s.CommandRouter.SetCategory("Roles")
