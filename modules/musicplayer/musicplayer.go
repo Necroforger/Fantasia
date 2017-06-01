@@ -15,7 +15,8 @@ type Module struct {
 
 // Build ...
 func (m *Module) Build(s *system.System) {
-	r, _ := system.NewSubCommandRouter("^musicplayer|m", "musicplayer|m")
+
+	r, _ := system.NewSubCommandRouter("^m|musicplayer", "m | musicplayer")
 	r.Set("", "musicplayer subrouter, controls the various actions related to music playing")
 	s.CommandRouter.AddSubrouter(r)
 

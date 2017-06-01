@@ -20,7 +20,7 @@ func (m *Module) Build(s *system.System) {
 	r.Set("role", "subrouter for role commands. example useage: `role color [hex]`")
 	s.CommandRouter.AddSubrouter(r)
 
-	r.Router.On("color|colour", m.Color).Set("", "Changes your role colour to the supplied hex code")
+	r.Router.On("color|colour", m.Color).Set("color | colour", "Changes your role colour to the supplied hex code")
 }
 
 // Color ...
