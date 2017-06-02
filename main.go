@@ -78,7 +78,6 @@ func main() {
 	}
 
 	// Override the configuration with the supplied command line arguments
-
 	if Token != "" {
 		conf.Token = Token
 	}

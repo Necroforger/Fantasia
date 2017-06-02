@@ -1,6 +1,11 @@
 package musicplayer
 
 /*
+	Requirements:
+		+ youtube-dl installed to path
+		+ dca-rs
+		+ ffmpeg
+
 	WIP
 	Musicplayer is a more advanced audio module with the ability to queue and
 	manage playlists using youtube-dl.
