@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
-	"html/template"
 	"io/ioutil"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
+	"text/template"
 )
 
 var moduleTmpl = template.Must(template.New("registerModules").Funcs(template.FuncMap{
@@ -19,7 +20,7 @@ import (
 	"log"
 
 	{{range . -}}
-	"github.com/Necroforger/Fantasia/modules/{{.}}"
+	"github.com/Necroforger/Fantasia/modules/{{.Name}}"
 	{{end}}
 	"github.com/Necroforger/Fantasia/system"
 )
@@ -33,8 +34,12 @@ import (
 type ModuleConfig struct {
 	Inverted bool
 	{{range . -}}
-	{{title .}} bool
+	{{title .Name}} bool
 	{{end}}
+
+	{{range . -}}{{if .HasConfig -}}
+	{{title .Name}}Config *{{.Name}}.Config
+	{{- end}}{{- end}}
 }
 
 // NewModuleConfig returns a new module configuration
@@ -42,23 +47,59 @@ func NewModuleConfig() ModuleConfig {
 	return ModuleConfig{
 		Inverted: false,
 		{{range . -}}
-		{{title .}}: true,
+		{{title .Name}}: true,
 		{{end}}
+
+		{{range . -}}{{if .HasConfig -}}
+		{{title .Name}}Config: {{.Name}}.NewConfig(),
+		{{- end}}{{- end}}
 	}
 }
 
 // RegisterModules builds a list of modules into the given system
 func RegisterModules(s *system.System, config ModuleConfig) {
 	{{range . -}}
-	if (config.Inverted && !config.{{title .}}) || config.{{title .}} {
-		s.CommandRouter.SetCategory("{{title .}}")
-		s.BuildModule(&{{.}}.Module{})
-		log.Println("loaded {{.}} module...")
+	if (config.Inverted && !config.{{title .Name}}) || config.{{title .Name}} {
+		s.CommandRouter.SetCategory("{{title .Name}}")
+		{{- if .HasConfig}}
+		if config.{{title .Name}}Config != nil {
+			s.BuildModule(&{{.Name}}.Module{Config: config.{{title .Name}}Config })
+		} else {
+			s.BuildModule(&{{.Name}}.Module{Config: {{.Name}}.NewConfig()})
+		}
+		{{else}}
+		s.BuildModule(&{{.Name}}.Module{})
+		{{end -}}
+		log.Println("loaded {{.Name}} module...")
 	}
 	{{end}}
 }
 
 `))
+
+// ModuleList ...
+type ModuleList struct {
+	HasConfig bool
+	Name      string
+}
+
+// ModuleListByNames ...
+type ModuleListByNames []ModuleList
+
+// Len ...
+func (m ModuleListByNames) Len() int {
+	return len(m)
+}
+
+// Less ...
+func (m ModuleListByNames) Less(a, b int) bool {
+	return m[a].Name < m[b].Name
+}
+
+// Swap ...
+func (m ModuleListByNames) Swap(a, b int) {
+	m[a], m[b] = m[b], m[a]
+}
 
 func main() {
 	var (
@@ -72,22 +113,41 @@ func main() {
 		return
 	}
 
-	moduleNames := []string{}
+	moduleList := []ModuleList{}
 	for _, v := range modules {
-		moduleNames = append(moduleNames, v.Name())
+		moduleList = append(moduleList,
+			ModuleList{false, v.Name()})
 	}
 
-	fmt.Println(moduleNames)
+	// Scan over all the main package files to see if they have a Configuration available.
+	for i, v := range modules {
+		data, err := ioutil.ReadFile(filepath.Join(currentDir, "modules", v.Name(), v.Name()+".go"))
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
 
-	sort.Strings(moduleNames)
-	err = moduleTmpl.Execute(&output, moduleNames)
+		// Check if the file meets all the requirements for having a config
+		if regexp.MustCompile("(?m:^//:<hasconfig>)").MatchString(string(data)) &&
+			regexp.MustCompile("(?m:^type Config struct)").MatchString(string(data)) &&
+			regexp.MustCompile(`(?m:^func NewConfig())`).MatchString(string(data)) {
+
+			moduleList[i].HasConfig = true
+		}
+	}
+
+	fmt.Println(moduleList)
+
+	sort.Sort(ModuleListByNames(moduleList))
+	err = moduleTmpl.Execute(&output, moduleList)
 	if err != nil {
-		fmt.Println("error: template failed to execute")
+		fmt.Println("error: template failed to execute", err)
+		return
 	}
 
 	src, err := format.Source(output.Bytes())
 	if err != nil {
-		fmt.Println("error: invalid Go generated")
+		fmt.Println("error: invalid Go generated", err)
 		fmt.Println(string(output.Bytes()))
 		return
 	}

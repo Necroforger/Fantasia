@@ -29,6 +29,8 @@ type ModuleConfig struct {
 	Information bool
 	Musicplayer bool
 	Roles       bool
+
+	MusicplayerConfig *musicplayer.Config
 }
 
 // NewModuleConfig returns a new module configuration
@@ -42,6 +44,8 @@ func NewModuleConfig() ModuleConfig {
 		Information: true,
 		Musicplayer: true,
 		Roles:       true,
+
+		MusicplayerConfig: musicplayer.NewConfig(),
 	}
 }
 
@@ -74,7 +78,11 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 	}
 	if (config.Inverted && !config.Musicplayer) || config.Musicplayer {
 		s.CommandRouter.SetCategory("Musicplayer")
-		s.BuildModule(&musicplayer.Module{})
+		if config.MusicplayerConfig != nil {
+			s.BuildModule(&musicplayer.Module{Config: config.MusicplayerConfig})
+		} else {
+			s.BuildModule(&musicplayer.Module{Config: musicplayer.NewConfig()})
+		}
 		log.Println("loaded musicplayer module...")
 	}
 	if (config.Inverted && !config.Roles) || config.Roles {
