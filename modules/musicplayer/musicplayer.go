@@ -117,7 +117,7 @@ func (m *Module) CmdNext(ctx *system.Context) {
 	radio := m.getRadio(guildID)
 
 	if t := time.Now().Sub(radio.ControlLastUsed); t < ControlCooldown && radio.IsRunning() {
-		ctx.ReplyError("This command is on cooldown for ", (ControlCooldown - t).String(), ". Please use `Goto` or provide an integer argument to skip multiple songs quickly")
+		ctx.ReplyError("This command is on cooldown for `", (ControlCooldown - t).String(), "`. Please use `Goto` or provide an integer argument to skip multiple songs quickly")
 		return
 	}
 	radio.ControlLastUsed = time.Now()
@@ -138,7 +138,7 @@ func (m *Module) CmdPrevious(ctx *system.Context) {
 	radio := m.getRadio(guildID)
 
 	if t := time.Now().Sub(radio.ControlLastUsed); t < ControlCooldown && radio.IsRunning() {
-		ctx.ReplyError("This command is on cooldown for ", (ControlCooldown - t).String(), ". Please use `Goto` or provide an integer argument to skip multiple songs quickly")
+		ctx.ReplyError("This command is on cooldown for `", (ControlCooldown - t).String(), "`. Please use `Goto` or provide an integer argument to skip multiple songs quickly")
 		return
 	}
 	radio.ControlLastUsed = time.Now()
@@ -166,7 +166,11 @@ func (m *Module) getRadio(guildID string) *Radio {
 		&Song{
 			URL: "https://www.youtube.com/watch?v=b8AIGUYscYo",
 		},
+		&Song{
+			URL: "https://www.youtube.com/watch?v=m2eeyey-87U",
+		},
 	}
+	r.Queue.Loop = true
 
 	return r
 }
