@@ -51,7 +51,7 @@ func NewRadio(guildID string) *Radio {
 // PlayQueue plays the radio queue
 func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) error {
 
-	// Check if the queue is already playing
+	// Don't allow two running PlayQueue methods on the same radio.
 	r.Lock()
 	if r.running {
 		r.Unlock()
@@ -67,15 +67,19 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 	}()
 
 	for {
-		ctx.Reply("Creating audio dispatcher")
 		disp, err := r.Play(ctx.Ses, vc)
 		if err != nil {
 			return err
 		}
 
+		// --------- TODO: Print information about the song if not Silenced ----------- //
+		song, err := r.Queue.Song()
+		if err == nil && !r.Silent {
+			ctx.ReplyNotify("Now playing\n", song.URL)
+		}
+
 		done := make(chan bool)
 		go func() {
-			ctx.Reply("Waiting for dispatcher to end")
 			disp.Wait()
 			done <- true
 		}()
@@ -84,23 +88,24 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 		case ctrl := <-r.control:
 			switch ctrl {
 			case AudioStop:
-				ctx.Reply("Received audio stop command")
 				disp.Stop()
 				return nil
 			case AudioContinue:
-				ctx.Reply("Received audio continue command")
 				disp.Stop()
 				continue
 			}
 
 		case <-done:
-			// Load the next song by default
-			ctx.Reply("Loading next song")
-			err = r.Queue.Next()
-			if err != nil {
-				return err
+			// Load the next song if AutoPlay is enabled.
+			if r.AutoPlay {
+				err = r.Queue.Next()
+				if err != nil {
+					return err
+				}
+				// Otherwise, stop the queue.
+			} else {
+				return nil
 			}
-
 		}
 	}
 }
