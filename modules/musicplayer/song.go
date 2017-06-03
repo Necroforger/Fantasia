@@ -162,6 +162,9 @@ func (s *SongQueue) Reverse() {
 
 // Move moves the song at index 'from' to index 'to'
 func (s *SongQueue) Move(from, to int) error {
+	s.Lock()
+	defer s.Unlock()
+
 	if from < 0 || to < 0 || from >= len(s.Playlist) || to >= len(s.Playlist) {
 		return ErrIndexOutOfBounds
 	}
