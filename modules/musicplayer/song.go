@@ -103,7 +103,7 @@ func (s *SongQueue) Song() (*Song, error) {
 		return s.Playlist[s.Index], nil
 	}
 
-	return nil, errors.New("No song available at the current index")
+	return nil, ErrIndexOutOfBounds
 }
 
 // Add adds a song to the queue and returns the index of the position it was added to

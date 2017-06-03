@@ -117,7 +117,7 @@ func (s *System) messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
 
 		// Check for nil Handler as it is possible to create a route with no handler.
 		if route.Handler != nil {
-			route.Handler(ctx)
+			go route.Handler(ctx)
 		}
 	}
 }

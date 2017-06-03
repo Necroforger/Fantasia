@@ -12,11 +12,15 @@ package musicplayer
 
 */
 
-import "github.com/Necroforger/Fantasia/system"
+import (
+	"github.com/Necroforger/Fantasia/system"
+)
 
 // Module ...
 type Module struct {
 }
+
+var tempradio = NewRadio("")
 
 // Build ...
 func (m *Module) Build(s *system.System) {
@@ -38,6 +42,18 @@ func (m *Module) Build(s *system.System) {
 	t.On("pause", m.CmdPause).Set("", ` CmdPause should
 		+ Pause the currently playing song`)
 
+	tempradio.Queue.Playlist = []*Song{
+		&Song{
+			URL: "https://www.youtube.com/watch?v=l7GObEWKTwA&feature=youtu.be",
+		},
+		&Song{
+			URL: "https://youtu.be/-yNATRuEvsE",
+		},
+		&Song{
+			URL: "https://www.youtube.com/watch?v=b8AIGUYscYo",
+		},
+	}
+	tempradio.Queue.Loop = true
 }
 
 // CmdPlay should handle
@@ -46,13 +62,25 @@ func (m *Module) Build(s *system.System) {
 //		+ Unpausing the currently playing song if the current song is paused.
 func (m *Module) CmdPlay(ctx *system.Context) {
 
+	vc, err := ctx.Ses.UserVoiceStateJoin(ctx.Msg.Author.ID, false, true)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+
+	tempradio.Queue.Goto(0)
+
+	err = tempradio.PlayQueue(ctx, vc)
+	if err != nil {
+		ctx.ReplyError(err)
+	}
 }
 
 // CmdStop should
 //		+ Stop the queue from playing
 //		+ Stop the current song from playing
 func (m *Module) CmdStop(ctx *system.Context) {
-
+	tempradio.Stop()
 }
 
 // CmdPause should
