@@ -10,6 +10,13 @@ package musicplayer
 	Musicplayer is a more advanced audio module with the ability to queue and
 	manage playlists using youtube-dl.
 
+	// TODO
+		* Create graphical menu using embeds with searchable buttons
+		* Bypass the ratelimit on adding reactions to messages
+		* Make youtube-dl an optional dependency and fall back to the 'ytdl' go library if it
+		  	is not available.
+		* Create a method to queue songs.
+		* Be able to play a queue while simultaneously adding songs to it.
 */
 
 import (
@@ -51,7 +58,6 @@ func (m *Module) CmdPlay(ctx *system.Context) {
 		return
 	}
 
-	ctx.Reply("Finding voice connection")
 	vc, err := ctx.Ses.GuildVoiceConnection(guildID)
 	if err != nil {
 		vc, err = ctx.Ses.UserVoiceStateJoin(ctx.Msg.Author.ID, false, true)
@@ -61,11 +67,9 @@ func (m *Module) CmdPlay(ctx *system.Context) {
 		}
 	}
 
-	ctx.Reply("Getting radio instance")
 	radio := m.getRadio(vc.GuildID)
 	radio.Queue.Goto(0)
 
-	ctx.Reply("Playing queue")
 	err = radio.PlayQueue(ctx, vc)
 	if err != nil {
 		ctx.ReplyError(err)
