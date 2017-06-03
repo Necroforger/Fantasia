@@ -11,7 +11,7 @@ var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 // Error vars
 var (
-	ErrPlaylistComplete = errors.New("playlist complete")
+	ErrEndOfPlaylist    = errors.New("End of playlist")
 	ErrIndexOutOfBounds = errors.New("Index out of bounds")
 )
 
@@ -71,7 +71,7 @@ func (s *SongQueue) Next() error {
 		return nil
 	}
 
-	return ErrPlaylistComplete
+	return ErrEndOfPlaylist
 }
 
 // Previous loads the previous song in the queue and returns the song.
@@ -91,7 +91,7 @@ func (s *SongQueue) Previous() error {
 		return nil
 	}
 
-	return ErrPlaylistComplete
+	return ErrEndOfPlaylist
 }
 
 // Song returns the current song in the queue

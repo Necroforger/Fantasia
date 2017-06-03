@@ -3,6 +3,7 @@ package musicplayer
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/discordgo"
@@ -13,9 +14,7 @@ import (
 // Control constants
 const (
 	AudioStop = iota
-	AudioPlay
-	AudioNext
-	AudioPrevious
+	AudioContinue
 )
 
 // Radio controls queueing and playing music over a guild
@@ -33,6 +32,9 @@ type Radio struct {
 
 	running bool
 	control chan int
+
+	// Used to prevent commands from being spammed.
+	ControlLastUsed time.Time
 }
 
 // NewRadio returns a pointer to a new radio
@@ -40,7 +42,7 @@ func NewRadio(guildID string) *Radio {
 	return &Radio{
 		GuildID:  guildID,
 		Queue:    NewSongQueue(),
-		control:  make(chan int),
+		control:  make(chan int, 100),
 		AutoPlay: true,
 		Silent:   false,
 	}
@@ -65,6 +67,7 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 	}()
 
 	for {
+		ctx.Reply("Creating audio dispatcher")
 		disp, err := r.Play(ctx.Ses, vc)
 		if err != nil {
 			return err
@@ -72,6 +75,7 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 
 		done := make(chan bool)
 		go func() {
+			ctx.Reply("Waiting for dispatcher to end")
 			disp.Wait()
 			done <- true
 		}()
@@ -79,20 +83,24 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 		select {
 		case ctrl := <-r.control:
 			switch ctrl {
-			case AudioStop: // Stop the queue from playing
+			case AudioStop:
+				ctx.Reply("Received audio stop command")
 				disp.Stop()
 				return nil
-			case AudioPrevious: // Attempt to load the previous song in the queue
-				r.Queue.Previous()
-			case AudioNext: // Load the next song if it has been requested early
-				err = r.Queue.Next()
+			case AudioContinue:
+				ctx.Reply("Received audio continue command")
 				disp.Stop()
+				continue
 			}
-		case <-done: // Attempt to load the next song by default
+
+		case <-done:
+			// Load the next song by default
+			ctx.Reply("Loading next song")
 			err = r.Queue.Next()
 			if err != nil {
 				return err
 			}
+
 		}
 	}
 }
@@ -117,34 +125,43 @@ func (r *Radio) Play(b *dream.Bot, vc *discordgo.VoiceConnection) (*dream.AudioD
 
 // Next ...
 func (r *Radio) Next() error {
-	r.Lock()
-	defer r.Unlock()
-
-	if r.running {
-		r.control <- AudioNext
-		return nil
+	err := r.Queue.Next()
+	if err != nil {
+		return err
 	}
-	return r.Queue.Next()
+	if r.IsRunning() {
+		r.control <- AudioContinue
+	}
+	return nil
 }
 
 // Previous ...
 func (r *Radio) Previous() error {
-	r.Lock()
-	defer r.Unlock()
-
-	if r.running {
-		r.control <- AudioPrevious
-		return nil
+	err := r.Queue.Previous()
+	if err != nil {
+		return err
 	}
-	return r.Queue.Previous()
+	if r.IsRunning() {
+		r.control <- AudioContinue
+	}
+	return nil
+}
+
+// IsRunning returns true if the player is currently running
+func (r *Radio) IsRunning() bool {
+	r.Lock()
+	running := r.running
+	r.Unlock()
+	return running
 }
 
 // Stop stops the playing queue
 func (r *Radio) Stop() error {
-	r.Lock()
-	defer r.Unlock()
 
+	r.Lock()
 	if r.running {
+		r.Unlock()
+
 		r.control <- AudioStop
 		return nil
 	}

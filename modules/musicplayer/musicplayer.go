@@ -13,8 +13,13 @@ package musicplayer
 */
 
 import (
+	"time"
+
 	"github.com/Necroforger/Fantasia/system"
 )
+
+// ControlCooldown is the cooldown for control event commands
+const ControlCooldown = time.Millisecond * 1500
 
 // Module ...
 type Module struct {
@@ -40,13 +45,13 @@ func (m *Module) Build(s *system.System) {
 // CmdPlay should handle
 // 		+ Playing a song from a URL
 //		+ Starting the queue if no argument is provided and nothing is playing.
-//		+ Unpausing the currently playing song if the current song is paused.
 func (m *Module) CmdPlay(ctx *system.Context) {
 	guildID, err := guildIDFromContext(ctx)
 	if err != nil {
 		return
 	}
 
+	ctx.Reply("Finding voice connection")
 	vc, err := ctx.Ses.GuildVoiceConnection(guildID)
 	if err != nil {
 		vc, err = ctx.Ses.UserVoiceStateJoin(ctx.Msg.Author.ID, false, true)
@@ -56,9 +61,11 @@ func (m *Module) CmdPlay(ctx *system.Context) {
 		}
 	}
 
+	ctx.Reply("Getting radio instance")
 	radio := m.getRadio(vc.GuildID)
 	radio.Queue.Goto(0)
 
+	ctx.Reply("Playing queue")
 	err = radio.PlayQueue(ctx, vc)
 	if err != nil {
 		ctx.ReplyError(err)
@@ -80,11 +87,22 @@ func (m *Module) CmdStop(ctx *system.Context) {
 	}
 }
 
-// CmdPause should
-//	+ Pause the currently playing song
+// CmdResume resumes the guild's currently playing audio dispatcher.
+func (m *Module) CmdResume(ctx *system.Context) {
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+
+	ctx.Ses.GuildAudioDispatcherResume(guildID)
+}
+
+// CmdPause Pauses the guilds currently playing audio dispatcher
 func (m *Module) CmdPause(ctx *system.Context) {
 	guildID, err := guildIDFromContext(ctx)
 	if err != nil {
+		ctx.ReplyError(err)
 		return
 	}
 	ctx.Ses.GuildAudioDispatcherPause(guildID)
@@ -96,9 +114,18 @@ func (m *Module) CmdNext(ctx *system.Context) {
 	if err != nil {
 		return
 	}
-	err = m.getRadio(guildID).Next()
+	radio := m.getRadio(guildID)
+
+	if t := time.Now().Sub(radio.ControlLastUsed); t < ControlCooldown && radio.IsRunning() {
+		ctx.ReplyError("This command is on cooldown for ", (ControlCooldown - t).String(), ". Please use `Goto` or provide an integer argument to skip multiple songs quickly")
+		return
+	}
+	radio.ControlLastUsed = time.Now()
+
+	err = radio.Next()
 	if err != nil {
 		ctx.ReplyError(err)
+		return
 	}
 }
 
@@ -108,7 +135,15 @@ func (m *Module) CmdPrevious(ctx *system.Context) {
 	if err != nil {
 		return
 	}
-	err = m.getRadio(guildID).Previous()
+	radio := m.getRadio(guildID)
+
+	if t := time.Now().Sub(radio.ControlLastUsed); t < ControlCooldown && radio.IsRunning() {
+		ctx.ReplyError("This command is on cooldown for ", (ControlCooldown - t).String(), ". Please use `Goto` or provide an integer argument to skip multiple songs quickly")
+		return
+	}
+	radio.ControlLastUsed = time.Now()
+
+	err = radio.Previous()
 	if err != nil {
 		ctx.ReplyError(err)
 	}
