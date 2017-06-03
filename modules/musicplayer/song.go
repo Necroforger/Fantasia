@@ -149,3 +149,31 @@ func (s *SongQueue) Shuffle() {
 		swap(i, rand)
 	}
 }
+
+// Reverse reverses the order of the playlist
+func (s *SongQueue) Reverse() {
+	s.Lock()
+	defer s.Unlock()
+
+	for i, j := 0, len(s.Playlist)-1; i < j; i, j = i+1, j-1 {
+		s.Playlist[i], s.Playlist[j] = s.Playlist[j], s.Playlist[i]
+	}
+}
+
+// Move moves the song at index 'from' to index 'to'
+func (s *SongQueue) Move(from, to int) error {
+	if from < 0 || to < 0 || from >= len(s.Playlist) || to >= len(s.Playlist) {
+		return ErrIndexOutOfBounds
+	}
+
+	value := s.Playlist[from]
+	s.Playlist = append(s.Playlist[:from], s.Playlist[from+1:]...)
+
+	start := s.Playlist[:to]
+	end := make([]*Song, len(s.Playlist[to:]))
+	copy(end, s.Playlist[to:])
+
+	s.Playlist = append(start, value)
+	s.Playlist = append(s.Playlist, end...)
+	return nil
+}
