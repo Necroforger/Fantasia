@@ -6,6 +6,7 @@ import (
 
 	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/discordgo"
+	"github.com/Necroforger/dream"
 	"github.com/Necroforger/ytdl"
 )
 
@@ -41,6 +42,7 @@ func NewRadio(guildID string) *Radio {
 		Queue:    NewSongQueue(),
 		control:  make(chan int),
 		AutoPlay: true,
+		Silent:   false,
 	}
 }
 
@@ -51,12 +53,10 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 	r.Lock()
 	if r.running {
 		r.Unlock()
-		return errors.New("Radio queue already playing")
+		return errors.New("Queue already playing")
 	}
 	r.running = true
 	r.Unlock()
-
-	b := ctx.Ses
 
 	defer func() {
 		r.Lock()
@@ -66,19 +66,11 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 
 	for {
 
-		song, err := r.Queue.Song()
+		disp, err := r.Play(ctx.Ses, vc)
 		if err != nil {
 			return err
 		}
-		info, err := ytdl.GetVideoInfo(song.URL)
-		if err != nil {
-			return err
-		}
-		stream, err := system.YoutubeDLFromInfo(info)
-		if err != nil {
-			return err
-		}
-		disp := b.PlayStream(vc, stream)
+
 		done := make(chan bool)
 		go func() {
 			disp.Wait()
@@ -108,26 +100,56 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 	}
 }
 
-// Next ...
-func (r *Radio) Next() {
+// Play plays a single song in the queue
+func (r *Radio) Play(b *dream.Bot, vc *discordgo.VoiceConnection) (*dream.AudioDispatcher, error) {
+	song, err := r.Queue.Song()
+	if err != nil {
+		return nil, err
+	}
+	info, err := ytdl.GetVideoInfo(song.URL)
+	if err != nil {
+		return nil, err
+	}
+	stream, err := system.YoutubeDLFromInfo(info)
+	if err != nil {
+		return nil, err
+	}
+	disp := b.PlayStream(vc, stream)
+	return disp, nil
+}
 
+// Next ...
+func (r *Radio) Next() error {
+	r.Lock()
+	defer r.Unlock()
+
+	if r.running {
+		r.control <- AudioNext
+		return nil
+	}
+	return r.Queue.Next()
 }
 
 // Previous ...
-func (r *Radio) Previous() {
+func (r *Radio) Previous() error {
 	r.Lock()
 	defer r.Unlock()
+
 	if r.running {
 		r.control <- AudioPrevious
+		return nil
 	}
+	return r.Queue.Previous()
 }
 
 // Stop stops the playing queue
-func (r *Radio) Stop() {
+func (r *Radio) Stop() error {
 	r.Lock()
 	defer r.Unlock()
 
 	if r.running {
 		r.control <- AudioStop
+		return nil
 	}
+	return errors.New("Audio player not running")
 }

@@ -18,12 +18,12 @@ import (
 
 // Module ...
 type Module struct {
+	GuildRadios map[string]*Radio
 }
-
-var tempradio = NewRadio("")
 
 // Build ...
 func (m *Module) Build(s *system.System) {
+	m.GuildRadios = map[string]*Radio{}
 
 	r, _ := system.NewSubCommandRouter("^m|musicplayer", "m | musicplayer")
 	r.Set("", "musicplayer subrouter, controls the various actions related to music playing")
@@ -41,19 +41,6 @@ func (m *Module) Build(s *system.System) {
 
 	t.On("pause", m.CmdPause).Set("", ` CmdPause should
 		+ Pause the currently playing song`)
-
-	tempradio.Queue.Playlist = []*Song{
-		&Song{
-			URL: "https://www.youtube.com/watch?v=l7GObEWKTwA&feature=youtu.be",
-		},
-		&Song{
-			URL: "https://youtu.be/-yNATRuEvsE",
-		},
-		&Song{
-			URL: "https://www.youtube.com/watch?v=b8AIGUYscYo",
-		},
-	}
-	tempradio.Queue.Loop = true
 }
 
 // CmdPlay should handle
@@ -61,16 +48,16 @@ func (m *Module) Build(s *system.System) {
 //		+ Starting the queue if no argument is provided and nothing is playing.
 //		+ Unpausing the currently playing song if the current song is paused.
 func (m *Module) CmdPlay(ctx *system.Context) {
-
 	vc, err := ctx.Ses.UserVoiceStateJoin(ctx.Msg.Author.ID, false, true)
 	if err != nil {
 		ctx.ReplyError(err)
 		return
 	}
 
-	tempradio.Queue.Goto(0)
+	radio := m.getRadio(vc.GuildID)
+	radio.Queue.Goto(0)
 
-	err = tempradio.PlayQueue(ctx, vc)
+	err = radio.PlayQueue(ctx, vc)
 	if err != nil {
 		ctx.ReplyError(err)
 	}
@@ -80,11 +67,70 @@ func (m *Module) CmdPlay(ctx *system.Context) {
 //		+ Stop the queue from playing
 //		+ Stop the current song from playing
 func (m *Module) CmdStop(ctx *system.Context) {
-	tempradio.Stop()
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		return
+	}
+
+	err = m.getRadio(guildID).Stop()
+	if err == nil {
+		ctx.ReplySuccess("Queue stopped")
+	}
 }
 
 // CmdPause should
 //	+ Pause the currently playing song
 func (m *Module) CmdPause(ctx *system.Context) {
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		return
+	}
+	ctx.Ses.GuildAudioDispatcherPause(guildID)
+}
 
+// CmdNext loads the next song in the queue
+func (m *Module) CmdNext(ctx *system.Context) {
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		return
+	}
+	m.getRadio(guildID).Next()
+}
+
+func (m *Module) getRadio(guildID string) *Radio {
+	if v, ok := m.GuildRadios[guildID]; ok {
+		return v
+	}
+	r := NewRadio(guildID)
+	m.GuildRadios[guildID] = r
+
+	r.Queue.Playlist = []*Song{
+		&Song{
+			URL: "https://www.youtube.com/watch?v=-yEDM-ogtBY",
+		},
+		&Song{
+			URL: "https://youtu.be/-yNATRuEvsE",
+		},
+		&Song{
+			URL: "https://www.youtube.com/watch?v=b8AIGUYscYo",
+		},
+	}
+
+	return r
+}
+
+func guildIDFromContext(ctx *system.Context) (string, error) {
+	var guildID string
+
+	vs, err := ctx.Ses.UserVoiceState(ctx.Msg.Author.ID)
+	if err != nil {
+		guildID, err = ctx.Ses.GuildID(ctx.Msg)
+		if err != nil {
+			return "", err
+		}
+	} else {
+		guildID = vs.GuildID
+	}
+
+	return guildID, nil
 }
