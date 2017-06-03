@@ -45,8 +45,9 @@ func (m *Module) Build(s *system.System) {
 	t.On("play", m.CmdPlay).Set("", "Plays the current queue")
 	t.On("stop", m.CmdStop).Set("", "stops the currently playing queue")
 	t.On("pause", m.CmdPause).Set("", "Pauses the currently playing song")
+	t.On("resume", m.CmdResume).Set("", "Resumes the currently playing song")
 	t.On("next", m.CmdNext).Set("", "Loads the next song in the queue")
-	t.On("previous|prev", m.CmdPrevious).Set("previous | prev", "Loads the previous song in the queue")
+	t.On("prev|previous", m.CmdPrevious).Set("prev | previous", "Loads the previous song in the queue")
 }
 
 // CmdPlay should handle
