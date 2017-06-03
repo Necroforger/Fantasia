@@ -57,12 +57,9 @@ func main() {
 
 			// Create a config file with the default options.
 			err = SaveConfig(ConfigPath, Config{
-				Dream:   dream.NewConfig(),
-				Modules: *NewModuleConfig(),
-				System: system.Config{
-					Selfbot: false,
-					Prefix:  "!",
-				},
+				Dream:            dream.NewConfig(),
+				Modules:          NewModuleConfig(),
+				System:           system.NewConfig(),
 				DisabledCommands: []string{},
 			})
 			if err != nil {

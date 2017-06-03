@@ -32,8 +32,8 @@ type ModuleConfig struct {
 }
 
 // NewModuleConfig returns a new module configuration
-func NewModuleConfig() *ModuleConfig {
-	return &ModuleConfig{
+func NewModuleConfig() ModuleConfig {
+	return ModuleConfig{
 		Inverted:    false,
 		Audio:       true,
 		Eval:        true,

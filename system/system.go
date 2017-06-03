@@ -127,16 +127,6 @@ func (s *System) readyHandler(b *dream.Bot, e *discordgo.Ready) {
 }
 
 //////////////////////////////////
-// 		CONFIG
-/////////////////////////////////
-
-// Config is the configuration for the bot
-type Config struct {
-	Prefix  string
-	Selfbot bool
-}
-
-//////////////////////////////////
 // 		Module
 /////////////////////////////////
 
