@@ -42,10 +42,18 @@ func (m *Module) Build(s *system.System) {
 //		+ Starting the queue if no argument is provided and nothing is playing.
 //		+ Unpausing the currently playing song if the current song is paused.
 func (m *Module) CmdPlay(ctx *system.Context) {
-	vc, err := ctx.Ses.UserVoiceStateJoin(ctx.Msg.Author.ID, false, true)
+	guildID, err := guildIDFromContext(ctx)
 	if err != nil {
-		ctx.ReplyError(err)
 		return
+	}
+
+	vc, err := ctx.Ses.GuildVoiceConnection(guildID)
+	if err != nil {
+		vc, err = ctx.Ses.UserVoiceStateJoin(ctx.Msg.Author.ID, false, true)
+		if err != nil {
+			ctx.ReplyError(err)
+			return
+		}
 	}
 
 	radio := m.getRadio(vc.GuildID)
