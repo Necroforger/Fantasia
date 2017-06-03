@@ -65,7 +65,6 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 	}()
 
 	for {
-
 		disp, err := r.Play(ctx.Ses, vc)
 		if err != nil {
 			return err
@@ -87,9 +86,7 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 				r.Queue.Previous()
 			case AudioNext: // Load the next song if it has been requested early
 				err = r.Queue.Next()
-				if err != nil {
-					return err
-				}
+				disp.Stop()
 			}
 		case <-done: // Attempt to load the next song by default
 			err = r.Queue.Next()

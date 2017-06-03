@@ -9,6 +9,10 @@ import (
 	"github.com/Necroforger/ytdl"
 )
 
+var customhHttpClient = http.Client{
+	Timeout: time.Second * 10,
+}
+
 ////////////////////////////////////////////////
 // YOUTUBE DOWNLOADING
 ////////////////////////////////////////////////
@@ -23,11 +27,7 @@ func YoutubeDLFromInfo(info *ytdl.VideoInfo) (io.Reader, error) {
 		return nil, err
 	}
 
-	client := http.Client{
-		Timeout: time.Second * 10,
-	}
-
-	resp, err := client.Get(u.String())
+	resp, err := customhHttpClient.Get(u.String())
 	if err != nil {
 		return nil, err
 	}

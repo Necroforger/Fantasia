@@ -28,19 +28,13 @@ func (m *Module) Build(s *system.System) {
 	r, _ := system.NewSubCommandRouter("^m|musicplayer", "m | musicplayer")
 	r.Set("", "musicplayer subrouter, controls the various actions related to music playing")
 	s.CommandRouter.AddSubrouter(r)
-
 	t := r.Router
-	t.On("play", m.CmdPlay).Set("", ` CmdPlay should handle
- 		+ Playing a song from a URL
-		+ Starting the queue if no argument is provided and nothing is playing.
-		+ Unpausing the currently playing song if the current song is paused.`)
 
-	t.On("stop", m.CmdStop).Set("", `CmdStop should
-		+ Stop the queue from playing
-		+ Stop the current song from playing`)
-
-	t.On("pause", m.CmdPause).Set("", ` CmdPause should
-		+ Pause the currently playing song`)
+	t.On("play", m.CmdPlay).Set("", "Plays the current queue")
+	t.On("stop", m.CmdStop).Set("", "stops the currently playing queue")
+	t.On("pause", m.CmdPause).Set("", "Pauses the currently playing song")
+	t.On("next", m.CmdNext).Set("", "Loads the next song in the queue")
+	t.On("previous|prev", m.CmdPrevious).Set("previous | prev", "Loads the previous song in the queue")
 }
 
 // CmdPlay should handle
@@ -94,7 +88,22 @@ func (m *Module) CmdNext(ctx *system.Context) {
 	if err != nil {
 		return
 	}
-	m.getRadio(guildID).Next()
+	err = m.getRadio(guildID).Next()
+	if err != nil {
+		ctx.ReplyError(err)
+	}
+}
+
+// CmdPrevious loads the previous song in the queue
+func (m *Module) CmdPrevious(ctx *system.Context) {
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		return
+	}
+	err = m.getRadio(guildID).Previous()
+	if err != nil {
+		ctx.ReplyError(err)
+	}
 }
 
 func (m *Module) getRadio(guildID string) *Radio {
