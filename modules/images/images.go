@@ -120,10 +120,6 @@ func MakeBooruSearcher(booruURL string) func(*system.Context) {
 		})
 		if err != nil {
 			ctx.ReplyError(err)
-		}
-
-		if len(posts) == 0 {
-			ctx.ReplyError("Length of posts is zero")
 			return
 		}
 
