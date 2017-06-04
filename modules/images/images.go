@@ -1,5 +1,7 @@
 package images
 
+//genmodules:config
+
 import (
 	"fmt"
 	"log"
@@ -11,7 +13,6 @@ import (
 	"github.com/Necroforger/dream"
 )
 
-<<<<<<< HEAD
 // Config ...
 type Config struct {
 	ImageCommands [][]string
@@ -38,12 +39,11 @@ func NewConfig() *Config {
 		},
 	}
 }
-=======
-// Images uses the boorudl extractor to retrieve images from boorus
->>>>>>> parent of c188dc6... Generators
 
 // Module ...
-type Module struct{}
+type Module struct {
+	Config *Config
+}
 
 // Build ...
 func (m *Module) Build(s *system.System) {
