@@ -1,5 +1,7 @@
 package musicplayer
 
+//:<hasconfig>
+
 /*
 	Requirements:
 		+ youtube-dl installed to path
@@ -30,6 +32,7 @@ const ControlCooldown = time.Millisecond * 1500
 
 // Module ...
 type Module struct {
+	Config      *Config
 	GuildRadios map[string]*Radio
 }
 
@@ -48,6 +51,16 @@ func (m *Module) Build(s *system.System) {
 	t.On("resume", m.CmdResume).Set("", "Resumes the currently playing song")
 	t.On("next", m.CmdNext).Set("", "Loads the next song in the queue")
 	t.On("prev|previous", m.CmdPrevious).Set("prev | previous", "Loads the previous song in the queue")
+}
+
+// Config represents the MusicPlayer configuration
+type Config struct {
+	UseYoutubeDL string
+}
+
+// NewConfig returns a default config
+func NewConfig() *Config {
+	return &Config{}
 }
 
 // CmdPlay should handle
