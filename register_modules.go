@@ -51,22 +51,22 @@ func NewModuleConfig() ModuleConfig {
 
 // RegisterModules builds a list of modules into the given system
 func RegisterModules(s *system.System, config ModuleConfig) {
-	if (config.Inverted && !config.Audio) || config.Audio {
+	if (config.Inverted && !config.Audio) || (!config.Inverted && !config.Audio) {
 		s.CommandRouter.SetCategory("Audio")
 		s.BuildModule(&audio.Module{})
 		log.Println("loaded audio module...")
 	}
-	if (config.Inverted && !config.Eval) || config.Eval {
+	if (config.Inverted && !config.Eval) || (!config.Inverted && !config.Eval) {
 		s.CommandRouter.SetCategory("Eval")
 		s.BuildModule(&eval.Module{})
 		log.Println("loaded eval module...")
 	}
-	if (config.Inverted && !config.General) || config.General {
+	if (config.Inverted && !config.General) || (!config.Inverted && !config.General) {
 		s.CommandRouter.SetCategory("General")
 		s.BuildModule(&general.Module{})
 		log.Println("loaded general module...")
 	}
-	if (config.Inverted && !config.Images) || config.Images {
+	if (config.Inverted && !config.Images) || (!config.Inverted && !config.Images) {
 		s.CommandRouter.SetCategory("Images")
 		if config.ImagesConfig != nil {
 			s.BuildModule(&images.Module{Config: config.ImagesConfig})
@@ -75,17 +75,17 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 		}
 		log.Println("loaded images module...")
 	}
-	if (config.Inverted && !config.Information) || config.Information {
+	if (config.Inverted && !config.Information) || (!config.Inverted && !config.Information) {
 		s.CommandRouter.SetCategory("Information")
 		s.BuildModule(&information.Module{})
 		log.Println("loaded information module...")
 	}
-	if (config.Inverted && !config.Musicplayer) || config.Musicplayer {
+	if (config.Inverted && !config.Musicplayer) || (!config.Inverted && !config.Musicplayer) {
 		s.CommandRouter.SetCategory("Musicplayer")
 		s.BuildModule(&musicplayer.Module{})
 		log.Println("loaded musicplayer module...")
 	}
-	if (config.Inverted && !config.Roles) || config.Roles {
+	if (config.Inverted && !config.Roles) || (!config.Inverted && !config.Roles) {
 		s.CommandRouter.SetCategory("Roles")
 		s.BuildModule(&roles.Module{})
 		log.Println("loaded roles module...")

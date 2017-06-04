@@ -59,7 +59,7 @@ func NewModuleConfig() ModuleConfig {
 // RegisterModules builds a list of modules into the given system
 func RegisterModules(s *system.System, config ModuleConfig) {
 	{{range . -}}
-	if (config.Inverted && !config.{{title .Name}}) || config.{{title .Name}} {
+	if (config.Inverted && !config.{{title .Name}}) || (!config.Inverted && !config.{{title .Name}}) {
 		s.CommandRouter.SetCategory("{{title .Name}}")
 		{{- if .HasConfig}}
 		if config.{{title .Name}}Config != nil {

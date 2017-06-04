@@ -3,6 +3,7 @@ package images
 //genmodules:config
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"strconv"
@@ -51,11 +52,10 @@ func (m *Module) Build(s *system.System) {
 	// Create booru searching commands
 	for _, v := range m.Config.BooruCommands {
 		if len(v) < 2 {
-			log.Println("error creating booru command, array must be in the form of [command name, booru url]")
+			log.Println("error creating booru command " + fmt.Sprint(v) + ", array must be in the form of [command name, booru url]")
 			continue
 		}
 		AddBooru(r, v[0], v[1])
-		log.Println("Added booru command: ", v[0], v[1])
 	}
 
 	// Create image searching commands
