@@ -30,7 +30,7 @@ type ModuleConfig struct {
 	Musicplayer bool
 	Roles       bool
 
-	MusicplayerConfig *musicplayer.Config
+	ImagesConfig *images.Config
 }
 
 // NewModuleConfig returns a new module configuration
@@ -45,7 +45,7 @@ func NewModuleConfig() ModuleConfig {
 		Musicplayer: true,
 		Roles:       true,
 
-		MusicplayerConfig: musicplayer.NewConfig(),
+		ImagesConfig: images.NewConfig(),
 	}
 }
 
@@ -68,7 +68,11 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 	}
 	if (config.Inverted && !config.Images) || config.Images {
 		s.CommandRouter.SetCategory("Images")
-		s.BuildModule(&images.Module{})
+		if config.ImagesConfig != nil {
+			s.BuildModule(&images.Module{Config: config.ImagesConfig})
+		} else {
+			s.BuildModule(&images.Module{Config: images.NewConfig()})
+		}
 		log.Println("loaded images module...")
 	}
 	if (config.Inverted && !config.Information) || config.Information {
@@ -78,11 +82,7 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 	}
 	if (config.Inverted && !config.Musicplayer) || config.Musicplayer {
 		s.CommandRouter.SetCategory("Musicplayer")
-		if config.MusicplayerConfig != nil {
-			s.BuildModule(&musicplayer.Module{Config: config.MusicplayerConfig})
-		} else {
-			s.BuildModule(&musicplayer.Module{Config: musicplayer.NewConfig()})
-		}
+		s.BuildModule(&musicplayer.Module{})
 		log.Println("loaded musicplayer module...")
 	}
 	if (config.Inverted && !config.Roles) || config.Roles {

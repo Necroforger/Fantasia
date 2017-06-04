@@ -3,6 +3,8 @@ package images
 //genmodules:config
 
 import (
+	"log"
+	"math/rand"
 	"strconv"
 
 	"github.com/Necroforger/Boorudl/extractor"
@@ -12,11 +14,29 @@ import (
 
 // Config ...
 type Config struct {
+	ImageCommands [][]string
+	BooruCommands [][]string
+}
+
+// ImageCommand ...
+type ImageCommand struct {
+	Name string
+	URL  string
 }
 
 // NewConfig ...
 func NewConfig() *Config {
-	return &Config{}
+	return &Config{
+		// Default Image commands
+		ImageCommands: [][]string{},
+
+		// Default booru commands
+		BooruCommands: [][]string{
+			{"danbooru", "http://danbooru.donmai.us"},
+			{"safebooru", "https://safebooru.org/"},
+			{"googleimg", "http://google.com"},
+		},
+	}
 }
 
 // Module ...
@@ -28,14 +48,47 @@ type Module struct {
 func (m *Module) Build(s *system.System) {
 	r := s.CommandRouter
 
-	AddBooru(r, "http://danbooru.donmai.us", "danbooru")
-	AddBooru(r, "https://safebooru.org/", "safebooru")
-	AddBooru(r, "http://google.com", "googleimg")
+	// Create booru searching commands
+	for _, v := range m.Config.BooruCommands {
+		if len(v) < 2 {
+			log.Println("error creating booru command, array must be in the form of [command name, booru url]")
+			continue
+		}
+		AddBooru(r, v[0], v[1])
+		log.Println("Added booru command: ", v[0], v[1])
+	}
 
+	// Create image searching commands
+	for _, v := range m.Config.ImageCommands {
+		AddImageCommand(r, v)
+	}
+}
+
+// AddImageCommand makes an image command from an array of strings in the format
+// [command name, description, urls...]
+func AddImageCommand(r *system.CommandRouter, cmd []string) {
+	if len(cmd) < 3 {
+		return
+	}
+	cmdName := cmd[0]
+
+	r.On(cmdName, MakeImageCommand(cmd[2:])).Set("", cmd[1])
+}
+
+// MakeImageCommand makes an image command
+func MakeImageCommand(urls []string) func(*system.Context) {
+	return func(ctx *system.Context) {
+		index := int(rand.Float64() * float64(len(urls)))
+
+		ctx.ReplyEmbed(dream.NewEmbed().
+			SetImage(urls[index]).
+			SetColor(system.StatusNotify).
+			MessageEmbed)
+	}
 }
 
 // AddBooru adds a booru command to the router
-func AddBooru(r *system.CommandRouter, booruURL string, commandName string) {
+func AddBooru(r *system.CommandRouter, commandName string, booruURL string) {
 	r.On(commandName, MakeBooruSearcher(booruURL)).
 		Set("", "Returns an image result from ["+commandName+"]("+booruURL+")\n"+
 			"Usage: `"+commandName+" [tags] [post index] [to post index]`\n"+
@@ -50,7 +103,7 @@ func MakeBooruSearcher(booruURL string) func(*system.Context) {
 			index = n
 		}
 
-		indexTo := index
+		indexTo := index + 1
 		if n, err := strconv.Atoi(ctx.Args.Get(2)); err == nil {
 			indexTo = n
 		}
@@ -67,6 +120,11 @@ func MakeBooruSearcher(booruURL string) func(*system.Context) {
 		})
 		if err != nil {
 			ctx.ReplyError(err)
+		}
+
+		if len(posts) == 0 {
+			ctx.ReplyError("Length of posts is zero")
+			return
 		}
 
 		for i := index; i < indexTo; i++ {
