@@ -128,7 +128,7 @@ func main() {
 		}
 
 		// Check if the file meets all the requirements for having a config
-		if regexp.MustCompile("(?m:^//:<hasconfig>)").MatchString(string(data)) &&
+		if regexp.MustCompile("(?m:^//genmodules:config)").MatchString(string(data)) &&
 			regexp.MustCompile("(?m:^type Config struct)").MatchString(string(data)) &&
 			regexp.MustCompile(`(?m:^func NewConfig())`).MatchString(string(data)) {
 

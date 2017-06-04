@@ -1,5 +1,7 @@
 package images
 
+//genmodules:config
+
 import (
 	"strconv"
 
@@ -8,10 +10,19 @@ import (
 	"github.com/Necroforger/dream"
 )
 
-// Images uses the boorudl extractor to retrieve images from boorus
+// Config ...
+type Config struct {
+}
+
+// NewConfig ...
+func NewConfig() *Config {
+	return &Config{}
+}
 
 // Module ...
-type Module struct{}
+type Module struct {
+	Config *Config
+}
 
 // Build ...
 func (m *Module) Build(s *system.System) {
