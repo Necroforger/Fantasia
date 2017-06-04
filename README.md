@@ -5,6 +5,8 @@
 
 - [Fantasia](#fantasia)
 - [Installing](#installing)
+- [Running](#running)
+- [Flags](#flags)
 - [Config samples](#config-samples)
     - [Selfbot](#selfbot)
 - [Modules](#modules)
@@ -22,6 +24,19 @@ Go to the [releases](https://github.com/Necroforger/Fantasia/releases) and downl
 
 Navigate to GOPATH/github.com/Necroforger/Fantasia and use `go build` to create an executeable.
 
+# Running
+Execute the bot and it should generate a `config.toml` file. Fill this in with your bot information and execute the bot again. You can copy the sample config to get started quickly.
+
+# Flags
+
+Executing with flags is optional unless you want to use the same config
+With multiple tokens, or use a config file stored in a path other than `./config.toml`
+
+| Flag | Description           |
+|------|-----------------------|
+| t    | Specify the bot token |
+| c    | Config file path      |
+| s    | Enable selfbot mode   |
 # Config samples
 
 ## Selfbot
