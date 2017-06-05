@@ -70,7 +70,9 @@ DisabledCommands = []
     # If the path is not prefixed by http:// or https:// it will attempt to get the clip from the file system.
     # If the path is a folder, it will get a random clip from the folder.
     SoundclipCommands = [
-      ["granddad", "Grand dad [source](https://youtu.be/gIcmIjfdE78)", "https://youtu.be/gIcmIjfdE78"],
+      ["granddad",   "[source](https://youtu.be/gIcmIjfdE78)", "https://youtu.be/gIcmIjfdE78"],
+      ["whomst",     "[source](https://youtu.be/EfAnvdcnE08)", "https://youtu.be/EfAnvdcnE08"],
+      ["dreamscape", "[source](https://youtu.be/2WPCLda_erI)", "https://youtu.be/2WPCLda_erI"],
     ]
 
   [Modules.ImagesConfig]
@@ -85,6 +87,10 @@ DisabledCommands = []
 
       ["cirnopi", "cirno calculates the exact value of pi", 
         "https://lh6.googleusercontent.com/-7kCspKNcZvU/VQRWMo4fb7I/AAAAAAAABIg/fwBfrgrCcx0/w800-h800/cirno_PI.jpg"],
+
+      # Retrieves a random file from Pictures/Please Respond
+      ["plsrespond", "please respond",
+        'Pictures/Please Respond']
     ]
 
 
