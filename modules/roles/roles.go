@@ -16,11 +16,12 @@ type Module struct{}
 
 // Build ...
 func (m *Module) Build(s *system.System) {
-	r, _ := system.NewSubCommandRouter("^role", "role")
+	r, _ := system.NewSubCommandRouter(`^role(\s|$)`, "role")
+	r.Router.Prefix = "^"
 	r.Set("role", "subrouter for role commands. example useage: `role color [hex]`")
 	s.CommandRouter.AddSubrouter(r)
 
-	r.Router.On("color|colour", m.Color).Set("color | colour", "Changes your role colour to the supplied hex code")
+	r.Router.On("colou?r", m.Color).Set("color | colour", "Changes your role colour to the supplied hex code")
 }
 
 // Color ...

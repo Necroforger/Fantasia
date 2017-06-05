@@ -37,7 +37,8 @@ type Module struct {
 func (m *Module) Build(s *system.System) {
 	m.GuildRadios = map[string]*Radio{}
 
-	r, _ := system.NewSubCommandRouter("^m|musicplayer", "m | musicplayer")
+	r, _ := system.NewSubCommandRouter(`^m(usicplayer)?(\s|$)`, "m | musicplayer")
+	r.Router.Prefix = "^"
 	r.Set("", "musicplayer subrouter, controls the various actions related to music playing")
 	s.CommandRouter.AddSubrouter(r)
 	t := r.Router

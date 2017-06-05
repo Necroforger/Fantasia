@@ -96,6 +96,11 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 			}
 
 		case <-done:
+			// I only need to check for a closed voice connection after the done event
+			// Is received because the dispatcher will end during a timeout error.
+			if !vc.Ready {
+				return errors.New("Voice connection closed")
+			}
 			// Load the next song if AutoPlay is enabled.
 			if r.AutoPlay {
 				err = r.Queue.Next()
@@ -107,6 +112,7 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 				return nil
 			}
 		}
+
 	}
 }
 

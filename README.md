@@ -14,7 +14,6 @@
 
 ______________
 
-![Example help menu](http://i.imgur.com/jC4lFxE.png)
 
 # Installing
 Go to the [releases](https://github.com/Necroforger/Fantasia/releases) and download a version or.
