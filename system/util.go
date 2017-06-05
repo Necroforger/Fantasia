@@ -3,7 +3,11 @@ package system
 import (
 	"errors"
 	"io"
+	"io/ioutil"
+	"math/rand"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/Necroforger/ytdl"
@@ -46,4 +50,32 @@ func YoutubeDL(URL string) (io.Reader, error) {
 	}
 
 	return YoutubeDLFromInfo(info)
+}
+
+///////////////////////////////////////
+//   FILES
+//////////////////////////////////////
+
+// RandomFileInFolder retrieves a random file from a folder
+func RandomFileInFolder(path string) (*os.File, error) {
+	info, err := ioutil.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	files := []string{}
+	for _, v := range info {
+		if !v.IsDir() {
+			files = append(files, v.Name())
+		}
+	}
+
+	if len(files) == 0 {
+		return nil, errors.New("No files in directory")
+	}
+	if len(files) == 1 {
+		return os.Open(filepath.Join(path, files[0]))
+	}
+
+	return os.Open(filepath.Join(path, files[int(rand.Float64()*float64(len(files)))]))
 }

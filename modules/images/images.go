@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"os"
 	"strconv"
+	"strings"
 
 	"github.com/Necroforger/Boorudl/extractor"
 	"github.com/Necroforger/Fantasia/system"
@@ -79,11 +81,33 @@ func AddImageCommand(r *system.CommandRouter, cmd []string) {
 func MakeImageCommand(urls []string) func(*system.Context) {
 	return func(ctx *system.Context) {
 		index := int(rand.Float64() * float64(len(urls)))
+		path := urls[index]
 
-		ctx.ReplyEmbed(dream.NewEmbed().
-			SetImage(urls[index]).
-			SetColor(system.StatusNotify).
-			MessageEmbed)
+		switch {
+
+		// Send a random file in a folder
+		case strings.HasPrefix(path, "folder:"):
+			f, err := system.RandomFileInFolder(path[len("folder:"):])
+			if err != nil {
+				ctx.ReplyError(err)
+			}
+			ctx.Ses.SendFile(ctx.Msg, f.Name(), f)
+
+		// Send a file
+		case strings.HasPrefix(path, "file:"):
+			f, err := os.Open(path[len("file:"):])
+			if err != nil {
+				ctx.ReplyError(err)
+			}
+			ctx.Ses.SendFile(ctx.Msg, f.Name(), f)
+
+		default:
+			ctx.ReplyEmbed(dream.NewEmbed().
+				SetImage(urls[index]).
+				SetColor(system.StatusNotify).
+				MessageEmbed)
+		}
+
 	}
 }
 
