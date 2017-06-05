@@ -68,6 +68,17 @@ DisabledCommands = []
   Musicplayer = true
   Roles = true
 
+  # Custom audio commands
+  [Modules.AudioConfig]
+
+    # Soundclip commands are in the format of ["Command Name", "Description", "url", "url"...]
+    # If more than one URL is present, the command will choose a random one from the list.
+    # If the path is not prefixed by http:// or https:// it will attempt to get the clip from the file system.
+    # If the path is a folder, it will get a random clip from the folder.
+    SoundclipCommands = [
+      ["granddad", "GRAND DAD", "https://youtu.be/gIcmIjfdE78"],
+    ]
+
   # Custom image commands
   [Modules.ImagesConfig]
 
