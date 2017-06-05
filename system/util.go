@@ -57,7 +57,7 @@ func YoutubeDL(URL string) (io.Reader, error) {
 //////////////////////////////////////
 
 // RandomFileInFolder retrieves a random file from a folder
-func RandomFileInFolder(path string) (*os.File, error) {
+func RandomFileInDir(path string) (*os.File, error) {
 	info, err := ioutil.ReadDir(path)
 	if err != nil {
 		return nil, err

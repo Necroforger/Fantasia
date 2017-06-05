@@ -82,15 +82,14 @@ DisabledCommands = []
 
     # Image commands are in the format of ["Command Name", "Description", "url", "url"...]
     # If more than one URL is present, the command will choose a random one from the list.
+    # If the path is not prefixed by http:// or https:// it will attempt to get the image from the file system.
+    # If the path is a folder, it will get a random image from the folder.
     ImageCommands = [
         ["cirno",   "cir-no",
         "https://nokywln.files.wordpress.com/2011/09/807720-20920920cirno20touhou20e291a81.jpg?w=500"],
 
         ["cirnopi", "Cirno calculates the exact value of pi", 
         "https://lh6.googleusercontent.com/-7kCspKNcZvU/VQRWMo4fb7I/AAAAAAAABIg/fwBfrgrCcx0/w800-h800/cirno_PI.jpg"],
-
-        ["smoking", "Marisa smoking",
-        "https://cdn.discordapp.com/attachments/319171684105977857/320987196775464970/unknown_3.png"],
     ]
 
 # Ffmpeg must be in your path and DCA-RS must be in the same folder

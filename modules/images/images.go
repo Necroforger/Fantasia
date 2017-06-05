@@ -74,39 +74,49 @@ func AddImageCommand(r *system.CommandRouter, cmd []string) {
 	}
 	cmdName := cmd[0]
 
-	r.On(cmdName, MakeImageCommand(cmd[2:])).Set("", cmd[1])
+	r.On(cmdName, MakeImageCommand(cmd[2:], true)).Set("", cmd[1])
 }
 
 // MakeImageCommand makes an image command
-func MakeImageCommand(urls []string) func(*system.Context) {
+func MakeImageCommand(urls []string, openFiles bool) func(*system.Context) {
 	return func(ctx *system.Context) {
 		index := int(rand.Float64() * float64(len(urls)))
 		path := urls[index]
 
-		switch {
+		// If the path is not a URL, it will check the file system for the image.
+		if !strings.HasPrefix(path, "http://") &&
+			!strings.HasPrefix(path, "https://") &&
+			openFiles {
 
-		// Send a random file in a folder
-		case strings.HasPrefix(path, "folder:"):
-			f, err := system.RandomFileInFolder(path[len("folder:"):])
+			f, err := os.Open(path)
 			if err != nil {
 				ctx.ReplyError(err)
+				return
 			}
-			ctx.Ses.SendFile(ctx.Msg, f.Name(), f)
 
-		// Send a file
-		case strings.HasPrefix(path, "file:"):
-			f, err := os.Open(path[len("file:"):])
+			info, err := f.Stat()
 			if err != nil {
 				ctx.ReplyError(err)
+				return
 			}
-			ctx.Ses.SendFile(ctx.Msg, f.Name(), f)
 
-		default:
-			ctx.ReplyEmbed(dream.NewEmbed().
-				SetImage(urls[index]).
-				SetColor(system.StatusNotify).
-				MessageEmbed)
+			if info.IsDir() {
+				randFile, err := system.RandomFileInDir(path)
+				if err != nil {
+					ctx.ReplyError(err)
+					return
+				}
+				ctx.Ses.DG.ChannelFileSend(ctx.Msg.ChannelID, randFile.Name(), randFile)
+			} else {
+				ctx.Ses.DG.ChannelFileSend(ctx.Msg.ChannelID, info.Name(), f)
+			}
+			return
 		}
+
+		ctx.ReplyEmbed(dream.NewEmbed().
+			SetImage(urls[index]).
+			SetColor(system.StatusNotify).
+			MessageEmbed)
 
 	}
 }
