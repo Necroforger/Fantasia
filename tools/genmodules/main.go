@@ -39,7 +39,7 @@ type ModuleConfig struct {
 
 	{{range . -}}{{if .HasConfig -}}
 	{{title .Name}}Config *{{.Name}}.Config
-	{{- end}}{{- end}}
+	{{end}}{{end}}
 }
 
 // NewModuleConfig returns a new module configuration
@@ -52,7 +52,7 @@ func NewModuleConfig() ModuleConfig {
 
 		{{range . -}}{{if .HasConfig -}}
 		{{title .Name}}Config: {{.Name}}.NewConfig(),
-		{{- end}}{{- end}}
+		{{end}}{{end}}
 	}
 }
 

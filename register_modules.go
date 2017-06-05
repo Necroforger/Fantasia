@@ -30,6 +30,7 @@ type ModuleConfig struct {
 	Musicplayer bool
 	Roles       bool
 
+	AudioConfig  *audio.Config
 	ImagesConfig *images.Config
 }
 
@@ -45,6 +46,7 @@ func NewModuleConfig() ModuleConfig {
 		Musicplayer: true,
 		Roles:       true,
 
+		AudioConfig:  audio.NewConfig(),
 		ImagesConfig: images.NewConfig(),
 	}
 }
@@ -53,7 +55,11 @@ func NewModuleConfig() ModuleConfig {
 func RegisterModules(s *system.System, config ModuleConfig) {
 	if (config.Inverted && !config.Audio) || (!config.Inverted && config.Audio) {
 		s.CommandRouter.SetCategory("Audio")
-		s.BuildModule(&audio.Module{})
+		if config.AudioConfig != nil {
+			s.BuildModule(&audio.Module{Config: config.AudioConfig})
+		} else {
+			s.BuildModule(&audio.Module{Config: audio.NewConfig()})
+		}
 		log.Println("loaded audio module...")
 	}
 	if (config.Inverted && !config.Eval) || (!config.Inverted && config.Eval) {
