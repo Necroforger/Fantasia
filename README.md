@@ -8,7 +8,6 @@
 - [Running](#running)
 - [Flags](#flags)
 - [Config samples](#config-samples)
-    - [Selfbot](#selfbot)
 - [Modules](#modules)
 
 <!-- /TOC -->
@@ -38,21 +37,16 @@ With multiple tokens, or use a config file stored in a path other than `./config
 | c    | Config file path      |
 | s    | Enable selfbot mode   |
 # Config samples
-
-## Selfbot
 ```toml
-# Bot tokens must be prefixed by 'bot'
-Token = "REPLACE_WITH_ACCOUNT_TOKEN"
-
-# Disabled commands is a list of commands you want to be disabled when the
-# Bot starts. Yes, you can disable the help command.
+# All bot tokens are prefixed by 'Bot '. Ex 'Bot MsasmdJAsndjANsjh23'
+Token = "REPLACE_WITH_BOT_TOKEN"
 DisabledCommands = []
 
-
-# Setting selfbot to true prevents the bot from responding to users that are not you
+# If selfbot is enabled, your bot must be run on a user token and it will only respond
+# To itself. Certain modules may not work on user accounts.
 [System]
-  Prefix = "./"
-  Selfbot = true 
+  Prefix = ">"
+  Selfbot = false
   YoutubeDLPath = "youtube-dl"
 
 # Any modules set to false are disabled.
@@ -68,7 +62,7 @@ DisabledCommands = []
   Musicplayer = true
   Roles = true
 
-  # Custom audio commands
+   # Custom audio commands
   [Modules.AudioConfig]
 
     # Soundclip commands are in the format of ["Command Name", "Description", "url", "url"...]
@@ -76,32 +70,33 @@ DisabledCommands = []
     # If the path is not prefixed by http:// or https:// it will attempt to get the clip from the file system.
     # If the path is a folder, it will get a random clip from the folder.
     SoundclipCommands = [
-      ["granddad", "GRAND DAD", "https://youtu.be/gIcmIjfdE78"],
+      ["granddad", "Grand dad [source](https://youtu.be/gIcmIjfdE78)", "https://youtu.be/gIcmIjfdE78"],
     ]
 
-  # Custom image commands
   [Modules.ImagesConfig]
-
-    # Booru commands allow you to request an image or list of images from a booru.
-    # usage: boorucommand "list of tags". Supports all boorus supported by
-    # https://github.com/Necroforger/boorudl
-    BooruCommands = [
-      ["danbooru",  "http://danbooru.donmai.us"],
-      ["safebooru", "https://safebooru.org/"],
-      ["googleimg", "http://google.com"],
-    ]
 
     # Image commands are in the format of ["Command Name", "Description", "url", "url"...]
     # If more than one URL is present, the command will choose a random one from the list.
     # If the path is not prefixed by http:// or https:// it will attempt to get the image from the file system.
     # If the path is a folder, it will get a random image from the folder.
     ImageCommands = [
-        ["cirno",   "cir-no",
+      ["cirno",   "cir no", 
         "https://nokywln.files.wordpress.com/2011/09/807720-20920920cirno20touhou20e291a81.jpg?w=500"],
 
-        ["cirnopi", "Cirno calculates the exact value of pi", 
+      ["cirnopi", "cirno calculates the exact value of pi", 
         "https://lh6.googleusercontent.com/-7kCspKNcZvU/VQRWMo4fb7I/AAAAAAAABIg/fwBfrgrCcx0/w800-h800/cirno_PI.jpg"],
     ]
+
+
+    # Booru commands allow you to request an image or list of images from a booru.
+    # usage: boorucommand "list of tags". Supports all boorus supported by
+    # https://github.com/Necroforger/boorudl
+    BooruCommands = [
+        ["danbooru",  "http://danbooru.donmai.us"],
+        ["safebooru", "https://safebooru.org/"],
+        ["img",       "http://google.com"],
+    ]
+
 
 # Ffmpeg must be in your path and DCA-RS must be in the same folder
 # As your bot if you intend to use audio
