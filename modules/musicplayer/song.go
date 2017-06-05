@@ -180,3 +180,8 @@ func (s *SongQueue) Move(from, to int) error {
 	s.Playlist = append(s.Playlist, end...)
 	return nil
 }
+
+// Clear clears the song queue
+func (s *SongQueue) Clear() {
+	s.Playlist = []*Song{}
+}

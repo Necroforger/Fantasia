@@ -1,14 +1,12 @@
 package audio
 
 import (
-	"errors"
 	"io"
 	"math/rand"
 	"os"
 	"strings"
 
 	"github.com/Necroforger/Fantasia/system"
-	"github.com/Necroforger/discordgo"
 	"github.com/Necroforger/ytdl"
 )
 
@@ -107,7 +105,7 @@ func MakeSoundclipFunc(urls []string, openFiles bool) func(*system.Context) {
 		}
 
 		// Connect to voice channel and play clip
-		vc, err := ConnectToVoiceChannel(ctx)
+		vc, err := system.ConnectToVoiceChannel(ctx)
 		if err != nil {
 			ctx.ReplyError(err)
 			return
@@ -117,46 +115,10 @@ func MakeSoundclipFunc(urls []string, openFiles bool) func(*system.Context) {
 	}
 }
 
-// ConnectToVoiceChannel finds and connects to a user's voice channel
-func ConnectToVoiceChannel(ctx *system.Context) (*discordgo.VoiceConnection, error) {
-	b := ctx.Ses
-	msg := ctx.Msg
-
-	vc, err := b.GuildVoiceConnection(ctx.Msg)
-	if err != nil {
-
-		// If not currently in a channel, attempt to join the voice channel of the calling user.
-		vs, err := b.UserVoiceState(msg.Author.ID)
-		if err != nil {
-			ctx.ReplyError(errors.New("Could not find user's voice state"))
-			return nil, err
-		}
-		vc, err = b.ChannelVoiceJoin(vs.GuildID, vs.ChannelID, false, true)
-		if err != nil {
-			ctx.ReplyError(errors.New("Could not join user's voice channel"))
-			return nil, err
-		}
-
-	}
-
-	// Confirm that the user is in the correct voice channel.
-	// If the user is in another voice channel, join them.
-	vs, err := b.UserVoiceState(msg.Author.ID)
-	if err == nil && vs.ChannelID != vc.ChannelID && vs.GuildID != vc.GuildID {
-		vc, err = b.ChannelVoiceJoin(vs.GuildID, vs.ChannelID, false, true)
-		if err != nil {
-			ctx.ReplyError("Could not join user's voice channel")
-			return nil, err
-		}
-	}
-
-	return vc, nil
-}
-
 func (m *Module) playHandler(ctx *system.Context) {
 	b := ctx.Ses
 
-	vc, err := ConnectToVoiceChannel(ctx)
+	vc, err := system.ConnectToVoiceChannel(ctx)
 	if err != nil {
 		ctx.ReplyError(err)
 		return

@@ -51,22 +51,24 @@ func (m *Module) Build(s *system.System) {
 	t.On("prev|previous", m.CmdPrevious).Set("prev | previous", "Loads the previous song in the queue")
 }
 
+// CmdClear clears the current queue
+func (m *Module) CmdClear(ctx *system.Context) {
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		ctx.ReplyError(err)
+	}
+	radio := m.getRadio(guildID)
+	radio.Queue.Clear()
+}
+
 // CmdPlay should handle
 // 		+ Playing a song from a URL
 //		+ Starting the queue if no argument is provided and nothing is playing.
 func (m *Module) CmdPlay(ctx *system.Context) {
-	guildID, err := guildIDFromContext(ctx)
+	vc, err := system.ConnectToVoiceChannel(ctx)
 	if err != nil {
+		ctx.ReplyError(err)
 		return
-	}
-
-	vc, err := ctx.Ses.GuildVoiceConnection(guildID)
-	if err != nil {
-		vc, err = ctx.Ses.UserVoiceStateJoin(ctx.Msg.Author.ID, false, true)
-		if err != nil {
-			ctx.ReplyError(err)
-			return
-		}
 	}
 
 	radio := m.getRadio(vc.GuildID)
@@ -174,6 +176,9 @@ func (m *Module) getRadio(guildID string) *Radio {
 		},
 		&Song{
 			URL: "https://www.youtube.com/watch?v=m2eeyey-87U",
+		},
+		&Song{
+			URL: "https://youtu.be/tqMfWwnLtKg",
 		},
 	}
 	r.Queue.Loop = true

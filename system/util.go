@@ -10,10 +10,11 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/Necroforger/discordgo"
 	"github.com/Necroforger/ytdl"
 )
 
-var customhHttpClient = http.Client{
+var customHTTPClient = http.Client{
 	Timeout: time.Second * 10,
 }
 
@@ -31,7 +32,7 @@ func YoutubeDLFromInfo(info *ytdl.VideoInfo) (io.Reader, error) {
 		return nil, err
 	}
 
-	resp, err := customhHttpClient.Get(u.String())
+	resp, err := customHTTPClient.Get(u.String())
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +57,7 @@ func YoutubeDL(URL string) (io.Reader, error) {
 //   FILES
 //////////////////////////////////////
 
-// RandomFileInFolder retrieves a random file from a folder
+// RandomFileInDir retrieves a random file from a folder
 func RandomFileInDir(path string) (*os.File, error) {
 	info, err := ioutil.ReadDir(path)
 	if err != nil {
@@ -78,4 +79,52 @@ func RandomFileInDir(path string) (*os.File, error) {
 	}
 
 	return os.Open(filepath.Join(path, files[int(rand.Float64()*float64(len(files)))]))
+}
+
+/////////////////////////////////////////////////////
+// Audio
+/////////////////////////////////////////////////////
+
+// ConnectToVoiceChannel finds and connects to a user's voice channel
+func ConnectToVoiceChannel(ctx *Context) (*discordgo.VoiceConnection, error) {
+	b := ctx.Ses
+	msg := ctx.Msg
+
+	vc, err := b.GuildVoiceConnection(ctx.Msg)
+	if err != nil {
+
+		// If not currently in a channel, attempt to join the voice channel of the calling user.
+		vs, err := b.UserVoiceState(msg.Author.ID)
+		if err != nil {
+			ctx.ReplyError(errors.New("Could not find user's voice state"))
+			return nil, err
+		}
+		vc, err = b.ChannelVoiceJoin(vs.GuildID, vs.ChannelID, false, true)
+		if err != nil {
+			ctx.ReplyError(errors.New("Could not join user's voice channel"))
+			return nil, err
+		}
+		return vc, nil
+	}
+
+	// Confirm that the user is in the correct voice channel.
+	// If the user is in another voice channel, join them.
+	vs, err := b.UserVoiceState(msg.Author.ID)
+	if err == nil && vs.ChannelID != vc.ChannelID || vs.GuildID != vc.GuildID {
+		vc, err = b.ChannelVoiceJoin(vs.GuildID, vs.ChannelID, false, true)
+		if err != nil {
+			ctx.ReplyError("Could not join user's voice channel")
+			return nil, err
+		}
+	}
+
+	if !vc.Ready {
+		vc, err = b.ChannelVoiceJoin(vc.GuildID, vc.ChannelID, false, true)
+		if err != nil {
+			ctx.ReplyError("Could not join user's voice channel")
+			return nil, err
+		}
+	}
+
+	return vc, nil
 }
