@@ -17,9 +17,11 @@ import (
 
 // Config ...
 type Config struct {
-	ImageCommands      [][]string
-	BooruCommands      [][]string
-	ConvolutionKernels [][]string
+	ImageCommandsCategory string
+	ImageCommands         [][]string
+	BooruCommandsCategory string
+	BooruCommands         [][]string
+	ImageFiltersCategory  string
 }
 
 // ImageCommand ...
@@ -51,21 +53,29 @@ type Module struct {
 // Build ...
 func (m *Module) Build(s *system.System) {
 	r := s.CommandRouter
+	maincategory := r.CurrentCategory
+
+	setCategory := func(name string) {
+		if name != "" {
+			r.SetCategory(name)
+		} else {
+			r.SetCategory(maincategory)
+		}
+	}
 
 	/////////////////////////////////
 	// Convolution filters
 	////////////////////////////////
-	lastcategory := r.CurrentCategory
-	r.CurrentCategory = "Effects"
+	setCategory(m.Config.ImageFiltersCategory)
 	r.On("edgedetect", MakeConvolutionFunc(MatrixEdgeDetect, getDivisor(MatrixEdgeDetect), 1)).Set("", "`usage: edge [iteratins]` Detects the edges of the given image")
 	r.On("blur", MakeConvolutionFunc(MatrixGaussian, getDivisor(MatrixGaussian), 1)).Set("", "`usage: blur [iterations]` Gaussian blurs the given image")
 	r.On("motionblur", MakeConvolutionFunc(MatrixMotionBlur, getDivisor(MatrixMotionBlur), 1)).Set("", "`usage: motionblue [iterations]` Applies a motion blur to the given image")
 	r.On("sharpen", MakeConvolutionFunc(MatrixSharpen, getDivisor(MatrixSharpen), 1)).Set("", "`usage: motionblue [iterations]`, sharpens the given image")
 
-	r.CurrentCategory = lastcategory
 	///////////////////////////////
 	//   Booru commands
 	///////////////////////////////
+	setCategory(m.Config.BooruCommandsCategory)
 	for _, v := range m.Config.BooruCommands {
 		if len(v) < 2 {
 			log.Println("error creating booru command " + fmt.Sprint(v) + ", array must be in the form of [command name, booru url]")
@@ -77,6 +87,7 @@ func (m *Module) Build(s *system.System) {
 	////////////////////////////////
 	//  Custom image commands
 	///////////////////////////////
+	setCategory(m.Config.ImageCommandsCategory)
 	for _, v := range m.Config.ImageCommands {
 		AddImageCommand(r, v)
 	}
