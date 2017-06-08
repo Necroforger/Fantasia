@@ -50,6 +50,9 @@ func (m *Module) Build(s *system.System) {
 	r.On("join", func(ctx *system.Context) { ctx.Ses.UserVoiceStateJoin(ctx.Msg.Author.ID, false, true) }).Set("", "Joins the calling user's voice channel")
 	r.On("leave", func(ctx *system.Context) { ctx.Ses.GuildVoiceConnectionDisconnect(ctx.Msg) }).Set("", "Disconnects from the current guild voice channel")
 
+	////////////////////////////////////
+	//           Sound clips
+	///////////////////////////////////
 	setCategory(m.Config.SoundClipCommandsCategory)
 	// Create custom soundclip commands
 	for _, v := range m.Config.SoundclipCommands {
