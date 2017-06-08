@@ -40,6 +40,14 @@ var (
 		{0, 0, 0, 1, 0},
 		{0, 0, 0, 0, 1},
 	}
+
+	MatrixSharpen = [][]float64{
+		{0, 0, 0, 0, 0},
+		{0, 0, -1, 0, 0},
+		{0, -1, 5, -1, 0},
+		{0, 0, -1, 1, 0},
+		{0, 0, 0, 0, 0},
+	}
 )
 
 func getDivisor(matrix [][]float64) int {
@@ -63,12 +71,15 @@ func MakeConvolutionFunc(matrix [][]float64, divisor int, iterations int) func(*
 			return
 		}
 
+		// Copy the iterations variable so that it is not modified the next time the
+		// Command is used.
+		it := iterations
 		// iterations bypass
 		if n, err := strconv.Atoi(ctx.Args.After()); err == nil {
-			if limit := 20; n > limit {
-				n = limit
+			if n > 20 {
+				n = 20
 			}
-			iterations = n
+			it = n
 		}
 
 		resp, err := http.Get(ctx.Msg.Attachments[0].URL)
@@ -86,7 +97,7 @@ func MakeConvolutionFunc(matrix [][]float64, divisor int, iterations int) func(*
 		img = resize.Thumbnail(500, 500, img, resize.Lanczos3)
 
 		imgresult := img
-		for i := 0; i < iterations; i++ {
+		for i := 0; i < it; i++ {
 			imgresult = Convolute(imgresult, matrix, divisor)
 		}
 
