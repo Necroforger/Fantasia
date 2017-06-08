@@ -17,8 +17,9 @@ import (
 
 // Config ...
 type Config struct {
-	ImageCommands [][]string
-	BooruCommands [][]string
+	ImageCommands      [][]string
+	BooruCommands      [][]string
+	ConvolutionKernels [][]string
 }
 
 // ImageCommand ...
@@ -51,7 +52,19 @@ type Module struct {
 func (m *Module) Build(s *system.System) {
 	r := s.CommandRouter
 
-	// Create booru searching commands
+	/////////////////////////////////
+	// Convolution filters
+	////////////////////////////////
+	lastcategory := r.CurrentCategory
+	r.CurrentCategory = "Effects"
+	r.On("edgedetect", MakeConvolutionFunc(MatrixEdgeDetect, getDivisor(MatrixEdgeDetect), 1)).Set("", "`usage: edge [iteratins]` Detects the edges of the given image")
+	r.On("blur", MakeConvolutionFunc(MatrixGaussian, getDivisor(MatrixGaussian), 1)).Set("", "`usage: blur [iterations]` Gaussian blurs the given image")
+	r.On("motionblur", MakeConvolutionFunc(MatrixMotionBlur, getDivisor(MatrixMotionBlur), 1)).Set("", "`usage: motionblue [iterations]` Applies a motion blur to the given image")
+
+	r.CurrentCategory = lastcategory
+	///////////////////////////////
+	//   Booru commands
+	///////////////////////////////
 	for _, v := range m.Config.BooruCommands {
 		if len(v) < 2 {
 			log.Println("error creating booru command " + fmt.Sprint(v) + ", array must be in the form of [command name, booru url]")
@@ -60,10 +73,13 @@ func (m *Module) Build(s *system.System) {
 		AddBooru(r, v[0], v[1])
 	}
 
-	// Create image searching commands
+	////////////////////////////////
+	//  Custom image commands
+	///////////////////////////////
 	for _, v := range m.Config.ImageCommands {
 		AddImageCommand(r, v)
 	}
+
 }
 
 // AddImageCommand makes an image command from an array of strings in the format

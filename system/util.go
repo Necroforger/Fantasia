@@ -99,11 +99,13 @@ func ConnectToVoiceChannel(ctx *Context) (*discordgo.VoiceConnection, error) {
 			ctx.ReplyError(errors.New("Could not find user's voice state"))
 			return nil, err
 		}
+
 		vc, err = b.ChannelVoiceJoin(vs.GuildID, vs.ChannelID, false, true)
 		if err != nil {
 			ctx.ReplyError(errors.New("Could not join user's voice channel"))
 			return nil, err
 		}
+
 		return vc, nil
 	}
 

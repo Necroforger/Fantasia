@@ -20,8 +20,11 @@ package musicplayer
 */
 
 import (
+	"bytes"
+	"strconv"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/Necroforger/Fantasia/system"
 )
 
@@ -43,6 +46,8 @@ func (m *Module) Build(s *system.System) {
 	s.CommandRouter.AddSubrouter(r)
 	t := r.Router
 
+	t.On("queue", m.CmdQueue).Set("", "queue")
+	t.On("goto", m.CmdGoto).Set("", "Changes the queues current song index")
 	t.On("play", m.CmdPlay).Set("", "Plays the current queue")
 	t.On("stop", m.CmdStop).Set("", "stops the currently playing queue")
 	t.On("pause", m.CmdPause).Set("", "Pauses the currently playing song")
@@ -72,7 +77,6 @@ func (m *Module) CmdPlay(ctx *system.Context) {
 	}
 
 	radio := m.getRadio(vc.GuildID)
-	radio.Queue.Goto(0)
 
 	err = radio.PlayQueue(ctx, vc)
 	if err != nil {
@@ -93,6 +97,63 @@ func (m *Module) CmdStop(ctx *system.Context) {
 	if err == nil {
 		ctx.ReplySuccess("Queue stopped")
 	}
+}
+
+// CmdQueue Queues a song or views the queue list
+func (m *Module) CmdQueue(ctx *system.Context) {
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		ctx.ReplyError(err)
+	}
+
+	radio := m.getRadio(guildID)
+
+	if ctx.Args.After() != "" {
+		radio.Queue.Add(&Song{
+			URL: ctx.Args.After(),
+		})
+		ctx.ReplySuccess("Added URL to queue")
+		return
+	}
+
+	var out bytes.Buffer
+	toml.NewEncoder(&out).Encode(radio.Queue)
+
+	ctx.ReplyNotify(string(out.Bytes()))
+}
+
+// CmdGoto changes the current song index to the specified index
+func (m *Module) CmdGoto(ctx *system.Context) {
+
+	if ctx.Args.After() == "" {
+		ctx.ReplyError("Please enter the song index to go to")
+		return
+	}
+
+	index, err := strconv.Atoi(ctx.Args.After())
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+
+	radio := m.getRadio(guildID)
+
+	err = radio.Goto(index)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+
+	if !radio.Silent {
+		ctx.ReplySuccess("Changed song index to ", index)
+	}
+
 }
 
 // CmdResume resumes the guild's currently playing audio dispatcher.

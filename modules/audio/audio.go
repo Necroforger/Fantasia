@@ -60,6 +60,12 @@ func MakeSoundclipFunc(urls []string, openFiles bool) func(*system.Context) {
 			path   string
 		)
 
+		vc, err := system.ConnectToVoiceChannel(ctx)
+		if err != nil {
+			ctx.ReplyError(err)
+			return
+		}
+
 		if len(urls) == 1 {
 			path = urls[0]
 		} else {
@@ -102,13 +108,6 @@ func MakeSoundclipFunc(urls []string, openFiles bool) func(*system.Context) {
 			if err != nil {
 				ctx.ReplyError(err)
 			}
-		}
-
-		// Connect to voice channel and play clip
-		vc, err := system.ConnectToVoiceChannel(ctx)
-		if err != nil {
-			ctx.ReplyError(err)
-			return
 		}
 
 		ctx.Ses.PlayStream(vc, stream)

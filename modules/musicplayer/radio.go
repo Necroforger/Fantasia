@@ -158,6 +158,19 @@ func (r *Radio) Previous() error {
 	return nil
 }
 
+// Goto ...
+func (r *Radio) Goto(index int) error {
+	err := r.Queue.Goto(index)
+	if err != nil {
+		return err
+	}
+
+	if r.running {
+		r.control <- AudioContinue
+	}
+	return nil
+}
+
 // IsRunning returns true if the player is currently running
 func (r *Radio) IsRunning() bool {
 	r.Lock()

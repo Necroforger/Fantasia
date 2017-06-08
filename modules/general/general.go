@@ -17,6 +17,7 @@ func (m *Module) Build(s *system.System) {
 	r.On("ping", Ping).Set("", "responds with the amount of time taken to send and retrieve a message")
 	r.On("snowflake", Snowflake).Set("", "gives the creation date of a discord ID")
 	r.On("emojify", m.emojifyCommand).Set("", "Emojifies the given text")
+	r.On("hex", HexDisplay).Set("", "Returns an image representation of the given hex code. example: `hex ff00ff`")
 }
 
 // Ping returns the time taken to send a message and recieve back the discord event

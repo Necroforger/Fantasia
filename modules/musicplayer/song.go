@@ -50,6 +50,7 @@ func NewSongQueue() *SongQueue {
 func (s *SongQueue) Goto(index int) error {
 	if index >= 0 && index < len(s.Playlist) {
 		s.Index = index
+		return nil
 	}
 	return ErrIndexOutOfBounds
 }
