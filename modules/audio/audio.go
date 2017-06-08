@@ -14,7 +14,8 @@ import (
 
 // Config ...
 type Config struct {
-	SoundclipCommands [][]string
+	SoundClipCommandsCategory string
+	SoundclipCommands         [][]string
 }
 
 // NewConfig ...
@@ -32,6 +33,16 @@ type Module struct {
 // Build ...
 func (m *Module) Build(s *system.System) {
 	r := s.CommandRouter
+	maincategory := r.CurrentCategory
+
+	setCategory := func(name string) {
+		if name != "" {
+			r.SetCategory(name)
+		} else {
+			r.SetCategory(maincategory)
+		}
+	}
+
 	r.On("play", m.playHandler).Set("", "Plays the requested song")
 	r.On("stop", func(ctx *system.Context) { ctx.Ses.GuildAudioDispatcherStop(ctx.Msg) }).Set("", "Stops the guilds currently playing audio dispatcher")
 	r.On("pause", func(ctx *system.Context) { ctx.Ses.GuildAudioDispatcherPause(ctx.Msg) }).Set("", "Pauses the guild's currently playing audio dispatcher")
@@ -39,6 +50,7 @@ func (m *Module) Build(s *system.System) {
 	r.On("join", func(ctx *system.Context) { ctx.Ses.UserVoiceStateJoin(ctx.Msg.Author.ID, false, true) }).Set("", "Joins the calling user's voice channel")
 	r.On("leave", func(ctx *system.Context) { ctx.Ses.GuildVoiceConnectionDisconnect(ctx.Msg) }).Set("", "Disconnects from the current guild voice channel")
 
+	setCategory(m.Config.SoundClipCommandsCategory)
 	// Create custom soundclip commands
 	for _, v := range m.Config.SoundclipCommands {
 		if len(v) >= 3 {
