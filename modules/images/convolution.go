@@ -65,8 +65,8 @@ func MakeConvolutionFunc(matrix [][]float64, divisor int, iterations int) func(*
 
 		// iterations bypass
 		if n, err := strconv.Atoi(ctx.Args.After()); err == nil {
-			if n > 10 {
-				n = 10
+			if limit := 20; n > limit {
+				n = limit
 			}
 			iterations = n
 		}
