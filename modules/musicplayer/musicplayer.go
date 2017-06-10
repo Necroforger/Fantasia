@@ -47,7 +47,7 @@ func (m *Module) Build(s *system.System) {
 	t := r.Router
 
 	t.On("queue", m.CmdQueue).Set("", "queue")
-	t.On("goto", m.CmdGoto).Set("", "Changes the queues current song index")
+	t.On("go", m.CmdGoto).Set("", "Changes the queues current song index")
 	t.On("play", m.CmdPlay).Set("", "Plays the current queue")
 	t.On("stop", m.CmdStop).Set("", "stops the currently playing queue")
 	t.On("pause", m.CmdPause).Set("", "Pauses the currently playing song")
@@ -186,7 +186,7 @@ func (m *Module) CmdNext(ctx *system.Context) {
 	radio := m.getRadio(guildID)
 
 	if t := time.Now().Sub(radio.ControlLastUsed); t < ControlCooldown && radio.IsRunning() {
-		ctx.ReplyError("This command is on cooldown for `", (ControlCooldown - t).String(), "`. Please use `Goto` or provide an integer argument to skip multiple songs quickly")
+		ctx.ReplyError("This command is on cooldown for `", (ControlCooldown - t).String(), "`. Please use `Go` or provide an integer argument to skip multiple songs quickly")
 		return
 	}
 	radio.ControlLastUsed = time.Now()
@@ -207,7 +207,7 @@ func (m *Module) CmdPrevious(ctx *system.Context) {
 	radio := m.getRadio(guildID)
 
 	if t := time.Now().Sub(radio.ControlLastUsed); t < ControlCooldown && radio.IsRunning() {
-		ctx.ReplyError("This command is on cooldown for `", (ControlCooldown - t).String(), "`. Please use `Goto` or provide an integer argument to skip multiple songs quickly")
+		ctx.ReplyError("This command is on cooldown for `", (ControlCooldown - t).String(), "`. Please use `Go` or provide an integer argument to skip multiple songs quickly")
 		return
 	}
 	radio.ControlLastUsed = time.Now()
