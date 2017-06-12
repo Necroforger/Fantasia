@@ -17,6 +17,8 @@ import (
 
 // Config ...
 type Config struct {
+	// FilterCommands includes image filtering commands
+	FilterCommands        bool
 	ImageCommandsCategory string
 	ImageCommands         [][]string
 	BooruCommandsCategory string
@@ -33,6 +35,9 @@ type ImageCommand struct {
 // NewConfig ...
 func NewConfig() *Config {
 	return &Config{
+		// FilterCommands includes filter commands
+		FilterCommands: true,
+
 		// Default Image commands
 		ImageCommands: [][]string{},
 
@@ -66,12 +71,14 @@ func (m *Module) Build(s *system.System) {
 	/////////////////////////////////
 	// Convolution filters
 	////////////////////////////////
-	setCategory(m.Config.ImageFiltersCategory)
-	r.On("edgedetect", MakeConvolutionFunc(MatrixEdgeDetect, getDivisor(MatrixEdgeDetect), 1)).Set("", "`usage: edge [iteratins]` Detects the edges of the given image")
-	r.On("blur", MakeConvolutionFunc(MatrixGaussian, getDivisor(MatrixGaussian), 1)).Set("", "`usage: blur [iterations]` Gaussian blurs the given image")
-	r.On("motionblur", MakeConvolutionFunc(MatrixMotionBlur, getDivisor(MatrixMotionBlur), 1)).Set("", "`usage: motionblue [iterations]` Applies a motion blur to the given image")
-	r.On("sharpen", MakeConvolutionFunc(MatrixSharpen, getDivisor(MatrixSharpen), 1)).Set("", "`usage: motionblue [iterations]`, sharpens the given image")
-	r.On("filter", cmdCustomFilter).Set("Provide a custom image filter")
+	if m.Config.FilterCommands {
+		setCategory(m.Config.ImageFiltersCategory)
+		r.On("edgedetect", MakeConvolutionFunc(MatrixEdgeDetect, getDivisor(MatrixEdgeDetect), 1)).Set("", "`usage: edge [iteratins]` Detects the edges of the given image")
+		r.On("blur", MakeConvolutionFunc(MatrixGaussian, getDivisor(MatrixGaussian), 1)).Set("", "`usage: blur [iterations]` Gaussian blurs the given image")
+		r.On("motionblur", MakeConvolutionFunc(MatrixMotionBlur, getDivisor(MatrixMotionBlur), 1)).Set("", "`usage: motionblue [iterations]` Applies a motion blur to the given image")
+		r.On("sharpen", MakeConvolutionFunc(MatrixSharpen, getDivisor(MatrixSharpen), 1)).Set("", "`usage: motionblue [iterations]`, sharpens the given image")
+		r.On("filter", cmdCustomFilter).Set("", "Provide a custom image filter")
+	}
 
 	///////////////////////////////
 	//   Booru commands

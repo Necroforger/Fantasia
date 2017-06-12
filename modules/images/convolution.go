@@ -146,23 +146,26 @@ func cmdCustomFilter(ctx *system.Context) {
 		return
 	}
 
-	matrixR = filters[0]
-	matrixG = matrixR
-	matrixB = matrixG
-
-	if len(filters) > 1 {
+	if len(filters) == 1 {
+		if !validFilter(filters[0]) {
+			ctx.ReplyError("Invalid filter form")
+			return
+		}
+		img = Convolute(img, filters[0], 1)
+	} else {
+		matrixR = filters[0]
 		matrixG = filters[1]
-	}
-	if len(filters) > 2 {
-		matrixB = filters[2]
-	}
+		matrixB = matrixG
+		if len(filters) > 2 {
+			matrixB = filters[2]
+		}
+		if !validFilter(matrixR) || !validFilter(matrixG) || !validFilter(matrixG) {
+			ctx.ReplyError("One of your filters presents an invalid form")
+			return
+		}
 
-	if !validFilter(matrixR) || !validFilter(matrixG) || !validFilter(matrixG) {
-		ctx.ReplyError("One of your filters presents an invalid form")
-		return
+		img = ConvoluteRGB(img, matrixR, matrixG, matrixB, getDivisor(matrixR), getDivisor(matrixG), getDivisor(matrixB))
 	}
-
-	img = ConvoluteRGB(img, matrixR, matrixG, matrixB, getDivisor(matrixR), getDivisor(matrixG), getDivisor(matrixB))
 
 	rd, wr := io.Pipe()
 	go func() {
@@ -283,7 +286,7 @@ func ConvoluteRGB(img image.Image, matrixR, matrixG, matrixB [][]float64, diviso
 			for i := -(offset); i <= (offset); i++ {
 				for j := -(offset); j <= (offset); j++ {
 					_, g, _, _ = img.At(x+i, y+j).RGBA()
-					sumG += (float64(g) * matrixR[i+offset][j+offset])
+					sumG += (float64(g) * matrixG[i+offset][j+offset])
 				}
 			}
 
@@ -292,7 +295,7 @@ func ConvoluteRGB(img image.Image, matrixR, matrixG, matrixB [][]float64, diviso
 			for i := -(offset); i <= (offset); i++ {
 				for j := -(offset); j <= (offset); j++ {
 					_, _, b, _ = img.At(x+i, y+j).RGBA()
-					sumB += (float64(b) * matrixR[i+offset][j+offset])
+					sumB += (float64(b) * matrixB[i+offset][j+offset])
 				}
 			}
 
