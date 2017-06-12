@@ -75,7 +75,7 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 		// --------- TODO: Print information about the song if not Silenced ----------- //
 		song, err := r.Queue.Song()
 		if err == nil && !r.Silent {
-			ctx.ReplyNotify("Now playing\n", song.URL)
+			ctx.ReplyNotify("Now playing\n", song.Markdown())
 		}
 
 		done := make(chan bool)
@@ -165,7 +165,7 @@ func (r *Radio) Goto(index int) error {
 		return err
 	}
 
-	if r.running {
+	if r.IsRunning() {
 		r.control <- AudioContinue
 	}
 	return nil
@@ -190,4 +190,13 @@ func (r *Radio) Stop() error {
 		return nil
 	}
 	return errors.New("Audio player not running")
+}
+
+///////////////////////////////////////////////////////////////////
+//  Song loading
+///////////////////////////////////////////////////
+
+// QueueYoutubeDL Queues a youtube video or playlist to the given song slice.
+func QueueYoutubeDL(URL string, playlist []*Song) {
+
 }

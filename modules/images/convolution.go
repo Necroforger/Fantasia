@@ -151,14 +151,19 @@ func cmdCustomFilter(ctx *system.Context) {
 			ctx.ReplyError("Invalid filter form")
 			return
 		}
+
 		img = Convolute(img, filters[0], 1)
+
 	} else {
+
 		matrixR = filters[0]
 		matrixG = filters[1]
 		matrixB = matrixG
+
 		if len(filters) > 2 {
 			matrixB = filters[2]
 		}
+
 		if !validFilter(matrixR) || !validFilter(matrixG) || !validFilter(matrixG) {
 			ctx.ReplyError("One of your filters presents an invalid form")
 			return

@@ -20,19 +20,50 @@ package musicplayer
 */
 
 import (
-	"bytes"
+	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/Necroforger/Fantasia/system"
 )
+
+//genmodules:config
+////////////////////////////////
+//         Config
+////////////////////////////////
+
+// Config module configuration
+type Config struct {
+	UseSubrouter bool
+
+	// All radios will start with silent mode on.
+	// Minimum notifications will be sent from commands.
+	RadioSilent bool
+
+	// RadioLoop sets the default loop value for radios.
+	// If enabled, playlists will loop by default.
+	RadioLoop bool
+
+	// Start all radios with a test queue
+	Debug bool
+}
+
+// NewConfig ...
+func NewConfig() *Config {
+	return &Config{
+		UseSubrouter: true,
+		RadioSilent:  false,
+		RadioLoop:    false,
+		Debug:        false,
+	}
+}
 
 // ControlCooldown is the cooldown for control event commands
 const ControlCooldown = time.Millisecond * 1500
 
 // Module ...
 type Module struct {
+	Config      *Config
 	GuildRadios map[string]*Radio
 }
 
@@ -40,14 +71,24 @@ type Module struct {
 func (m *Module) Build(s *system.System) {
 	m.GuildRadios = map[string]*Radio{}
 
-	r, _ := system.NewSubCommandRouter(`^m(usicplayer)?(\s|$)`, "m | musicplayer")
-	r.Router.Prefix = "^"
-	r.Set("", "musicplayer subrouter, controls the various actions related to music playing")
-	s.CommandRouter.AddSubrouter(r)
-	t := r.Router
+	var t *system.CommandRouter
+
+	if m.Config.UseSubrouter {
+		r, _ := system.NewSubCommandRouter(`^m(usicplayer)?(\s|$)`, "m | musicplayer")
+		r.Router.Prefix = "^"
+		r.Set("", "musicplayer subrouter, controls the various actions related to music playing")
+		s.CommandRouter.AddSubrouter(r)
+		t = r.Router
+	} else {
+		t = s.CommandRouter
+	}
 
 	t.On("queue", m.CmdQueue).Set("", "queue")
-	t.On("go", m.CmdGoto).Set("", "Changes the queues current song index")
+	t.On("shuffle", m.CmdShuffle).Set("", "Shuffles the current queue, ignoring the current song index")
+	t.On("swap", m.CmdSwap).Set("", "Swaps the song at index 'n' with index 't'\nusage: `swap [int: from] [int: to]`")
+	t.On("move", m.CmdMove).Set("", "Moves the song at index 'n' to index 't'\nusage: `move [int: from] [int: to]`")
+	t.On("go", m.CmdGoto).Set("", "Changes the queues current song index\nusage: `go [int: index]`")
+	t.On("clear", m.CmdClear).Set("", "Clears the current song queue")
 	t.On("play", m.CmdPlay).Set("", "Plays the current queue")
 	t.On("stop", m.CmdStop).Set("", "stops the currently playing queue")
 	t.On("pause", m.CmdPause).Set("", "Pauses the currently playing song")
@@ -105,10 +146,10 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 	if err != nil {
 		ctx.ReplyError(err)
 	}
-
 	radio := m.getRadio(guildID)
 
-	if ctx.Args.After() != "" {
+	index := 0
+	if index, err = strconv.Atoi(ctx.Args.Get(0)); err != nil && ctx.Args.After() != "" {
 		radio.Queue.Add(&Song{
 			URL: ctx.Args.After(),
 		})
@@ -116,10 +157,28 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 		return
 	}
 
-	var out bytes.Buffer
-	toml.NewEncoder(&out).Encode(radio.Queue)
+	if err != nil {
+		index = radio.Queue.Index
+	}
 
-	ctx.ReplyNotify(string(out.Bytes()))
+	ctx.ReplyEmbed(EmbedQueue(radio.Queue, index, 5, 10).
+		SetColor(system.StatusNotify).
+		MessageEmbed)
+}
+
+// CmdShuffle Shuffles the current queue
+func (m *Module) CmdShuffle(ctx *system.Context) {
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+
+	radio := m.getRadio(guildID)
+	radio.Queue.Shuffle()
+	if !radio.Silent {
+		ctx.ReplyNotify("Queue shuffled")
+	}
 }
 
 // CmdGoto changes the current song index to the specified index
@@ -218,6 +277,80 @@ func (m *Module) CmdPrevious(ctx *system.Context) {
 	}
 }
 
+// CmdSwap swaps two queue indexes
+func (m *Module) CmdSwap(ctx *system.Context) {
+	var (
+		guildID string
+		from    int
+		to      int
+		err     error
+	)
+
+	guildID, err = guildIDFromContext(ctx)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+	radio := m.getRadio(guildID)
+
+	if from, err = strconv.Atoi(ctx.Args.Get(0)); err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+
+	if to, err = strconv.Atoi(ctx.Args.Get(1)); err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+
+	err = radio.Queue.Swap(from, to)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+
+	if !radio.Silent {
+		ctx.ReplyNotify(fmt.Sprintf("Song index [%d] swapped with [%d]", from, to))
+	}
+}
+
+// CmdMove moves the specified index to the given position.
+func (m *Module) CmdMove(ctx *system.Context) {
+	var (
+		guildID string
+		from    int
+		to      int
+		err     error
+	)
+
+	guildID, err = guildIDFromContext(ctx)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+	radio := m.getRadio(guildID)
+
+	if from, err = strconv.Atoi(ctx.Args.Get(0)); err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+
+	if to, err = strconv.Atoi(ctx.Args.Get(1)); err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+
+	err = radio.Queue.Move(from, to)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+
+	if !radio.Silent {
+		ctx.ReplyNotify(fmt.Sprintf("Song index [%d] moved to [%d]", from, to))
+	}
+}
+
 func (m *Module) getRadio(guildID string) *Radio {
 	if v, ok := m.GuildRadios[guildID]; ok {
 		return v
@@ -225,24 +358,50 @@ func (m *Module) getRadio(guildID string) *Radio {
 	r := NewRadio(guildID)
 	m.GuildRadios[guildID] = r
 
-	r.Queue.Playlist = []*Song{
-		&Song{
-			URL: "https://www.youtube.com/watch?v=-yEDM-ogtBY",
-		},
-		&Song{
-			URL: "https://youtu.be/-yNATRuEvsE",
-		},
-		&Song{
-			URL: "https://www.youtube.com/watch?v=b8AIGUYscYo",
-		},
-		&Song{
-			URL: "https://www.youtube.com/watch?v=m2eeyey-87U",
-		},
-		&Song{
-			URL: "https://youtu.be/tqMfWwnLtKg",
-		},
+	if m.Config.RadioSilent {
+		r.Silent = true
 	}
-	r.Queue.Loop = true
+
+	if m.Config.RadioLoop {
+		r.Queue.Loop = true
+	}
+
+	if m.Config.Debug {
+		r.Queue.Playlist = []*Song{
+			&Song{
+				Title: "Touhou Erhu［東方名曲］土著神醮 ／ 平行世界",
+				URL:   "https://www.youtube.com/watch?v=-yEDM-ogtBY",
+			},
+			&Song{
+				Title: "東方 [Piano] Necrofantasia 『5』",
+				URL:   "https://youtu.be/-yNATRuEvsE",
+			},
+			&Song{
+				Title: "東方 [Piano] Love-coloured Master Spark 『4』",
+				URL:   "https://www.youtube.com/watch?v=b8AIGUYscYo",
+			},
+			&Song{
+				Title: "Touhou Remix E.149 (Horror) Satori Maiden ~ 3rd Eye",
+				URL:   "https://www.youtube.com/watch?v=m2eeyey-87U",
+			},
+			&Song{
+				Title: "Elder - Reflections of a Floating World (2017) (New Full Album)",
+				URL:   "https://youtu.be/tqMfWwnLtKg",
+			},
+			&Song{
+				Title: "東方 [Piano] Reach for the Moon, Immortal Smoke 『3』",
+				URL:   "https://www.youtube.com/watch?v=WUJdZDM8pKk",
+			},
+			&Song{
+				Title: "東方 [Piano] Septette for the Dead Princess 『8』",
+				URL:   "https://www.youtube.com/watch?v=c55RF62YZgI",
+			},
+			&Song{
+				Title: "東方 [Piano] Septette for the Dead Princess 『6』",
+				URL:   "https://youtu.be/RYTEJ7fdDrg",
+			},
+		}
+	}
 
 	return r
 }

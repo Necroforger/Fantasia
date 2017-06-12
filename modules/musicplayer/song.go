@@ -29,6 +29,23 @@ type Song struct {
 	Duration    int    `json:"duration"`
 }
 
+// String provides a string representation of the song
+func (s *Song) String() string {
+	var title string
+	switch {
+	case s.Title != "":
+		title = s.Title
+	case s.URL != "":
+		title = s.URL
+	}
+	return title
+}
+
+// Markdown Provides a markdown url for the song
+func (s *Song) Markdown() string {
+	return "[" + s.String() + "]" + "(" + s.URL + ")"
+}
+
 // SongQueue ...
 type SongQueue struct {
 	sync.Mutex
@@ -179,6 +196,18 @@ func (s *SongQueue) Move(from, to int) error {
 
 	s.Playlist = append(start, value)
 	s.Playlist = append(s.Playlist, end...)
+	return nil
+}
+
+// Swap swaps two indexes in the queue playlist.
+func (s *SongQueue) Swap(from, to int) error {
+	s.Lock()
+	defer s.Unlock()
+	if from < 0 || to < 0 || from >= len(s.Playlist) || to >= len(s.Playlist) {
+		return ErrIndexOutOfBounds
+	}
+
+	s.Playlist[from], s.Playlist[to] = s.Playlist[to], s.Playlist[from]
 	return nil
 }
 
