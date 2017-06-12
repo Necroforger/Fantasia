@@ -1,7 +1,12 @@
 package musicplayer
 
 import (
+	"bufio"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"os/exec"
 	"sync"
 	"time"
 
@@ -29,6 +34,8 @@ type Radio struct {
 	AutoPlay bool
 	GuildID  string
 	Queue    *SongQueue
+
+	Dispatcher *dream.AudioDispatcher
 
 	running bool
 	control chan int
@@ -72,10 +79,14 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 			return err
 		}
 
+		r.Lock()
+		r.Dispatcher = disp
+		r.Unlock()
+
 		// --------- TODO: Print information about the song if not Silenced ----------- //
 		song, err := r.Queue.Song()
 		if err == nil && !r.Silent {
-			ctx.ReplyNotify("Now playing\n", song.Markdown())
+			ctx.ReplyNotify("Now playing\n", song.Markdown()+"\nindex: "+fmt.Sprint(r.Queue.Index))
 		}
 
 		done := make(chan bool)
@@ -182,21 +193,105 @@ func (r *Radio) IsRunning() bool {
 // Stop stops the playing queue
 func (r *Radio) Stop() error {
 
-	r.Lock()
-	if r.running {
-		r.Unlock()
-
+	if r.IsRunning() {
 		r.control <- AudioStop
 		return nil
 	}
 	return errors.New("Audio player not running")
 }
 
+// Duration returns the duration the current song has been playing for in seconds
+func (r *Radio) Duration() int {
+	r.Lock()
+	defer r.Unlock()
+	if r.Dispatcher != nil {
+		return int(r.Dispatcher.Duration.Seconds())
+	}
+	return 0
+}
+
 ///////////////////////////////////////////////////////////////////
 //  Song loading
 ///////////////////////////////////////////////////
 
-// QueueYoutubeDL Queues a youtube video or playlist to the given song slice.
-func QueueYoutubeDL(URL string, playlist []*Song) {
+// QueueWithYoutubeDL Queues a youtube video or playlist to the given song slice.
+// Supports returning the currently queued song
+func QueueWithYoutubeDL(URL, addedBy string, queue *SongQueue, progress chan *Song) error {
+	song := &Song{
+		URL: URL,
+	}
 
+	ytdl := exec.Command("youtube-dl", "-j", "-i", URL)
+	ytdlout, err := ytdl.StdoutPipe()
+	if err != nil {
+		return err
+	}
+	reader := bufio.NewReader(ytdlout)
+	err = ytdl.Start()
+	if err != nil {
+		return err
+	}
+	var (
+		line      []byte
+		isPrefix  bool
+		totalLine []byte
+	)
+	err = nil
+	for err == nil {
+		// Scan each line for song information
+		line, isPrefix, err = reader.ReadLine()
+		if err != nil && err != io.EOF {
+			fmt.Println("SCANNER ERROR: ", err)
+		}
+		totalLine = append(totalLine, line...)
+		if isPrefix {
+			continue
+		}
+		song = &Song{}
+		er := json.Unmarshal(totalLine, song)
+		if er != nil {
+			continue
+		}
+
+		// Add song to queue
+		song.AddedBy = addedBy
+		queue.Add(song)
+
+		// Track progress
+		if progress != nil {
+			progress <- song
+		}
+
+		totalLine = []byte{}
+	}
+	if err != nil && err != io.EOF {
+		return err
+	}
+
+	if progress != nil {
+		close(progress)
+	}
+
+	return nil
+}
+
+// SongFromYTDL Uses ytdl to obtain video information and create a song object
+func SongFromYTDL(URL, addedBy string) (*Song, error) {
+	info, err := ytdl.GetVideoInfo(URL)
+	if err != nil {
+		return nil, err
+	}
+
+	song := &Song{
+		Title:       info.Title,
+		AddedBy:     addedBy,
+		Description: info.Description,
+		Duration:    int(info.Duration.Seconds()),
+		ID:          info.ID,
+		Thumbnail:   info.GetThumbnailURL(ytdl.ThumbnailQualityHigh).String(),
+		Uploader:    info.Author,
+		URL:         URL,
+	}
+
+	return song, nil
 }

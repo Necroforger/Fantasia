@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"sync"
 	"time"
+
+	"github.com/Necroforger/dream"
 )
 
 var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -27,6 +29,7 @@ type Song struct {
 	Uploader    string `json:"uploader"`
 	UploadDate  string `json:"upload_date"`
 	Duration    int    `json:"duration"`
+	Progress    int
 }
 
 // String provides a string representation of the song
@@ -46,12 +49,34 @@ func (s *Song) Markdown() string {
 	return "[" + s.String() + "]" + "(" + s.URL + ")"
 }
 
+// Embed Returns an embed containing information about the song
+func (s *Song) Embed() *dream.Embed {
+	embed := dream.NewEmbed().
+		SetTitle(s.Title).
+		SetThumbnail(s.Thumbnail).
+		SetURL(s.URL).
+		SetFooter(s.AddedBy)
+	return embed
+}
+
+////////////////////////////////////////////
+//        Song Queue
+//////////////////////////////////////////
+
 // SongQueue ...
 type SongQueue struct {
 	sync.Mutex
 	Playlist []*Song
-	Index    int
-	Loop     bool
+
+	// Index is the current position in the playlist.
+	Index int
+
+	// Loop controls if the playlist is to restart at the beginning when attempting
+	// To navigate to the next song after the playlist ends.
+	Loop bool
+
+	// LoopSong controls if the playlist is to loop the currently selected song.
+	LoopSong bool
 }
 
 // NewSongQueue returns a pointer to a new Song queue
@@ -125,12 +150,12 @@ func (s *SongQueue) Song() (*Song, error) {
 }
 
 // Add adds a song to the queue and returns the index of the position it was added to
-func (s *SongQueue) Add(song *Song) int {
+func (s *SongQueue) Add(song *Song) *Song {
 	s.Lock()
 	defer s.Unlock()
 
 	s.Playlist = append(s.Playlist, song)
-	return len(s.Playlist) - 1
+	return song
 }
 
 // Remove removes a song from the playlist

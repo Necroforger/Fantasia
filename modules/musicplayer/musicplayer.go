@@ -22,9 +22,11 @@ package musicplayer
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Necroforger/Fantasia/system"
+	"github.com/Necroforger/dream"
 )
 
 //genmodules:config
@@ -84,6 +86,7 @@ func (m *Module) Build(s *system.System) {
 	}
 
 	t.On("queue", m.CmdQueue).Set("", "queue")
+	t.On("info", m.CmdInfo).Set("", "Gives information about the currently playing song")
 	t.On("shuffle", m.CmdShuffle).Set("", "Shuffles the current queue, ignoring the current song index")
 	t.On("swap", m.CmdSwap).Set("", "Swaps the song at index 'n' with index 't'\nusage: `swap [int: from] [int: to]`")
 	t.On("move", m.CmdMove).Set("", "Moves the song at index 'n' to index 't'\nusage: `move [int: from] [int: to]`")
@@ -102,9 +105,11 @@ func (m *Module) CmdClear(ctx *system.Context) {
 	guildID, err := guildIDFromContext(ctx)
 	if err != nil {
 		ctx.ReplyError(err)
+		return
 	}
 	radio := m.getRadio(guildID)
 	radio.Queue.Clear()
+	ctx.ReplyNotify("Cleared queue")
 }
 
 // CmdPlay should handle
@@ -150,10 +155,36 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 
 	index := 0
 	if index, err = strconv.Atoi(ctx.Args.Get(0)); err != nil && ctx.Args.After() != "" {
-		radio.Queue.Add(&Song{
-			URL: ctx.Args.After(),
-		})
-		ctx.ReplySuccess("Added URL to queue")
+		progress := make(chan *Song)
+		go func() {
+			err := QueueWithYoutubeDL(ctx.Args.After(), ctx.Msg.Author.Username, radio.Queue, progress)
+			if err != nil {
+				ctx.ReplyError(err)
+			}
+		}()
+
+		msg, err := ctx.Ses.SendEmbed(ctx.Msg, dream.NewEmbed().
+			SetColor(system.StatusNotify).
+			SetDescription("Attempting to add to queue..."))
+		if err != nil {
+			ctx.ReplyError(err)
+			return
+		}
+
+		count := 0
+		for v := range progress {
+			count++
+			ctx.Ses.DG.ChannelMessageEditEmbed(msg.ChannelID, msg.ID, dream.NewEmbed().
+				SetColor(system.StatusSuccess).
+				SetTitle(v.Title).
+				SetDescription(fmt.Sprintf("Queued %d songs...", count)).
+				SetFooter(v.URL).
+				MessageEmbed)
+		}
+		ctx.Ses.DG.ChannelMessageEditEmbed(msg.ChannelID, msg.ID, dream.NewEmbed().
+			SetColor(system.StatusSuccess).
+			SetDescription(fmt.Sprintf("Queued %d songs", count)).
+			MessageEmbed)
 		return
 	}
 
@@ -164,6 +195,31 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 	ctx.ReplyEmbed(EmbedQueue(radio.Queue, index, 5, 10).
 		SetColor(system.StatusNotify).
 		MessageEmbed)
+}
+
+// CmdInfo returns various info related to the currently playing song
+func (m *Module) CmdInfo(ctx *system.Context) {
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		return
+	}
+	radio := m.getRadio(guildID)
+
+	song, err := radio.Queue.Song()
+	if err != nil {
+		ctx.ReplyError(err)
+	}
+
+	embed := dream.NewEmbed().
+		SetTitle(song.Title).
+		SetURL(song.URL).
+		SetImage(song.Thumbnail).
+		SetDescription("Added by " + song.AddedBy + "\nindex " + fmt.Sprint(radio.Queue.Index)).
+		SetColor(system.StatusNotify).
+		SetFooter(ProgressBar(radio.Duration(), song.Duration, 100))
+
+	ctx.ReplyEmbed(embed.MessageEmbed)
+
 }
 
 // CmdShuffle Shuffles the current queue
@@ -420,4 +476,19 @@ func guildIDFromContext(ctx *system.Context) (string, error) {
 	}
 
 	return guildID, nil
+}
+
+//ProgressBar generates a progressbar given a value, end point, and scale
+func ProgressBar(value, end, scale int) string {
+	if end == 0 {
+		return "[" + strings.Repeat("-", scale) + "]"
+	}
+	if value >= end {
+		return "[" + strings.Repeat("#", scale) + "]"
+	}
+
+	num := (float64(value) / float64(end)) * float64(scale)
+	numrem := (1 - (float64(value) / float64(end))) * float64(scale)
+
+	return "[" + strings.Repeat("#", int(num)) + strings.Repeat("=", int(numrem)) + "]"
 }
