@@ -279,7 +279,7 @@ func ConvoluteRGB(img image.Image, matrixR, matrixG, matrixB [][]float64, diviso
 			}
 
 			// Green filter
-			offset := midG
+			offset = midG
 			for i := -(offset); i <= (offset); i++ {
 				for j := -(offset); j <= (offset); j++ {
 					_, g, _, _ = img.At(x+i, y+j).RGBA()
@@ -288,7 +288,7 @@ func ConvoluteRGB(img image.Image, matrixR, matrixG, matrixB [][]float64, diviso
 			}
 
 			// Blue filter
-			offset := midB
+			offset = midB
 			for i := -(offset); i <= (offset); i++ {
 				for j := -(offset); j <= (offset); j++ {
 					_, _, b, _ = img.At(x+i, y+j).RGBA()
@@ -319,7 +319,6 @@ func ConvoluteRGB(img image.Image, matrixR, matrixG, matrixB [][]float64, diviso
 
 				A: 255,
 			})
-
 		}
 	}
 
