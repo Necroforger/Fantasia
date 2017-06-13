@@ -14,6 +14,7 @@ type Module struct{}
 // Build ...
 func (m *Module) Build(s *system.System) {
 	r := s.CommandRouter
+	r.On("avatar", CmdAvatar).Set("", "Retrieves your avatar or the avatar of the user with the given ID.\n`avatar [userid]`")
 	r.On("ping", Ping).Set("", "responds with the amount of time taken to send and retrieve a message")
 	r.On("snowflake", Snowflake).Set("", "gives the creation date of a discord ID")
 	r.On("emojify", m.emojifyCommand).Set("", "Emojifies the given text")
