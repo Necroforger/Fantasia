@@ -284,6 +284,8 @@ func (m *Module) CmdRemove(ctx *system.Context) {
 		}
 	}
 
+	ctx.Reply(ids)
+
 	err = radio.Queue.Remove(ids...)
 	if err != nil {
 		if len(args) == 1 {
