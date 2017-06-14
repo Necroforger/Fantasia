@@ -15,9 +15,10 @@ type Module struct{}
 func (m *Module) Build(s *system.System) {
 	r := s.CommandRouter
 	r.On("avatar", CmdAvatar).Set("", "Retrieves your avatar or the avatar of the user with the given ID.\n`avatar [userid]`")
+	r.On("whois", CmdWhois).Set("", "Retrieves information abour a user. If called without any arguments, it will retrieve your user info\n`whois [userid | user mention]`")
+	r.On("emojify", m.emojifyCommand).Set("", "Emojifies the given text")
 	r.On("ping", Ping).Set("", "responds with the amount of time taken to send and retrieve a message")
 	r.On("snowflake", Snowflake).Set("", "gives the creation date of a discord ID")
-	r.On("emojify", m.emojifyCommand).Set("", "Emojifies the given text")
 	r.On("hex", HexDisplay).Set("", "Returns an image representation of the given hex code. example: `hex ff00ff`")
 }
 

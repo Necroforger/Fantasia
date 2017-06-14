@@ -96,7 +96,8 @@ func (m *Module) Build(s *system.System) {
 
 	// Queue management
 	t.On("queue", m.CmdQueue).Set("", "queue")
-	t.On("silent", m.CmdSilence).Set("", "Set the silence of the radio. If silent is true, the radio will no longer automatically give updates on the currently playing song\nUsage: `silent [true:false]`")
+	t.On("loop", m.CmdLoop).Set("", "Controls whether the playlist should loop or not. Call with a boolean argument to change the loop mode.\n`loop [true | false]`")
+	t.On("silent", m.CmdSilence).Set("", "Set the silence of the radio. If silent is true, the radio will no longer automatically give updates on the currently playing song\nUsage: `silent [true | false]`")
 	t.On("remove", m.CmdRemove).Set("", "Remove an index, or multiple indexes, from the queue.\nProvide multiple integer arguments to remove multiple indexes.")
 	t.On("info", m.CmdInfo).Set("", "Gives information about the currently playing song")
 	t.On("shuffle", m.CmdShuffle).Set("", "Shuffles the current queue, ignoring the current song index")
@@ -182,6 +183,25 @@ func (m *Module) CmdStop(ctx *system.Context) {
 	}
 }
 
+// CmdLoop toggles the loop state of the radio
+func (m *Module) CmdLoop(ctx *system.Context) {
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+	radio := m.getRadio(guildID)
+
+	if ctx.Args.After() == "false" {
+		radio.Queue.Loop = false
+	} else if ctx.Args.After() == "true" {
+		radio.Queue.Loop = true
+	}
+
+	ctx.ReplyNotify(fmt.Sprintf("Loop playlists: `%t`", radio.Queue.Loop))
+
+}
+
 // CmdQueue Queues a song or views the queue list
 func (m *Module) CmdQueue(ctx *system.Context) {
 	guildID, err := guildIDFromContext(ctx)
@@ -210,6 +230,10 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 				return
 			}
 
+			radio.Lock()
+			startIndex := len(radio.Queue.Playlist)
+			radio.Unlock()
+
 			count := 0
 			var lastsong *Song
 			for v := range progress {
@@ -217,8 +241,8 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 				ctx.Ses.DG.ChannelMessageEditEmbed(msg.ChannelID, msg.ID, dream.NewEmbed().
 					SetColor(system.StatusSuccess).
 					SetTitle(v.Title).
-					SetDescription(fmt.Sprintf("Queued %d songs...", count)).
-					SetFooter(v.URL).
+					SetDescription(fmt.Sprintf("Queued %d songs starting at index %d", count, startIndex)).
+					SetFooter("index: "+fmt.Sprint(startIndex+count-1)).
 					MessageEmbed)
 				lastsong = v
 			}
@@ -227,7 +251,7 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 			if count == 1 {
 				finalEmbed.SetDescription("queued " + lastsong.Markdown())
 			} else {
-				finalEmbed.SetDescription(fmt.Sprintf("queued %d songs", count))
+				finalEmbed.SetDescription(fmt.Sprintf("queued %d songs starting at index", count, startIndex))
 			}
 			ctx.Ses.DG.ChannelMessageEditEmbed(msg.ChannelID, msg.ID, finalEmbed.MessageEmbed)
 			// YTDL
@@ -265,30 +289,13 @@ func (m *Module) CmdRemove(ctx *system.Context) {
 		return
 	}
 
-	ids := []int{}
-	args := strings.Split(ctx.Args.After(), " ")
-	for _, arg := range args {
-		// Check for range of numbers
-		if strings.Contains(arg, "-") {
-			if nums := strings.Split(arg, "-"); len(nums) > 1 && nums[0] != "" && nums[1] != "" {
-				if n1, err := strconv.Atoi(nums[0]); err == nil {
-					if n2, err := strconv.Atoi(nums[1]); err == nil {
-						for i := n1; i <= n2; i++ {
-							ids = append(ids, i)
-						}
-					}
-				}
-			}
-		} else if num, err := strconv.Atoi(arg); err == nil {
-			ids = append(ids, num)
-		}
-	}
+	ids := createIDList(strings.Split(ctx.Args.After(), " "))
 
 	ctx.Reply(ids)
 
 	err = radio.Queue.Remove(ids...)
 	if err != nil {
-		if len(args) == 1 {
+		if len(ids) == 1 {
 			ctx.ReplyError("The index you provided was out of playlist bounds")
 		} else {
 			ctx.ReplyError("One of the indexes you provided was out of the playlist bounds")
@@ -627,35 +634,4 @@ func (m *Module) getRadio(guildID string) *Radio {
 	}
 
 	return r
-}
-
-func guildIDFromContext(ctx *system.Context) (string, error) {
-	var guildID string
-
-	vs, err := ctx.Ses.UserVoiceState(ctx.Msg.Author.ID)
-	if err != nil {
-		guildID, err = ctx.Ses.GuildID(ctx.Msg)
-		if err != nil {
-			return "", err
-		}
-	} else {
-		guildID = vs.GuildID
-	}
-
-	return guildID, nil
-}
-
-//ProgressBar generates a progressbar given a value, end point, and scale
-func ProgressBar(value, end, scale int) string {
-	if end == 0 {
-		return "[" + strings.Repeat("-", scale) + "]"
-	}
-	if value >= end {
-		return "[" + strings.Repeat("#", scale) + "]"
-	}
-
-	num := (float64(value) / float64(end)) * float64(scale)
-	numrem := (1 - (float64(value) / float64(end))) * float64(scale)
-
-	return "[" + strings.Repeat("#", int(num)) + strings.Repeat("=", int(numrem)) + "]"
 }

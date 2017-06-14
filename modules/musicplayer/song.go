@@ -29,7 +29,6 @@ type Song struct {
 	Uploader    string `json:"uploader"`
 	UploadDate  string `json:"upload_date"`
 	Duration    int    `json:"duration"`
-	Progress    int
 }
 
 // String provides a string representation of the song
@@ -150,13 +149,13 @@ func (s *SongQueue) Song() (*Song, error) {
 }
 
 // Add adds a song to the queue and returns the index of the position it was added to
-func (s *SongQueue) Add(songs ...*Song) {
+func (s *SongQueue) Add(songs ...*Song) int {
 	s.Lock()
 	defer s.Unlock()
 
-	for _, song := range songs {
-		s.Playlist = append(s.Playlist, song)
-	}
+	startIndex := len(s.Playlist)
+	s.Playlist = append(s.Playlist, songs...)
+	return startIndex
 }
 
 // Remove removes a song from the playlist
