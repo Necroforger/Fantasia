@@ -416,12 +416,6 @@ func (m *Module) CmdGoto(ctx *system.Context) {
 		return
 	}
 
-	index, err := strconv.Atoi(ctx.Args.After())
-	if err != nil {
-		ctx.ReplyError(err)
-		return
-	}
-
 	guildID, err := guildIDFromContext(ctx)
 	if err != nil {
 		ctx.ReplyError(err)
@@ -429,6 +423,17 @@ func (m *Module) CmdGoto(ctx *system.Context) {
 	}
 
 	radio := m.getRadio(guildID)
+
+	index, err := strconv.Atoi(ctx.Args.After())
+	if err != nil {
+		if ctx.Args.After() != "end" {
+			ctx.ReplyError(err)
+			return
+		}
+		radio.Queue.Lock()
+		index = len(radio.Queue.Playlist) - 1
+		radio.Queue.Unlock()
+	}
 
 	err = radio.Goto(index)
 	if err != nil {
