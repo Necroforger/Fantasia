@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"os/exec"
 	"sync"
 	"time"
@@ -39,6 +40,10 @@ type Radio struct {
 
 	running bool
 	control chan int
+
+	// UseYoutubeDL specifies which downloader to use when playing videos.
+	// If set to true, videos will be downloaded using youtube-dl rather than the golang lib.
+	UseYoutubeDL bool
 
 	// Used to prevent commands from being spammed.
 	ControlLastUsed time.Time
@@ -139,10 +144,26 @@ func (r *Radio) Play(b *dream.Bot, vc *discordgo.VoiceConnection) (*dream.AudioD
 	if err != nil {
 		return nil, err
 	}
-	stream, err := system.YoutubeDL(song.URL)
-	if err != nil {
-		return nil, err
+
+	var stream io.Reader
+
+	if r.UseYoutubeDL {
+		yt := exec.Command("youtube-dl", "-f", "bestaudio", "-o", "-", song.URL)
+		stream, err = yt.StdoutPipe()
+		if err != nil {
+			return nil, err
+		}
+		err = yt.Start()
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		stream, err = system.YoutubeDL(song.URL)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	disp := b.PlayStream(vc, stream)
 	return disp, nil
 }
@@ -216,11 +237,27 @@ func (r *Radio) Duration() int {
 //  Song loading
 ///////////////////////////////////////////////////
 
-// QueueWithYoutubeDL Queues a youtube video or playlist to the given song slice.
+// QueueFromURL Queues a youtube video or playlist to the given song slice.
 // Supports returning the currently queued song
-func QueueWithYoutubeDL(URL, addedBy string, queue *SongQueue, progress chan *Song) error {
-	song := &Song{
-		URL: URL,
+func QueueFromURL(URL, addedBy string, queue *SongQueue, progress chan *Song) error {
+	// Analyze the URL and use the proper method to obtain
+	// Information about it.
+	u, err := url.Parse(URL)
+	if err != nil {
+		return err
+	}
+
+	// If the youtube link does not contain a link, use the golang youtube
+	// Extractor to obtain the media information. This is significantly faster
+	// Than using youtube-dl.
+	if (u.Host == "youtube.com" || u.Host == "youtu.be") && u.Query().Get("list") == "" {
+		song, err := SongFromYTDL(URL, addedBy)
+		if err != nil {
+			return err
+		}
+		progress <- song
+		queue.Add(song)
+		return nil
 	}
 
 	ytdl := exec.Command("youtube-dl", "-j", "-i", URL)
@@ -249,7 +286,7 @@ func QueueWithYoutubeDL(URL, addedBy string, queue *SongQueue, progress chan *So
 		if isPrefix {
 			continue
 		}
-		song = &Song{}
+		song := &Song{}
 		er := json.Unmarshal(totalLine, song)
 		if er != nil {
 			continue

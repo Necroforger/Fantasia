@@ -50,6 +50,10 @@ type Config struct {
 	// If enabled, playlists will loop by default.
 	RadioLoop bool
 
+	// UseYoutubeDL determines if youtube-dl should be used to download videos.
+	// If false, the golang library will be used.
+	UseYoutubeDL bool
+
 	// Start all radios with a test queue
 	Debug bool
 }
@@ -60,6 +64,7 @@ func NewConfig() *Config {
 		UseSubrouter: true,
 		RadioSilent:  false,
 		RadioLoop:    false,
+		UseYoutubeDL: false,
 		Debug:        false,
 	}
 }
@@ -187,36 +192,54 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 
 	index := 0
 	if index, err = strconv.Atoi(ctx.Args.Get(0)); err != nil && ctx.Args.After() != "" {
-		progress := make(chan *Song)
-		go func() {
-			err := QueueWithYoutubeDL(ctx.Args.After(), ctx.Msg.Author.Username, radio.Queue, progress)
+		// Youtube-dl
+		if m.Config.UseYoutubeDL {
+			progress := make(chan *Song)
+			go func() {
+				err := QueueFromURL(ctx.Args.After(), ctx.Msg.Author.Username, radio.Queue, progress)
+				if err != nil {
+					ctx.ReplyError(err)
+				}
+			}()
+
+			msg, err := ctx.Ses.SendEmbed(ctx.Msg, dream.NewEmbed().
+				SetColor(system.StatusNotify).
+				SetDescription("Attempting to add to queue..."))
 			if err != nil {
 				ctx.ReplyError(err)
+				return
 			}
-		}()
 
-		msg, err := ctx.Ses.SendEmbed(ctx.Msg, dream.NewEmbed().
-			SetColor(system.StatusNotify).
-			SetDescription("Attempting to add to queue..."))
-		if err != nil {
-			ctx.ReplyError(err)
-			return
-		}
+			count := 0
+			var lastsong *Song
+			for v := range progress {
+				count++
+				ctx.Ses.DG.ChannelMessageEditEmbed(msg.ChannelID, msg.ID, dream.NewEmbed().
+					SetColor(system.StatusSuccess).
+					SetTitle(v.Title).
+					SetDescription(fmt.Sprintf("Queued %d songs...", count)).
+					SetFooter(v.URL).
+					MessageEmbed)
+				lastsong = v
+			}
 
-		count := 0
-		for v := range progress {
-			count++
-			ctx.Ses.DG.ChannelMessageEditEmbed(msg.ChannelID, msg.ID, dream.NewEmbed().
-				SetColor(system.StatusSuccess).
-				SetTitle(v.Title).
-				SetDescription(fmt.Sprintf("Queued %d songs...", count)).
-				SetFooter(v.URL).
-				MessageEmbed)
+			finalEmbed := dream.NewEmbed().SetColor(system.StatusSuccess)
+			if count == 1 {
+				finalEmbed.SetDescription("queued " + lastsong.Markdown())
+			} else {
+				finalEmbed.SetDescription(fmt.Sprintf("queued %d songs", count))
+			}
+			ctx.Ses.DG.ChannelMessageEditEmbed(msg.ChannelID, msg.ID, finalEmbed.MessageEmbed)
+			// YTDL
+		} else {
+			song, err := SongFromYTDL(ctx.Args.After(), ctx.Msg.Author.Username)
+			if err != nil {
+				ctx.ReplyError(err)
+				return
+			}
+			radio.Queue.Add(song)
+			ctx.ReplySuccess("queued " + song.Markdown())
 		}
-		ctx.Ses.DG.ChannelMessageEditEmbed(msg.ChannelID, msg.ID, dream.NewEmbed().
-			SetColor(system.StatusSuccess).
-			SetDescription(fmt.Sprintf("Queued %d songs", count)).
-			MessageEmbed)
 		return
 	}
 
@@ -561,6 +584,8 @@ func (m *Module) getRadio(guildID string) *Radio {
 	if m.Config.RadioLoop {
 		r.Queue.Loop = true
 	}
+
+	r.UseYoutubeDL = m.Config.UseYoutubeDL
 
 	if m.Config.Debug {
 		r.Queue.Playlist = []*Song{
