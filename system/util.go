@@ -110,11 +110,12 @@ func ConnectToVoiceChannel(ctx *Context) (*discordgo.VoiceConnection, error) {
 	// Confirm that the user is in the correct voice channel.
 	// If the user is in another voice channel, join them.
 	vs, err := b.UserVoiceState(msg.Author.ID)
-	if err == nil && vc != nil && vs.ChannelID != vc.ChannelID || vs.GuildID != vc.GuildID {
+	if err == nil && (vc != nil && vs != nil && vs.ChannelID != vc.ChannelID || vs.GuildID != vc.GuildID) {
 		vc, err = b.ChannelVoiceJoin(vs.GuildID, vs.ChannelID, false, true)
 		if err != nil {
 			return nil, err
 		}
+		return vc, nil
 	}
 
 	if !vc.Ready {

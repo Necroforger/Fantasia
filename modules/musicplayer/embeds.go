@@ -13,6 +13,11 @@ const (
 	EmojiStar  = "⭐"
 )
 
+// EmbedQueueFilter ...
+func EmbedQueueFilter() {
+
+}
+
 // EmbedQueue returns an embed object for a musicqueue
 func EmbedQueue(q *SongQueue, index, beforeIndex, afterIndex int) *dream.Embed {
 	embed := dream.NewEmbed()
