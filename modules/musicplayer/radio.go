@@ -88,7 +88,7 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 		if err == nil && !r.Silent {
 			ctx.ReplyEmbed(dream.NewEmbed().
 				SetTitle("Now playing").
-				SetDescription(fmt.Sprintf("[%d]: %s", r.Queue.Index, song.Markdown())).
+				SetDescription(fmt.Sprintf("[%d]: %s\nduration:\t %ds", r.Queue.Index, song.Markdown(), song.Duration)).
 				SetFooter("added by " + song.AddedBy).
 				SetColor(system.StatusNotify).
 				MessageEmbed)
@@ -139,11 +139,7 @@ func (r *Radio) Play(b *dream.Bot, vc *discordgo.VoiceConnection) (*dream.AudioD
 	if err != nil {
 		return nil, err
 	}
-	info, err := ytdl.GetVideoInfo(song.URL)
-	if err != nil {
-		return nil, err
-	}
-	stream, err := system.YoutubeDLFromInfo(info)
+	stream, err := system.YoutubeDL(song.URL)
 	if err != nil {
 		return nil, err
 	}

@@ -91,6 +91,7 @@ func (m *Module) Build(s *system.System) {
 
 	// Queue management
 	t.On("queue", m.CmdQueue).Set("", "queue")
+	t.On("silent", m.CmdSilence).Set("", "Set the silence of the radio. If silent is true, the radio will no longer automatically give updates on the currently playing song\nUsage: `silent [true:false]`")
 	t.On("remove", m.CmdRemove).Set("", "Remove an index, or multiple indexes, from the queue.\nProvide multiple integer arguments to remove multiple indexes.")
 	t.On("info", m.CmdInfo).Set("", "Gives information about the currently playing song")
 	t.On("shuffle", m.CmdShuffle).Set("", "Shuffles the current queue, ignoring the current song index")
@@ -108,6 +109,27 @@ func (m *Module) Build(s *system.System) {
 	t.On("resume", m.CmdResume).Set("", "Resumes the currently playing song")
 	t.On("next", m.CmdNext).Set("", "Loads the next song in the queue")
 	t.On("prev|previous", m.CmdPrevious).Set("prev | previous", "Loads the previous song in the queue")
+}
+
+// CmdSilence should toggle the radio from automatically sending messages when the song changes
+func (m *Module) CmdSilence(ctx *system.Context) {
+	guildID, err := guildIDFromContext(ctx)
+	radio := m.getRadio(guildID)
+
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+	if ctx.Args.After() == "true" {
+		radio.Silent = true
+		ctx.ReplySuccess("silent mode `enabled`")
+	} else if ctx.Args.After() == "false" {
+		radio.Silent = false
+		ctx.ReplySuccess("silent mode `disabled`")
+	} else {
+		ctx.ReplySuccess(fmt.Sprintf("silent: `%t`", radio.Silent))
+	}
+
 }
 
 // CmdClear clears the current queue
@@ -334,7 +356,7 @@ func (m *Module) CmdInfo(ctx *system.Context) {
 		SetTitle(song.Title).
 		SetURL(song.URL).
 		SetImage(song.Thumbnail).
-		SetDescription("Added by " + song.AddedBy + "\nindex " + fmt.Sprint(radio.Queue.Index)).
+		SetDescription("Added by\t" + song.AddedBy + "\nindex\t" + fmt.Sprint(radio.Queue.Index)).
 		SetColor(system.StatusNotify).
 		SetFooter(ProgressBar(radio.Duration(), song.Duration, 100) + fmt.Sprintf("[%d/%d]", radio.Duration(), song.Duration))
 

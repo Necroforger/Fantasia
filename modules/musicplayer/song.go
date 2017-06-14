@@ -174,6 +174,10 @@ func (s *SongQueue) Remove(indexes ...int) error {
 	j := len(s.Playlist)
 	for _, index := range indexes {
 		s.Playlist[index], s.Playlist[j-1] = s.Playlist[j-1], s.Playlist[index]
+		// Maintain the same position in the queue if a song before the index is removed.
+		if index < s.Index {
+			s.Index--
+		}
 		j--
 	}
 	s.Playlist = s.Playlist[:j]
