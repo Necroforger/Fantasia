@@ -29,6 +29,7 @@ type Song struct {
 	Uploader    string `json:"uploader"`
 	UploadDate  string `json:"upload_date"`
 	Duration    int    `json:"duration"`
+	Rating      int
 }
 
 // String provides a string representation of the song
@@ -146,6 +147,14 @@ func (s *SongQueue) Song() (*Song, error) {
 	}
 
 	return nil, ErrIndexOutOfBounds
+}
+
+// Get retrieves the song at index n
+func (s *SongQueue) Get(n int) (*Song, error) {
+	if n < 0 || n >= len(s.Playlist) {
+		return nil, ErrIndexOutOfBounds
+	}
+	return s.Playlist[n], nil
 }
 
 // Add adds a song to the queue and returns the index of the position it was added to

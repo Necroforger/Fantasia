@@ -96,6 +96,7 @@ func (m *Module) Build(s *system.System) {
 
 	// Queue management
 	t.On("queue", m.CmdQueue).Set("", "queue")
+	t.On("star", m.CmdStar).Set("", "Stars the song at the given index. Starring songs is akin to a favourites system and will allow you to sort songs based on their star ratings")
 	t.On("loop", m.CmdLoop).Set("", "Controls whether the playlist should loop or not. Call with a boolean argument to change the loop mode.\n`loop [true | false]`")
 	t.On("silent", m.CmdSilence).Set("", "Set the silence of the radio. If silent is true, the radio will no longer automatically give updates on the currently playing song\nUsage: `silent [true | false]`")
 	t.On("remove", m.CmdRemove).Set("", "Remove an index, or multiple indexes, from the queue.\nProvide multiple integer arguments to remove multiple indexes.")
@@ -202,6 +203,47 @@ func (m *Module) CmdLoop(ctx *system.Context) {
 
 }
 
+// CmdStar gives a rating to the given song index or the current song
+func (m *Module) CmdStar(ctx *system.Context) {
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+	radio := m.getRadio(guildID)
+
+	indexes := []int{radio.Queue.Index}
+	if ctx.Args.After() != "" {
+		indexes = getIndexes(strings.Split(ctx.Args.After(), " "), radio)
+		if err != nil {
+			ctx.ReplyError(err)
+			return
+		}
+	}
+
+	embedlog := dream.NewEmbed().SetColor(system.StatusNotify)
+
+	for _, index := range indexes {
+		song, err := radio.Queue.Get(index)
+		if err != nil {
+			ctx.ReplyError(err)
+			return
+		}
+
+		if song.Rating == 1 {
+			song.Rating = 0
+			embedlog.Description += "Unstarred " + song.Markdown() + "\n"
+		} else {
+			song.Rating = 1
+			embedlog.Description += "Starred " + song.Markdown() + "\n"
+		}
+	}
+
+	embedlog.TruncateDescription()
+	ctx.ReplyEmbed(embedlog.MessageEmbed)
+
+}
+
 // CmdQueue Queues a song or views the queue list
 func (m *Module) CmdQueue(ctx *system.Context) {
 	guildID, err := guildIDFromContext(ctx)
@@ -251,7 +293,7 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 			if count == 1 {
 				finalEmbed.SetDescription("queued " + lastsong.Markdown())
 			} else {
-				finalEmbed.SetDescription(fmt.Sprintf("queued %d songs starting at index", count, startIndex))
+				finalEmbed.SetDescription(fmt.Sprintf("queued %d songs starting at index %d", count, startIndex))
 			}
 			ctx.Ses.DG.ChannelMessageEditEmbed(msg.ChannelID, msg.ID, finalEmbed.MessageEmbed)
 			// YTDL
@@ -271,8 +313,9 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 		index = radio.Queue.Index
 	}
 
-	ctx.ReplyEmbed(EmbedQueue(radio.Queue, index, 5, 10).
+	ctx.ReplyEmbed(EmbedQueue(radio.Queue, index, 10, 15).
 		SetColor(system.StatusNotify).
+		SetFooter("playlist length:\t" + fmt.Sprint(len(radio.Queue.Playlist))).
 		MessageEmbed)
 }
 
@@ -289,7 +332,7 @@ func (m *Module) CmdRemove(ctx *system.Context) {
 		return
 	}
 
-	ids := createIDList(strings.Split(ctx.Args.After(), " "))
+	ids := getIndexes(strings.Split(ctx.Args.After(), " "), radio)
 
 	ctx.Reply(ids)
 
@@ -379,7 +422,12 @@ func (m *Module) CmdInfo(ctx *system.Context) {
 	}
 	radio := m.getRadio(guildID)
 
-	song, err := radio.Queue.Song()
+	var index = radio.Queue.Index
+	if n, err := getIndex(ctx.Args.After(), radio); err == nil {
+		index = n
+	}
+
+	song, err := radio.Queue.Get(index)
 	if err != nil {
 		ctx.ReplyError(err)
 	}
@@ -389,8 +437,13 @@ func (m *Module) CmdInfo(ctx *system.Context) {
 		SetURL(song.URL).
 		SetImage(song.Thumbnail).
 		SetDescription("Added by\t" + song.AddedBy + "\nindex\t" + fmt.Sprint(radio.Queue.Index)).
-		SetColor(system.StatusNotify).
-		SetFooter(ProgressBar(radio.Duration(), song.Duration, 100) + fmt.Sprintf("[%d/%d]", radio.Duration(), song.Duration))
+		SetColor(system.StatusNotify)
+
+	if index == radio.Queue.Index {
+		embed.SetFooter(ProgressBar(radio.Duration(), song.Duration, 100) + fmt.Sprintf("[%d/%d]", radio.Duration(), song.Duration))
+	} else {
+		embed.SetFooter(fmt.Sprintf("Duration: %ds", song.Duration))
+	}
 
 	ctx.ReplyEmbed(embed.MessageEmbed)
 }
@@ -424,15 +477,10 @@ func (m *Module) CmdGoto(ctx *system.Context) {
 
 	radio := m.getRadio(guildID)
 
-	index, err := strconv.Atoi(ctx.Args.After())
+	index, err := getIndex(ctx.Args.After(), radio)
 	if err != nil {
-		if ctx.Args.After() != "end" {
-			ctx.ReplyError(err)
-			return
-		}
-		radio.Queue.Lock()
-		index = len(radio.Queue.Playlist) - 1
-		radio.Queue.Unlock()
+		ctx.ReplyError(err)
+		return
 	}
 
 	err = radio.Goto(index)
@@ -530,12 +578,12 @@ func (m *Module) CmdSwap(ctx *system.Context) {
 	}
 	radio := m.getRadio(guildID)
 
-	if from, err = strconv.Atoi(ctx.Args.Get(0)); err != nil {
+	if from, err = getIndex(ctx.Args.Get(0), radio); err != nil {
 		ctx.ReplyError(err)
 		return
 	}
 
-	if to, err = strconv.Atoi(ctx.Args.Get(1)); err != nil {
+	if to, err = getIndex(ctx.Args.Get(1), radio); err != nil {
 		ctx.ReplyError(err)
 		return
 	}
@@ -565,12 +613,12 @@ func (m *Module) CmdMove(ctx *system.Context) {
 	}
 	radio := m.getRadio(guildID)
 
-	if from, err = strconv.Atoi(ctx.Args.Get(0)); err != nil {
+	if from, err = getIndex(ctx.Args.Get(0), radio); err != nil {
 		ctx.ReplyError(err)
 		return
 	}
 
-	if to, err = strconv.Atoi(ctx.Args.Get(1)); err != nil {
+	if to, err = getIndex(ctx.Args.Get(1), radio); err != nil {
 		ctx.ReplyError(err)
 		return
 	}

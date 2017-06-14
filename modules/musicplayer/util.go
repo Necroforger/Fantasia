@@ -7,17 +7,17 @@ import (
 	"github.com/Necroforger/Fantasia/system"
 )
 
-// createIDList creates an ID list from the supplied arguments.
+// getIndexes creates an ID list from the supplied arguments.
 // Used for dealing with playlist queues
-func createIDList(args []string) []int {
+func getIndexes(args []string, radio *Radio) []int {
 	ids := []int{}
 	for _, arg := range args {
 
 		// Check for range of numbers
 		if strings.Contains(arg, "-") {
 			if nums := strings.Split(arg, "-"); len(nums) > 1 && nums[0] != "" && nums[1] != "" {
-				if n1, err := strconv.Atoi(nums[0]); err == nil {
-					if n2, err := strconv.Atoi(nums[1]); err == nil {
+				if n1, err := getIndex(nums[0], radio); err == nil {
+					if n2, err := getIndex(nums[1], radio); err == nil {
 						for i := n1; i <= n2; i++ {
 							ids = append(ids, i)
 						}
@@ -30,6 +30,22 @@ func createIDList(args []string) []int {
 
 	}
 	return ids
+}
+
+func getIndex(index string, radio *Radio) (int, error) {
+	switch index {
+	case "start":
+		return 0, nil
+	case "end":
+		return len(radio.Queue.Playlist) - 1, nil
+	case "mid":
+		return len(radio.Queue.Playlist) / 2, nil
+	case "rand", "random":
+		return int(rng.Float64() * float64(len(radio.Queue.Playlist)-1)), nil
+	default:
+		return strconv.Atoi(index)
+	}
+
 }
 
 func guildIDFromContext(ctx *system.Context) (string, error) {
