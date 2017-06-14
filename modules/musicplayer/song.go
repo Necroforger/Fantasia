@@ -150,24 +150,35 @@ func (s *SongQueue) Song() (*Song, error) {
 }
 
 // Add adds a song to the queue and returns the index of the position it was added to
-func (s *SongQueue) Add(song *Song) *Song {
+func (s *SongQueue) Add(songs ...*Song) {
 	s.Lock()
 	defer s.Unlock()
 
-	s.Playlist = append(s.Playlist, song)
-	return song
+	for _, song := range songs {
+		s.Playlist = append(s.Playlist, song)
+	}
 }
 
 // Remove removes a song from the playlist
-func (s *SongQueue) Remove(index int) error {
+//		...indexes: The indexes in the playlist array to remove the songs from
+func (s *SongQueue) Remove(indexes ...int) error {
 	s.Lock()
 	defer s.Unlock()
 
-	if index >= 0 && index < len(s.Playlist) {
-		s.Playlist = append(s.Playlist[:index], s.Playlist[index+1:]...)
-		return nil
+	for _, index := range indexes {
+		if index < 0 || index >= len(s.Playlist) {
+			return ErrIndexOutOfBounds
+		}
 	}
-	return ErrIndexOutOfBounds
+
+	j := len(s.Playlist)
+	for _, index := range indexes {
+		s.Playlist[index], s.Playlist[j-1] = s.Playlist[j-1], s.Playlist[index]
+		j--
+	}
+	s.Playlist = s.Playlist[:j]
+
+	return nil
 }
 
 // Shuffle shuffles the queue randomly

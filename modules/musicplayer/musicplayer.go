@@ -20,12 +20,16 @@ package musicplayer
 */
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/Necroforger/Fantasia/system"
+	"github.com/Necroforger/discordgo"
 	"github.com/Necroforger/dream"
 )
 
@@ -85,13 +89,19 @@ func (m *Module) Build(s *system.System) {
 		t = s.CommandRouter
 	}
 
+	// Queue management
 	t.On("queue", m.CmdQueue).Set("", "queue")
+	t.On("remove", m.CmdRemove).Set("", "Remove an index, or multiple indexes, from the queue.\nProvide multiple integer arguments to remove multiple indexes.")
 	t.On("info", m.CmdInfo).Set("", "Gives information about the currently playing song")
 	t.On("shuffle", m.CmdShuffle).Set("", "Shuffles the current queue, ignoring the current song index")
 	t.On("swap", m.CmdSwap).Set("", "Swaps the song at index 'n' with index 't'\nusage: `swap [int: from] [int: to]`")
 	t.On("move", m.CmdMove).Set("", "Moves the song at index 'n' to index 't'\nusage: `move [int: from] [int: to]`")
-	t.On("go", m.CmdGoto).Set("", "Changes the queues current song index\nusage: `go [int: index]`")
 	t.On("clear", m.CmdClear).Set("", "Clears the current song queue")
+	t.On("save", m.CmdSave).Set("", "Saves the current queue state to a json file and uploads it to discord")
+	t.On("load", m.CmdLoad).Set("", "Loads a json playlist file. Present a URL, file attachment, or upload your file after calling this command")
+
+	// Control commands
+	t.On("go", m.CmdGoto).Set("", "Changes the queues current song index\nusage: `go [int: index]`")
 	t.On("play", m.CmdPlay).Set("", "Plays the current queue")
 	t.On("stop", m.CmdStop).Set("", "stops the currently playing queue")
 	t.On("pause", m.CmdPause).Set("", "Pauses the currently playing song")
@@ -197,6 +207,116 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 		MessageEmbed)
 }
 
+// CmdRemove removes a song from the queue from its index id
+func (m *Module) CmdRemove(ctx *system.Context) {
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		ctx.ReplyError(err)
+	}
+	radio := m.getRadio(guildID)
+
+	if ctx.Args.After() == "" {
+		ctx.ReplyError("Please provide the indexes you want to remove as a space separated list")
+		return
+	}
+
+	ids := []int{}
+	args := strings.Split(ctx.Args.After(), " ")
+	for _, arg := range args {
+		// Check for range of numbers
+		if strings.Contains(arg, "-") {
+			if nums := strings.Split(arg, "-"); len(nums) > 1 && nums[0] != "" && nums[1] != "" {
+				if n1, err := strconv.Atoi(nums[0]); err == nil {
+					if n2, err := strconv.Atoi(nums[1]); err == nil {
+						for i := n1; i <= n2; i++ {
+							ids = append(ids, i)
+						}
+					}
+				}
+			}
+		} else if num, err := strconv.Atoi(arg); err == nil {
+			ids = append(ids, num)
+		}
+	}
+
+	err = radio.Queue.Remove(ids...)
+	if err != nil {
+		if len(args) == 1 {
+			ctx.ReplyError("The index you provided was out of playlist bounds")
+		} else {
+			ctx.ReplyError("One of the indexes you provided was out of the playlist bounds")
+		}
+		return
+	}
+	ctx.ReplySuccess(fmt.Sprintf("Removed %d indexes", len(ids)))
+}
+
+// CmdSave saves the current playlist to a json encoded text file and uploads it to discord.
+func (m *Module) CmdSave(ctx *system.Context) {
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+	radio := m.getRadio(guildID)
+
+	playlistName := "playlist"
+	if ctx.Args.After() != "" {
+		playlistName = ctx.Args.After()
+	}
+
+	rd, wr := io.Pipe()
+	go func() {
+		json.NewEncoder(wr).Encode(radio.Queue.Playlist)
+		wr.Close()
+	}()
+	ctx.Ses.SendFile(ctx.Msg.ChannelID, playlistName+".json", rd)
+}
+
+// CmdLoad loads a playlist from a previously saved file.
+func (m *Module) CmdLoad(ctx *system.Context) {
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+	radio := m.getRadio(guildID)
+
+	var fileURL string
+	switch {
+	case len(ctx.Msg.Attachments) > 0:
+		fileURL = ctx.Msg.Attachments[0].URL
+	case ctx.Args.After() != "":
+		fileURL = ctx.Args.After()
+	default:
+		ctx.ReplyNotify("Upload a saved playlist or give a file url")
+		var nxtmsg *discordgo.MessageCreate
+		for nxtmsg = ctx.Ses.NextMessageCreate(); nxtmsg.Author.ID != ctx.Msg.Author.ID; nxtmsg = ctx.Ses.NextMessageCreate() {
+		}
+		if len(nxtmsg.Attachments) == 0 {
+			fileURL = nxtmsg.Content
+		} else {
+			fileURL = nxtmsg.Attachments[0].URL
+		}
+	}
+
+	resp, err := http.Get(fileURL)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+	defer resp.Body.Close()
+
+	playlist := []*Song{}
+	err = json.NewDecoder(resp.Body).Decode(&playlist)
+	if err != nil {
+		ctx.ReplyError(err)
+	}
+
+	radio.Queue.Add(playlist...)
+	ctx.ReplySuccess("Loaded playlist into queue.")
+}
+
 // CmdInfo returns various info related to the currently playing song
 func (m *Module) CmdInfo(ctx *system.Context) {
 	guildID, err := guildIDFromContext(ctx)
@@ -216,10 +336,9 @@ func (m *Module) CmdInfo(ctx *system.Context) {
 		SetImage(song.Thumbnail).
 		SetDescription("Added by " + song.AddedBy + "\nindex " + fmt.Sprint(radio.Queue.Index)).
 		SetColor(system.StatusNotify).
-		SetFooter(ProgressBar(radio.Duration(), song.Duration, 100))
+		SetFooter(ProgressBar(radio.Duration(), song.Duration, 100) + fmt.Sprintf("[%d/%d]", radio.Duration(), song.Duration))
 
 	ctx.ReplyEmbed(embed.MessageEmbed)
-
 }
 
 // CmdShuffle Shuffles the current queue
@@ -232,9 +351,7 @@ func (m *Module) CmdShuffle(ctx *system.Context) {
 
 	radio := m.getRadio(guildID)
 	radio.Queue.Shuffle()
-	if !radio.Silent {
-		ctx.ReplyNotify("Queue shuffled")
-	}
+	ctx.ReplySuccess("Queue shuffled")
 }
 
 // CmdGoto changes the current song index to the specified index
@@ -265,8 +382,13 @@ func (m *Module) CmdGoto(ctx *system.Context) {
 		return
 	}
 
-	if !radio.Silent {
-		ctx.ReplySuccess("Changed song index to ", index)
+	if song, err := radio.Queue.Song(); err == nil {
+		ctx.ReplyEmbed(dream.NewEmbed().
+			SetColor(system.StatusNotify).
+			SetTitle("Selected song").
+			SetDescription(fmt.Sprintf("[%d]: %s", radio.Queue.Index, song.Markdown())).
+			SetColor(system.StatusSuccess).
+			MessageEmbed)
 	}
 
 }
@@ -365,9 +487,7 @@ func (m *Module) CmdSwap(ctx *system.Context) {
 		return
 	}
 
-	if !radio.Silent {
-		ctx.ReplyNotify(fmt.Sprintf("Song index [%d] swapped with [%d]", from, to))
-	}
+	ctx.ReplyNotify(fmt.Sprintf("Song index [%d] swapped with [%d]", from, to))
 }
 
 // CmdMove moves the specified index to the given position.
@@ -402,9 +522,7 @@ func (m *Module) CmdMove(ctx *system.Context) {
 		return
 	}
 
-	if !radio.Silent {
-		ctx.ReplyNotify(fmt.Sprintf("Song index [%d] moved to [%d]", from, to))
-	}
+	ctx.ReplyNotify(fmt.Sprintf("Song index [%d] moved to [%d]", from, to))
 }
 
 func (m *Module) getRadio(guildID string) *Radio {

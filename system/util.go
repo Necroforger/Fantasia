@@ -126,3 +126,15 @@ func ConnectToVoiceChannel(ctx *Context) (*discordgo.VoiceConnection, error) {
 
 	return vc, nil
 }
+
+///////////////////////////////////////////////////
+//                Requesting information
+///////////////////////////////////////////////////
+
+// RequestFile requests a file upload from the user
+// It will search for
+// 	1. a file attachment
+//  2. a URL to an http address
+// func RequestFile(ctx *system.Context) {
+
+// }

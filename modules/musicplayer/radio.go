@@ -83,11 +83,17 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 		r.Dispatcher = disp
 		r.Unlock()
 
-		// --------- TODO: Print information about the song if not Silenced ----------- //
+		//----------------- Print information about the currently playing song ---------------- //
 		song, err := r.Queue.Song()
 		if err == nil && !r.Silent {
-			ctx.ReplyNotify("Now playing\n", song.Markdown()+"\nindex: "+fmt.Sprint(r.Queue.Index))
+			ctx.ReplyEmbed(dream.NewEmbed().
+				SetTitle("Now playing").
+				SetDescription(fmt.Sprintf("[%d]: %s", r.Queue.Index, song.Markdown())).
+				SetFooter("added by " + song.AddedBy).
+				SetColor(system.StatusNotify).
+				MessageEmbed)
 		}
+		//-------------------------------------------------------------------------------------//
 
 		done := make(chan bool)
 		go func() {
