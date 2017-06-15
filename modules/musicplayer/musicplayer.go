@@ -24,11 +24,14 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/Necroforger/Fantasia/system"
+	"github.com/Necroforger/Fantasia/youtubeapi"
 	"github.com/Necroforger/discordgo"
 	"github.com/Necroforger/dream"
 )
@@ -96,6 +99,7 @@ func (m *Module) Build(s *system.System) {
 
 	// Queue management
 	t.On("queue", m.CmdQueue).Set("", "queue")
+	t.On("ytqueue", m.CmdYoutubeSearchQueue).Set("", "Searches youtube for the given query and queues the first video found\n`ytqueue [query]`")
 	t.On("star", m.CmdStar).Set("", "Stars the song at the given index. Starring songs is akin to a favourites system and will allow you to sort songs based on their star ratings")
 	t.On("loop", m.CmdLoop).Set("", "Controls whether the playlist should loop or not. Call with a boolean argument to change the loop mode.\n`loop [true | false]`")
 	t.On("silent", m.CmdSilence).Set("", "Set the silence of the radio. If silent is true, the radio will no longer automatically give updates on the currently playing song\nUsage: `silent [true | false]`")
@@ -317,6 +321,38 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 		SetColor(system.StatusNotify).
 		SetFooter("playlist length:\t" + fmt.Sprint(len(radio.Queue.Playlist))).
 		MessageEmbed)
+}
+
+// CmdYoutubeSearchQueue searches youtube and queues the first video result found
+func (m *Module) CmdYoutubeSearchQueue(ctx *system.Context) {
+	if ctx.System.Config.GoogleAPIKey == "" {
+		ctx.ReplyError("Youtube searching is not enabled: no google api key")
+		return
+	}
+
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+	radio := m.getRadio(guildID)
+
+	results, err := youtubeapi.New(ctx.System.Config.GoogleAPIKey).Search(ctx.Args.After(), 5)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+
+	toml.NewEncoder(os.Stdout).Encode(results)
+
+	if len(results.Items) != 0 {
+		item := results.Items[0]
+		QueueFromURL("https://www.youtube.com/watch?v="+item.ID.VideoID, ctx.Msg.Author.Username, radio.Queue, nil)
+		ctx.ReplySuccess("Queued "+item.Snippet.Title+"\nindex: ", len(radio.Queue.Playlist)-1)
+		return
+	}
+
+	ctx.ReplyError("No results found")
 }
 
 // CmdRemove removes a song from the queue from its index id

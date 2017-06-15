@@ -2,7 +2,6 @@ package system
 
 import (
 	"errors"
-	"io"
 	"io/ioutil"
 	"math/rand"
 	"net/http"
@@ -11,46 +10,10 @@ import (
 	"time"
 
 	"github.com/Necroforger/discordgo"
-	"github.com/Necroforger/ytdl"
 )
 
 var customHTTPClient = http.Client{
 	Timeout: time.Second * 10,
-}
-
-////////////////////////////////////////////////
-// YOUTUBE DOWNLOADING
-////////////////////////////////////////////////
-
-// YoutubeDLFromInfo ...
-func YoutubeDLFromInfo(info *ytdl.VideoInfo) (io.Reader, error) {
-	if len(info.Formats.Best(ytdl.FormatAudioEncodingKey)) == 0 {
-		return nil, errors.New("Error processing video")
-	}
-	u, err := info.GetDownloadURL(info.Formats.Best(ytdl.FormatAudioEncodingKey)[0])
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := customHTTPClient.Get(u.String())
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return nil, errors.New("invalid status code")
-	}
-
-	return resp.Body, nil
-}
-
-// YoutubeDL ...
-func YoutubeDL(URL string) (io.Reader, error) {
-	info, err := ytdl.GetVideoInfo(URL)
-	if err != nil {
-		return nil, err
-	}
-
-	return YoutubeDLFromInfo(info)
 }
 
 ///////////////////////////////////////
@@ -127,15 +90,3 @@ func ConnectToVoiceChannel(ctx *Context) (*discordgo.VoiceConnection, error) {
 
 	return vc, nil
 }
-
-///////////////////////////////////////////////////
-//                Requesting information
-///////////////////////////////////////////////////
-
-// RequestFile requests a file upload from the user
-// It will search for
-// 	1. a file attachment
-//  2. a URL to an http address
-// func RequestFile(ctx *system.Context) {
-
-// }
