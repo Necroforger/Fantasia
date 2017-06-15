@@ -1,31 +1,31 @@
 
 
-# Fantasia
+# 1. Fantasia
 <!-- TOC -->
 
-- [Fantasia](#fantasia)
-- [Installing](#installing)
-- [Running](#running)
-- [Flags](#flags)
-- [Config samples](#config-samples)
-- [Modules](#modules)
+- [1. Fantasia](#1-fantasia)
+- [2. Installing](#2-installing)
+- [3. Running](#3-running)
+- [4. Flags](#4-flags)
+- [5. Config sample](#5-config-sample)
+- [6. Modules](#6-modules)
 
 <!-- /TOC -->
 
 ______________
 
 
-# Installing
+# 2. Installing
 Go to the [releases](https://github.com/Necroforger/Fantasia/releases) and download a version or.
 
 `go get -U github.com/Necroforger`
 
 Navigate to GOPATH/github.com/Necroforger/Fantasia and use `go build` to create an executeable.
 
-# Running
+# 3. Running
 Execute the bot and it should generate a `config.toml` file. Fill this in with your bot information and execute the bot again. You can copy the sample config to get started quickly.
 
-# Flags
+# 4. Flags
 
 Executing with flags is optional unless you want to use the same config
 With multiple tokens, or use a config file stored in a path other than `./config.toml`
@@ -35,10 +35,11 @@ With multiple tokens, or use a config file stored in a path other than `./config
 | t    | Specify the bot token |
 | c    | Config file path      |
 | s    | Enable selfbot mode   |
-# Config samples
+# 5. Config sample
+
 ```toml
 # All bot tokens are prefixed by 'Bot '. Ex 'Bot MsasmdJAsndjANsjh23'
-Token = "REPLACE_WITH_BOT_TOKEN"
+Token = "Bot MsasmdJAsndjANsjh23"
 DisabledCommands = []
 
 # If selfbot is enabled, your bot must be run on a user token and it will only respond
@@ -46,7 +47,6 @@ DisabledCommands = []
 [System]
   Prefix = ">"
   Selfbot = false
-  YoutubeDLPath = "youtube-dl"
 
 # Any modules set to false are disabled.
 # If inverted is true, all modules are enabled by default
@@ -64,34 +64,46 @@ DisabledCommands = []
    # Custom audio commands
   [Modules.AudioConfig]
 
+    # Category name for sound clips
+    SoundClipCommandsCategory = "Sound clips"
+
     # Soundclip commands are in the format of ["Command Name", "Description", "url", "url"...]
-    # If more than one URL is present, the command will choose a random one from the list.
+    # If more than one URL is present, the command will choose a random one from the list.>
     # If the path is not prefixed by http:// or https:// it will attempt to get the clip from the file system.
     # If the path is a folder, it will get a random clip from the folder.
     SoundclipCommands = [
-      ["granddad",   "[source](https://youtu.be/gIcmIjfdE78)", "https://youtu.be/gIcmIjfdE78"],
-      ["whomst",     "[source](https://youtu.be/EfAnvdcnE08)", "https://youtu.be/EfAnvdcnE08"],
-      ["dreamscape", "[source](https://youtu.be/2WPCLda_erI)", "https://youtu.be/2WPCLda_erI"],
+      ["granddad",   "[source](https://youtu.be/gIcmIjfdE78)", "https://youtu.be/gIcmIjfdE78"]
     ]
 
   [Modules.ImagesConfig]
+
+    # Include image filtering commands
+    FilterCommands = true
+
+    # Controls the category of image filters
+    ImageFiltersCategory = "Image filters"
+
+    # Leaving this setting blank will set custom image commands category to the default
+    # Module category, which would be Images.
+    ImageCommandsCategory = ""
 
     # Image commands are in the format of ["Command Name", "Description", "url", "url"...]
     # If more than one URL is present, the command will choose a random one from the list.
     # If the path is not prefixed by http:// or https:// it will attempt to get the image from the file system.
     # If the path is a folder, it will get a random image from the folder.
     ImageCommands = [
-      ["cirno",   "cir no", 
-        "https://nokywln.files.wordpress.com/2011/09/807720-20920920cirno20touhou20e291a81.jpg?w=500"],
-
       ["cirnopi", "cirno calculates the exact value of pi", 
-        "https://lh6.googleusercontent.com/-7kCspKNcZvU/VQRWMo4fb7I/AAAAAAAABIg/fwBfrgrCcx0/w800-h800/cirno_PI.jpg"],
-
-      # Retrieves a random file from Pictures/Please Respond
-      ["plsrespond", "please respond",
-        'Pictures/Please Respond']
+          "https://lh6.googleusercontent.com/-7kCspKNcZvU/VQRWMo4fb7I/AAAAAAAABIg/fwBfrgrCcx0/w800-h800/cirno_PI.jpg"],
+      ["highground", "its over anakin, I have the high ground",
+          'https://cdn.discordapp.com/attachments/221341345539686400/321496580362338304/Icantevendrawastickfiguresoidont_25dec9985c1399cf20e3bd064a7a8571.jpg'],
+      ["nothing_to_do_with_this", "I don't think I want anything to do with this",
+          "https://cdn.discordapp.com/attachments/319171684105977857/321117932002476033/FAqSXDJ.png"],
     ]
 
+
+    # BooruCommandsCategory allows you to change the category the booru commands
+    # Appear under. The help menu will display it under a different field.
+    BooruCommandsCategory = "Boorus"
 
     # Booru commands allow you to request an image or list of images from a booru.
     # usage: boorucommand "list of tags". Supports all boorus supported by
@@ -101,6 +113,19 @@ DisabledCommands = []
         ["safebooru", "https://safebooru.org/"],
         ["img",       "http://google.com"],
     ]
+
+[Modules.MusicplayerConfig]
+    # Use the music player subrouter.
+    # This can prevent conflicts between commands with
+    # The same name. Requires you to type `musicplayer` or `m`
+    # Before every musicplayer command.
+    UseSubrouter = true
+
+    # Debug adds a testing song queue
+    Debug = false
+
+    # Use youtube-dl to queue and stream media
+    UseYoutubeDL = true
 
 
 # Ffmpeg must be in your path and DCA-RS must be in the same folder
@@ -112,7 +137,7 @@ DisabledCommands = []
 ```
 
 
-# Modules
+# 6. Modules
 
 | Module      | Description                                                                                 |
 |-------------|---------------------------------------------------------------------------------------------|
