@@ -1,31 +1,45 @@
 
 
-# 1. Fantasia
+# Fantasia
 <!-- TOC -->
 
-- [1. Fantasia](#1-fantasia)
-- [2. Installing](#2-installing)
-- [3. Running](#3-running)
-- [4. Flags](#4-flags)
-- [5. Config sample](#5-config-sample)
-- [6. Modules](#6-modules)
+- [Fantasia](#fantasia)
+- [Dependencies](#dependencies)
+    - [Audio dependencies](#audio-dependencies)
+- [Installing](#installing)
+- [Running](#running)
+- [Flags](#flags)
+- [Config Example](#config-example)
+- [Modules](#modules)
 
 <!-- /TOC -->
 
 ______________
+# Dependencies
+## Audio dependencies
+* [dca-rs](https://github.com/nstafie/dca-rs/releases)
+* [ffmpeg](https://ffmpeg.org/)
+* [youtubedl](https://rg3.github.io/youtube-dl/) - optional
+
+You need to have [dca-rs](https://github.com/nstafie/dca-rs/releases) in the same directory as your bot executeable in order to use audio playing commands. This is required to convert the audio to opus format.
+
+[ffmpeg](https://ffmpeg.org/) is also required for converting audio to opus format. It should be [installed to your path.](http://www.wikihow.com/Install-FFmpeg-on-Windows)
+
+Installing [youtubedl](https://rg3.github.io/youtube-dl/) will allow you to queue videos in the media player from a variety of sources, such as soundcloud and facebook rather than specifically youtube. [It should be added to your path similarly to ffmpeg.](http://www.wikihow.com/Install-YouTube-DL.py-to-Download-YouTube-Videos-to-Your-PC). If you choose not to use youtube-dl, set UseYotubeDL in the MusicPlayer config to false and it will resort to using the golang downloader, [rylio/ytdl](https://github.com/rylio/ytdl)
 
 
-# 2. Installing
+
+# Installing
 Go to the [releases](https://github.com/Necroforger/Fantasia/releases) and download a version or.
 
 `go get -U github.com/Necroforger`
 
 Navigate to GOPATH/github.com/Necroforger/Fantasia and use `go build` to create an executeable.
 
-# 3. Running
+# Running
 Execute the bot and it should generate a `config.toml` file. Fill this in with your bot information and execute the bot again. You can copy the sample config to get started quickly.
 
-# 4. Flags
+# Flags
 
 Executing with flags is optional unless you want to use the same config
 With multiple tokens, or use a config file stored in a path other than `./config.toml`
@@ -35,7 +49,9 @@ With multiple tokens, or use a config file stored in a path other than `./config
 | t    | Specify the bot token |
 | c    | Config file path      |
 | s    | Enable selfbot mode   |
-# 5. Config sample
+
+
+# Config Example
 
 ```toml
 # All bot tokens are prefixed by 'Bot '. Ex 'Bot MsasmdJAsndjANsjh23'
@@ -137,7 +153,7 @@ DisabledCommands = []
 ```
 
 
-# 6. Modules
+# Modules
 
 | Module      | Description                                                                                 |
 |-------------|---------------------------------------------------------------------------------------------|
@@ -147,4 +163,4 @@ DisabledCommands = []
 | Roles       | Role managing module                                                                        |
 | eval        | Module for evaluating code                                                                  |
 | Images      | Various image commands                                                                      |
-| Musicplayer | Do not use, work in progress                                                                |
+| Musicplayer | Queue and play songs from a variety of sources                                                           |
