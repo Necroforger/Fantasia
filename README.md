@@ -32,7 +32,7 @@ Installing [youtubedl](https://rg3.github.io/youtube-dl/) will allow you to queu
 # Installing
 Go to the [releases](https://github.com/Necroforger/Fantasia/releases) and download a version or.
 
-`go get -U github.com/Necroforger`
+`go get -U github.com/Necroforger/Fantasia`
 
 Navigate to GOPATH/github.com/Necroforger/Fantasia and use `go build` to create an executeable.
 
