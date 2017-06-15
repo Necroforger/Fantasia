@@ -370,8 +370,6 @@ func (m *Module) CmdRemove(ctx *system.Context) {
 
 	ids := getIndexes(strings.Split(ctx.Args.After(), " "), radio)
 
-	ctx.Reply(ids)
-
 	err = radio.Queue.Remove(ids...)
 	if err != nil {
 		if len(ids) == 1 {
