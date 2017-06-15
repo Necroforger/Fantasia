@@ -14,12 +14,7 @@ const (
 )
 
 // EmbedQueueFilter ...
-func EmbedQueueFilter() {
-
-}
-
-// EmbedQueue returns an embed object for a musicqueue
-func EmbedQueue(q *SongQueue, index, beforeIndex, afterIndex int) *dream.Embed {
+func EmbedQueueFilter(q *SongQueue, index, beforeIndex, afterIndex int, filterFunc func(*SongQueue, *Song) bool) *dream.Embed {
 	embed := dream.NewEmbed()
 
 	for i := index - beforeIndex; i < index+afterIndex; i++ {
@@ -31,18 +26,24 @@ func EmbedQueue(q *SongQueue, index, beforeIndex, afterIndex int) *dream.Embed {
 				songname string
 				prefix   string
 			)
-			if i == index {
-				songname = q.Playlist[i].Markdown()
-			} else {
-				songname = q.Playlist[i].String()
+			if filterFunc(q, q.Playlist[i]) {
+				if i == index {
+					songname = q.Playlist[i].Markdown()
+				} else {
+					songname = q.Playlist[i].String()
+				}
+				if q.Playlist[i].Rating != 0 {
+					prefix = strings.Repeat(EmojiStar, q.Playlist[i].Rating)
+				}
+				embed.Description += fmt.Sprintf("%d. %s%s\n", i, prefix, songname)
 			}
-			if q.Playlist[i].Rating != 0 {
-				prefix = strings.Repeat(EmojiStar, q.Playlist[i].Rating)
-			}
-			embed.Description += fmt.Sprintf("%d. %s%s\n", i, prefix, songname)
-
 		}
 	}
 
 	return embed
+}
+
+// EmbedQueue returns an embed object for a musicqueue
+func EmbedQueue(q *SongQueue, index, beforeIndex, afterIndex int) *dream.Embed {
+	return EmbedQueueFilter(q, index, beforeIndex, afterIndex, func(q *SongQueue, s *Song) bool { return true })
 }
