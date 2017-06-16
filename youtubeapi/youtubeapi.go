@@ -72,7 +72,6 @@ type Item struct {
 
 // Search searches youtube for videos with the supplied query.
 //		query: The query to search for.
-//		key:   Your google API key.
 func (y *Youtube) Search(query string, maxResults int) (*SearchResult, error) {
 	resp, err := http.Get(fmt.Sprintf("https://www.googleapis.com/youtube/v3/search?part=snippet&q=%s&key=%s&maxResults=%d", url.QueryEscape(query), y.Key, maxResults))
 	if err != nil {
