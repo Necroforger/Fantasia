@@ -329,7 +329,7 @@ func SongFromYTDL(URL, addedBy string) (*Song, error) {
 		ID:          info.ID,
 		Thumbnail:   info.GetThumbnailURL(ytdl.ThumbnailQualityHigh).String(),
 		Uploader:    info.Author,
-		URL:         URL,
+		URL:         "https://www.youtube.com/watch?v=" + info.ID,
 	}
 
 	return song, nil

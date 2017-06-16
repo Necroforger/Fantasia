@@ -24,12 +24,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/Fantasia/youtubeapi"
 	"github.com/Necroforger/discordgo"
@@ -249,6 +247,10 @@ func (m *Module) CmdStar(ctx *system.Context) {
 }
 
 // CmdQueue Queues a song or views the queue list
+// Attempts to parse an integer value from the command argument.
+// If an integer is parsed without error, the queue will present a
+// List of songs around that position in the queue. If there is an
+// Error parsing the integer, The queue will attempt to queue a video from the supplied URL.
 func (m *Module) CmdQueue(ctx *system.Context) {
 	guildID, err := guildIDFromContext(ctx)
 	if err != nil {
@@ -258,6 +260,14 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 
 	index := 0
 	if index, err = strconv.Atoi(ctx.Args.Get(0)); err != nil && ctx.Args.After() != "" {
+
+		// If the URL is not an http link, search youtube for it.
+		if !strings.HasPrefix(ctx.Args.After(), "http://") &&
+			!strings.HasPrefix(ctx.Args.After(), "https://") {
+			m.CmdYoutubeSearchQueue(ctx)
+			return
+		}
+
 		// Youtube-dl
 		if m.Config.UseYoutubeDL {
 			progress := make(chan *Song)
@@ -326,7 +336,7 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 // CmdYoutubeSearchQueue searches youtube and queues the first video result found
 func (m *Module) CmdYoutubeSearchQueue(ctx *system.Context) {
 	if ctx.System.Config.GoogleAPIKey == "" {
-		ctx.ReplyError("Youtube searching is not enabled: no google api key")
+		ctx.ReplyError("Youtube searching is not enabled")
 		return
 	}
 
@@ -337,18 +347,20 @@ func (m *Module) CmdYoutubeSearchQueue(ctx *system.Context) {
 	}
 	radio := m.getRadio(guildID)
 
-	results, err := youtubeapi.New(ctx.System.Config.GoogleAPIKey).Search(ctx.Args.After(), 5)
+	results, err := youtubeapi.New(ctx.System.Config.GoogleAPIKey).Search(ctx.Args.After(), 1)
 	if err != nil {
 		ctx.ReplyError(err)
 		return
 	}
 
-	toml.NewEncoder(os.Stdout).Encode(results)
-
 	if len(results.Items) != 0 {
 		item := results.Items[0]
-		QueueFromURL("https://www.youtube.com/watch?v="+item.ID.VideoID, ctx.Msg.Author.Username, radio.Queue, nil)
-		ctx.ReplySuccess("Queued "+item.Snippet.Title+"\nindex: ", len(radio.Queue.Playlist)-1)
+		if song, err := SongFromYTDL(item.ID.VideoID, ctx.Msg.Author.Username); err == nil {
+			index := radio.Queue.Add(song)
+			ctx.ReplySuccess(fmt.Sprintf("Queued [%d]: %s", index, song.Markdown()))
+		} else {
+			ctx.ReplyError(err)
+		}
 		return
 	}
 
