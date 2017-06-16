@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Necroforger/Fantasia/system"
+	"github.com/Necroforger/Fantasia/youtubeapi"
 	"github.com/Necroforger/ytdl"
 )
 
@@ -43,7 +44,7 @@ func (m *Module) Build(s *system.System) {
 		}
 	}
 
-	r.On("play", m.playHandler).Set("", "Plays the requested song")
+	r.On("play", m.playHandler).Set("", "Plays the requested youtube song URL. If the provided argument does not begin with http:// or https:// it will attempt to search youtube to find the video. Example: `play Through the Fire and the Flames`")
 	r.On("stop", func(ctx *system.Context) { ctx.Ses.GuildAudioDispatcherStop(ctx.Msg) }).Set("", "Stops the guilds currently playing audio dispatcher")
 	r.On("pause", func(ctx *system.Context) { ctx.Ses.GuildAudioDispatcherPause(ctx.Msg) }).Set("", "Pauses the guild's currently playing audio dispatcher")
 	r.On("resume", func(ctx *system.Context) { ctx.Ses.GuildAudioDispatcherResume(ctx.Msg) }).Set("", "resumes the guild's currently playing audio dispatcher")
@@ -143,7 +144,25 @@ func (m *Module) playHandler(ctx *system.Context) {
 		return
 	}
 
-	info, err := ytdl.GetVideoInfo(ctx.Args.After())
+	var SongURL string
+	if !strings.HasPrefix(ctx.Args.After(), "http://") && !strings.HasPrefix(ctx.Args.After(), "https://") &&
+		ctx.System.Config.GoogleAPIKey != "" {
+
+		result, err := youtubeapi.New(ctx.System.Config.GoogleAPIKey).Search(ctx.Args.After(), 1)
+		if err != nil {
+			ctx.ReplyError("Could not search for video, invalid API key")
+			return
+		}
+		if len(result.Items) == 0 {
+			ctx.ReplyError("No videos found")
+			return
+		}
+		SongURL = result.Items[0].ID.VideoID
+	} else {
+		SongURL = ctx.Args.After()
+	}
+
+	info, err := ytdl.GetVideoInfo(SongURL)
 	if err != nil {
 		ctx.ReplyError("Error obtaining video information")
 		return
