@@ -243,7 +243,6 @@ func (m *Module) CmdStar(ctx *system.Context) {
 
 	embedlog.TruncateDescription()
 	ctx.ReplyEmbed(embedlog.MessageEmbed)
-
 }
 
 // CmdQueue Queues a song or views the queue list
