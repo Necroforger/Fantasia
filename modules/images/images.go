@@ -4,11 +4,18 @@ package images
 
 import (
 	"fmt"
+	"image"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
+
+	// Used in imageFromContext
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 
 	"github.com/Necroforger/Boorudl/extractor"
 	"github.com/Necroforger/Fantasia/system"
@@ -67,6 +74,11 @@ func (m *Module) Build(s *system.System) {
 			r.SetCategory(maincategory)
 		}
 	}
+
+	////////////////////////////////
+	//  Textify
+	///////////////////////////////
+	r.On("textify", m.CmdTextify).Set("", "Converts the supplied image to text")
 
 	/////////////////////////////////
 	// Convolution filters
@@ -204,4 +216,23 @@ func MakeBooruSearcher(booruURL string) func(*system.Context) {
 		}
 
 	}
+}
+
+func imageFromContext(ctx *system.Context) (image.Image, error) {
+	msg := ctx.Msg
+
+	var imgurl string
+	if len(msg.Attachments) != 0 {
+		imgurl = msg.Attachments[0].URL
+	} else if ctx.Args.After() != "" {
+		imgurl = ctx.Args.After()
+	}
+
+	resp, err := http.Get(imgurl)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	img, _, err := image.Decode(resp.Body)
+	return img, err
 }
