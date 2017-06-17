@@ -49,6 +49,7 @@ With multiple tokens, or use a config file stored in a path other than `./config
 | t    | Specify the bot token |
 | c    | Config file path      |
 | s    | Enable selfbot mode   |
+| p    | Bot prefix            |
 
 
 # Config Example
