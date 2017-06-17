@@ -24,6 +24,7 @@ var (
 	Token      string
 	ConfigPath string
 	SelfBot    bool
+	Prefix     string
 )
 
 // Config ...
@@ -39,6 +40,7 @@ func parseFlags() {
 	flag.StringVar(&Token, "t", "", "Bot token")
 	flag.StringVar(&ConfigPath, "c", "config.toml", "configuration file path")
 	flag.BoolVar(&SelfBot, "s", false, "specifies if the bot is a selfbot")
+	flag.StringVar(&Prefix, "p", "", "Bot prefix")
 	flag.Parse()
 }
 
@@ -81,6 +83,10 @@ func main() {
 
 	if SelfBot {
 		conf.System.Selfbot = true
+	}
+
+	if Prefix != "" {
+		conf.System.Prefix = Prefix
 	}
 
 	// Create the bot session
