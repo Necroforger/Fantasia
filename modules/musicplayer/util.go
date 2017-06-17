@@ -24,7 +24,7 @@ func getIndexes(args []string, radio *Radio) []int {
 					}
 				}
 			}
-		} else if num, err := strconv.Atoi(arg); err == nil {
+		} else if num, err := getIndex(arg, radio); err == nil {
 			ids = append(ids, num)
 		}
 
