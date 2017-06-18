@@ -1,8 +1,6 @@
 package images
 
 import (
-	"fmt"
-
 	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/textify"
 )
@@ -25,6 +23,5 @@ func (m *Module) CmdTextify(ctx *system.Context) {
 		ctx.ReplyError(err)
 		return
 	}
-	fmt.Println(text)
 	ctx.Reply("```" + text + "```")
 }
