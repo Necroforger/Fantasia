@@ -96,6 +96,7 @@ func (y *Youtube) Search(query string, maxResults int) (*SearchResult, error) {
 
 // ScrapeSearch search youtube without an api key
 //		query: The query to search for.
+func ScrapeSearch(query string, limit int) ([]string, error) {
 	resp, err := http.Get("https://www.youtube.com/results?search_query=" + url.QueryEscape(query))
 	if err != nil {
 		return nil, err
@@ -113,6 +114,7 @@ func (y *Youtube) Search(query string, maxResults int) (*SearchResult, error) {
 	videoEnd := `"`
 
 	urls := []string{}
+	for i := 0; i < limit; i++ {
 		startIndex := strings.Index(body, videostart)
 		if startIndex < 0 {
 			break
