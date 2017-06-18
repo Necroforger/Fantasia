@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -90,4 +92,42 @@ func (y *Youtube) Search(query string, maxResults int) (*SearchResult, error) {
 	}
 
 	return &searchRes, nil
+}
+
+// ScrapeSearch search youtube without an api key
+//		query: The query to search for.
+	resp, err := http.Get("https://www.youtube.com/results?search_query=" + url.QueryEscape(query))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var body string
+	if b, err := ioutil.ReadAll(resp.Body); err == nil {
+		body = string(b)
+	} else {
+		return nil, err
+	}
+
+	videostart := `<a href="/watch?v=`
+	videoEnd := `"`
+
+	urls := []string{}
+		startIndex := strings.Index(body, videostart)
+		if startIndex < 0 {
+			break
+		}
+		startIndex += 9
+
+		endIndex := strings.Index(body[startIndex:], videoEnd)
+		if endIndex < 0 {
+			break
+		}
+		endIndex += startIndex
+
+		urls = append(urls, "https://www.youtube.com"+body[startIndex:endIndex])
+		body = body[endIndex:]
+	}
+
+	return urls, nil
 }

@@ -145,19 +145,30 @@ func (m *Module) playHandler(ctx *system.Context) {
 	}
 
 	var SongURL string
-	if !strings.HasPrefix(ctx.Args.After(), "http://") && !strings.HasPrefix(ctx.Args.After(), "https://") &&
-		ctx.System.Config.GoogleAPIKey != "" {
-
-		result, err := youtubeapi.New(ctx.System.Config.GoogleAPIKey).Search(ctx.Args.After(), 1)
-		if err != nil {
-			ctx.ReplyError("Could not search for video, invalid API key")
-			return
+	if !strings.HasPrefix(ctx.Args.After(), "http://") && !strings.HasPrefix(ctx.Args.After(), "https://") {
+		if ctx.System.Config.GoogleAPIKey != "" {
+			result, err := youtubeapi.New(ctx.System.Config.GoogleAPIKey).Search(ctx.Args.After(), 1)
+			if err != nil {
+				ctx.ReplyError("Could not search for video, invalid API key")
+				return
+			}
+			if len(result.Items) == 0 {
+				ctx.ReplyError("No videos found")
+				return
+			}
+			SongURL = result.Items[0].ID.VideoID
+		} else {
+			results, err := youtubeapi.ScrapeSearch(ctx.Args.After(), 1)
+			if err != nil {
+				ctx.ReplyError(err)
+				return
+			}
+			if len(results) == 0 {
+				ctx.ReplyError("No videos found")
+				return
+			}
+			SongURL = results[0]
 		}
-		if len(result.Items) == 0 {
-			ctx.ReplyError("No videos found")
-			return
-		}
-		SongURL = result.Items[0].ID.VideoID
 	} else {
 		SongURL = ctx.Args.After()
 	}

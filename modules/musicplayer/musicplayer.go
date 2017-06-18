@@ -334,11 +334,6 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 
 // CmdYoutubeSearchQueue searches youtube and queues the first video result found
 func (m *Module) CmdYoutubeSearchQueue(ctx *system.Context) {
-	if ctx.System.Config.GoogleAPIKey == "" {
-		ctx.ReplyError("Youtube searching is not enabled")
-		return
-	}
-
 	guildID, err := guildIDFromContext(ctx)
 	if err != nil {
 		ctx.ReplyError(err)
@@ -346,24 +341,36 @@ func (m *Module) CmdYoutubeSearchQueue(ctx *system.Context) {
 	}
 	radio := m.getRadio(guildID)
 
-	results, err := youtubeapi.New(ctx.System.Config.GoogleAPIKey).Search(ctx.Args.After(), 1)
-	if err != nil {
-		ctx.ReplyError(err)
-		return
-	}
+	var videoURL string
 
-	if len(results.Items) != 0 {
-		item := results.Items[0]
-		if song, err := SongFromYTDL(item.ID.VideoID, ctx.Msg.Author.Username); err == nil {
-			index := radio.Queue.Add(song)
-			ctx.ReplySuccess(fmt.Sprintf("Queued [%d]: %s", index, song.Markdown()))
-		} else {
+	if ctx.System.Config.GoogleAPIKey != "" {
+		results, err := youtubeapi.New(ctx.System.Config.GoogleAPIKey).Search(ctx.Args.After(), 1)
+		if err != nil {
 			ctx.ReplyError(err)
+			return
 		}
+		if len(results.Items) != 0 {
+			videoURL = results.Items[0].ID.VideoID
+		}
+	} else {
+		results, err := youtubeapi.ScrapeSearch(ctx.Args.After(), 1)
+		if err == nil && len(results) > 0 {
+			videoURL = results[0]
+		}
+	}
+
+	if videoURL == "" {
+		ctx.ReplyError("No results found")
 		return
 	}
 
-	ctx.ReplyError("No results found")
+	if song, err := SongFromYTDL(videoURL, ctx.Msg.Author.Username); err == nil {
+		ctx.ReplySuccess(fmt.Sprintf("Queued [%d]: %s", radio.Queue.Add(song), song.Markdown()))
+	} else {
+		ctx.ReplyError(err)
+	}
+
+	return
 }
 
 // CmdRemove removes a song from the queue from its index id
