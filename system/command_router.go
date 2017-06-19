@@ -155,7 +155,7 @@ func (c *CommandRouter) findMatch(name string, skipDisabled bool) (*CommandRoute
 	return nil, nil
 }
 
-// FindMatch returns the first non-disabled match that matches the given string
+// FindMatch returns the first match that matches the given string
 //		name: The name of the route to find
 func (c *CommandRouter) FindMatch(name string) (*CommandRoute, []int) {
 	return c.findMatch(name, false)
