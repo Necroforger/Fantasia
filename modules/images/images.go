@@ -25,12 +25,12 @@ import (
 // Config ...
 type Config struct {
 	// FilterCommands includes image filtering commands
-	FilterCommands        bool
 	ImageCommandsCategory string
 	ImageCommands         [][]string
 	BooruCommandsCategory string
 	BooruCommands         [][]string
-	ImageFiltersCategory  string
+	EffectCommands        bool
+	ImageEffectsCategory  string
 }
 
 // ImageCommand ...
@@ -43,7 +43,7 @@ type ImageCommand struct {
 func NewConfig() *Config {
 	return &Config{
 		// FilterCommands includes filter commands
-		FilterCommands: true,
+		EffectCommands: true,
 
 		// Default Image commands
 		ImageCommands: [][]string{},
@@ -75,16 +75,12 @@ func (m *Module) Build(s *system.System) {
 		}
 	}
 
-	////////////////////////////////
-	//  Textify
-	///////////////////////////////
-	r.On("textify", m.CmdTextify).Set("", "Converts the supplied image to text")
-
 	/////////////////////////////////
-	// Convolution filters
+	// Effects
 	////////////////////////////////
-	if m.Config.FilterCommands {
-		setCategory(m.Config.ImageFiltersCategory)
+	if m.Config.EffectCommands {
+		setCategory(m.Config.ImageEffectsCategory)
+		r.On("textify", m.CmdTextify).Set("", "Converts the supplied image to text")
 		r.On("edgedetect", MakeConvolutionFunc(MatrixEdgeDetect, getDivisor(MatrixEdgeDetect), 1)).Set("", "`usage: edge [iteratins]` Detects the edges of the given image")
 		r.On("blur", MakeConvolutionFunc(MatrixGaussian, getDivisor(MatrixGaussian), 1)).Set("", "`usage: blur [iterations]` Gaussian blurs the given image")
 		r.On("motionblur", MakeConvolutionFunc(MatrixMotionBlur, getDivisor(MatrixMotionBlur), 1)).Set("", "`usage: motionblue [iterations]` Applies a motion blur to the given image")
