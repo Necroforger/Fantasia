@@ -118,6 +118,9 @@ func (m *Module) Build(s *system.System) {
 	t.On("resume", m.CmdResume).Set("", "Resumes the currently playing song")
 	t.On("next", m.CmdNext).Set("", "Loads the next song in the queue")
 	t.On("prev|previous", m.CmdPrevious).Set("prev | previous", "Loads the previous song in the queue")
+
+	// Other
+	t.On("tutorial", m.CmdTutorial).Set("", "A multipage tutorial for using the musicplayer module.\n Call this command in a DM to prevent other people from changing the pages on you")
 }
 
 // CmdSilence should toggle the radio from automatically sending messages when the song changes
@@ -304,11 +307,12 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 
 			finalEmbed := dream.NewEmbed().SetColor(system.StatusSuccess)
 			if count == 1 {
-				finalEmbed.SetDescription("queued " + lastsong.Markdown())
+				finalEmbed.SetDescription("queued " + lastsong.Markdown()).SetFooter("index: " + fmt.Sprint(radio.Queue.Index))
 			} else {
 				finalEmbed.SetDescription(fmt.Sprintf("queued %d songs starting at index %d", count, startIndex))
 			}
 			ctx.Ses.DG.ChannelMessageEditEmbed(msg.ChannelID, msg.ID, finalEmbed.MessageEmbed)
+
 			// YTDL
 		} else {
 			song, err := SongFromYTDL(ctx.Args.After(), ctx.Msg.Author.Username)
