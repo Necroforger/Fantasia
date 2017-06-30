@@ -10,7 +10,6 @@ import (
 
 // CmdTutorial sends a tutorial with instructions on how to use the musicplayer
 func (m *Module) CmdTutorial(ctx *system.Context) {
-	paginator := widgets.NewPaginator(ctx.Ses.DG, ctx.Msg.ChannelID)
 
 	QuickGuide := dream.NewEmbed().
 		SetTitle("Quick guide").
@@ -57,8 +56,11 @@ func (m *Module) CmdTutorial(ctx *system.Context) {
 		SetColor(system.StatusNotify).
 		MessageEmbed
 
-	// Change the colour to yellow when the tutorial is no longer listening
-	paginator.ChangeColourWhenDone = true
+	paginator := widgets.NewPaginator(ctx.Ses.DG, ctx.Msg.ChannelID)
+
+	// Change colour to yellow when the paginator is no longer
+	// Listening for reactions.
+	paginator.ColourWhenDone = system.StatusWarning
 	paginator.Add(QuickGuide, QueueHelp, Navigating, SaveAndLoad)
 	paginator.SetPageFooters()
 	paginator.NavigationTimeout = time.Minute * 5

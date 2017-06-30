@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/discordgo"
 )
 
@@ -35,7 +34,7 @@ type Paginator struct {
 	Close chan bool
 
 	DeleteMessageWhenDone bool
-	ChangeColourWhenDone  bool
+	ColourWhenDone        int
 
 	running bool
 }
@@ -51,7 +50,7 @@ func NewPaginator(ses *discordgo.Session, channelID string) *Paginator {
 		Loop:                  false,
 		ChannelID:             channelID,
 		DeleteMessageWhenDone: false,
-		ChangeColourWhenDone:  false,
+		ColourWhenDone:        -1,
 		NavigationTimeout:     0,
 	}
 }
@@ -70,9 +69,9 @@ func (p *Paginator) Spawn() error {
 			p.Ses.ChannelMessageDelete(p.Message.ChannelID, p.Message.ID)
 		} else
 		// Change colour when done
-		if p.ChangeColourWhenDone {
+		if p.ColourWhenDone >= 0 {
 			if page, err := p.Page(); err == nil {
-				page.Color = system.StatusWarning
+				page.Color = p.ColourWhenDone
 			}
 			p.Update()
 		}
