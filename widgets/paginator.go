@@ -38,7 +38,8 @@ type Paginator struct {
 	Ses *dream.Session
 
 	// Stop listening for events and delete the message
-	Close chan bool
+	Close                 chan bool
+	DeleteMessageWhenDone bool
 
 	running bool
 }
@@ -48,12 +49,13 @@ type Paginator struct {
 //    channelID: channelID to spawn the paginator on
 func NewPaginator(ses *dream.Session, channelID string) *Paginator {
 	return &Paginator{
-		Ses:               ses,
-		Pages:             []*discordgo.MessageEmbed{},
-		Index:             0,
-		Loop:              false,
-		ChannelID:         channelID,
-		NavigationTimeout: 0,
+		Ses:                   ses,
+		Pages:                 []*discordgo.MessageEmbed{},
+		Index:                 0,
+		Loop:                  false,
+		ChannelID:             channelID,
+		DeleteMessageWhenDone: false,
+		NavigationTimeout:     0,
 	}
 }
 
@@ -65,6 +67,9 @@ func (p *Paginator) Spawn() error {
 	p.running = true
 	defer func() {
 		p.running = false
+		if p.DeleteMessageWhenDone {
+			p.Ses.DG.ChannelMessageDelete(p.ChannelID, p.Message.ID)
+		}
 	}()
 
 	page, err := p.Page()
@@ -104,7 +109,6 @@ func (p *Paginator) Spawn() error {
 			case <-time.After(startTime.Add(p.NavigationTimeout).Sub(time.Now())):
 				return nil
 			case <-p.Close:
-				p.Ses.DG.ChannelMessageDelete(p.ChannelID, p.Message.ID)
 				return nil
 			}
 
@@ -116,7 +120,6 @@ func (p *Paginator) Spawn() error {
 			case k := <-p.Ses.NextMessageReactionRemoveC():
 				reaction = k.MessageReaction
 			case <-p.Close:
-				p.Ses.DG.ChannelMessageDelete(p.ChannelID, p.Message.ID)
 				return nil
 			}
 		}
