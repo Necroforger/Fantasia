@@ -19,8 +19,10 @@ var (
 
 // Navigation emojis
 var (
-	NavRight = "➡"
-	NavLeft  = "⬅"
+	NavRight     = "➡"
+	NavLeft      = "⬅"
+	NavEnd       = "⏩"
+	NavBeginning = "⏪"
 )
 
 // Paginator provides a method for creating a navigatable embed
@@ -88,14 +90,10 @@ func (p *Paginator) Spawn() error {
 	p.Message = msg
 
 	// Add navigation reactions
+	p.Ses.DG.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavBeginning)
 	p.Ses.DG.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavLeft)
 	p.Ses.DG.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavRight)
-
-	// Skip the first reaction, otherwise it will detect the last
-	// Navigation emoji added by the bot, which is navRight.
-	// I don't ignore reactions from the bot user, because that
-	// Would break selfbots.
-	firstReaction := true
+	p.Ses.DG.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavEnd)
 
 	var reaction *discordgo.MessageReaction
 	for {
@@ -104,8 +102,8 @@ func (p *Paginator) Spawn() error {
 			select {
 			case k := <-p.Ses.NextMessageReactionAddC():
 				reaction = k.MessageReaction
-			case k := <-p.Ses.NextMessageReactionRemoveC():
-				reaction = k.MessageReaction
+			// case k := <-p.Ses.NextMessageReactionRemoveC():
+			// 	reaction = k.MessageReaction
 			case <-time.After(startTime.Add(p.NavigationTimeout).Sub(time.Now())):
 				return nil
 			case <-p.Close:
@@ -117,20 +115,15 @@ func (p *Paginator) Spawn() error {
 			select {
 			case k := <-p.Ses.NextMessageReactionAddC():
 				reaction = k.MessageReaction
-			case k := <-p.Ses.NextMessageReactionRemoveC():
-				reaction = k.MessageReaction
+			// case k := <-p.Ses.NextMessageReactionRemoveC():
+			// 	reaction = k.MessageReaction
 			case <-p.Close:
 				return nil
 			}
 		}
 
-		// Skip the first reaction to avoid taking input from the bot user.
-		if firstReaction {
-			firstReaction = false
-			continue
-		}
-
-		if reaction.MessageID != p.Message.ID || firstReaction {
+		// Ignore the bot's reactions
+		if reaction.MessageID != p.Message.ID || p.Ses.DG.State.User.ID == reaction.UserID {
 			continue
 		}
 
@@ -143,7 +136,20 @@ func (p *Paginator) Spawn() error {
 			if err := p.NextPage(); err == nil {
 				p.Update()
 			}
+		case NavBeginning:
+			if err := p.Goto(0); err == nil {
+				p.Update()
+			}
+		case NavEnd:
+			if err := p.Goto(len(p.Pages) - 1); err == nil {
+				p.Update()
+			}
 		}
+
+		go func() {
+			time.Sleep(time.Millisecond * 250)
+			p.Ses.DG.MessageReactionRemove(reaction.ChannelID, reaction.MessageID, reaction.Emoji.Name, reaction.UserID)
+		}()
 	}
 }
 
@@ -201,6 +207,18 @@ func (p *Paginator) PreviousPage() error {
 	}
 
 	return ErrIndexOutOfBounds
+}
+
+// Goto jumps to the requested page index
+//    index: The index of the page to go to
+func (p *Paginator) Goto(index int) error {
+	p.Lock()
+	defer p.Unlock()
+	if index < 0 || index >= len(p.Pages) {
+		return ErrIndexOutOfBounds
+	}
+	p.Index = index
+	return nil
 }
 
 // Update updates the message with the current state of the paginator
