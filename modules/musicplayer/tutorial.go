@@ -10,7 +10,7 @@ import (
 
 // CmdTutorial sends a tutorial with instructions on how to use the musicplayer
 func (m *Module) CmdTutorial(ctx *system.Context) {
-	paginator := widgets.NewPaginator(ctx.Ses, ctx.Msg.ChannelID)
+	paginator := widgets.NewPaginator(ctx.Ses.DG, ctx.Msg.ChannelID)
 
 	QuickGuide := dream.NewEmbed().
 		SetTitle("Quick guide").
