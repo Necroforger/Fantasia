@@ -15,7 +15,7 @@ func (m *Module) CmdTutorial(ctx *system.Context) {
 	QuickGuide := dream.NewEmbed().
 		SetTitle("Quick guide").
 		SetDescription("Get started quickly\n" +
-			"`>m queue https://www.youtube.com/watch?v=dm2YwytOyH0\n`" +
+			"`>m queue https://www.youtube.com/watch?v=dm2YwytOyH0`\n" +
 			"`>m play`").
 		SetImage("http://i.imgur.com/7MLMNmM.gif").
 		SetColor(system.StatusNotify).
