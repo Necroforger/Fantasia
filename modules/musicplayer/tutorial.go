@@ -44,7 +44,20 @@ func (m *Module) CmdTutorial(ctx *system.Context) {
 		SetColor(system.StatusNotify).
 		MessageEmbed
 
-	paginator.Add(QuickGuide, QueueHelp, SaveAndLoad)
+	Navigating := dream.NewEmbed().
+		SetTitle("Navigating the queue").
+		SetDescription("Navigate the queue using the `next`, `previous`, and multipurpose `go` command" +
+			"Any command that accepts a song index as an argument (except the queue command) can use one of the following strings " +
+			"in its place\n\n" +
+			"`start, beginning : select index 0`\n" +
+			"`end, last : select the last index`\n" +
+			"`middle, center: select the middle index`\n" +
+			"`random, rand : select a random index`").
+		SetImage("http://i.imgur.com/KaaRGBb.gif").
+		SetColor(system.StatusNotify).
+		MessageEmbed
+
+	paginator.Add(QuickGuide, QueueHelp, Navigating, SaveAndLoad)
 	paginator.SetPageFooters()
 	paginator.NavigationTimeout = time.Minute * 5
 	paginator.Spawn()
