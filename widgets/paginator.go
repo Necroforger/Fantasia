@@ -8,7 +8,6 @@ import (
 
 	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/discordgo"
-	"github.com/Necroforger/dream"
 )
 
 // error vars
@@ -32,6 +31,15 @@ const (
 	EventChangeColourWhenDone
 )
 
+// NextMessageReactionAddC returns a channel for the next MessageReactionAdd event
+func nextMessageReactionAddC(s *discordgo.Session) chan *discordgo.MessageReactionAdd {
+	out := make(chan *discordgo.MessageReactionAdd)
+	s.AddHandlerOnce(func(_ *discordgo.Session, e *discordgo.MessageReactionAdd) {
+		out <- e
+	})
+	return out
+}
+
 // Paginator provides a method for creating a navigatable embed
 type Paginator struct {
 	sync.Mutex
@@ -44,7 +52,7 @@ type Paginator struct {
 	Message           *discordgo.Message
 	ChannelID         string
 
-	Ses *dream.Session
+	Ses *discordgo.Session
 
 	// Stop listening for events and delete the message
 	Close chan bool
@@ -58,7 +66,7 @@ type Paginator struct {
 // NewPaginator returns a new Paginator
 //    ses      : Dream session
 //    channelID: channelID to spawn the paginator on
-func NewPaginator(ses *dream.Session, channelID string) *Paginator {
+func NewPaginator(ses *discordgo.Session, channelID string) *Paginator {
 	return &Paginator{
 		Ses:               ses,
 		Pages:             []*discordgo.MessageEmbed{},
@@ -81,7 +89,7 @@ func (p *Paginator) Spawn() error {
 
 		// Delete Message when done
 		if p.Events&EventDeleteMessageWhenDone != 0 {
-			p.Ses.DG.ChannelMessageDelete(p.Message.ChannelID, p.Message.ID)
+			p.Ses.ChannelMessageDelete(p.Message.ChannelID, p.Message.ID)
 		} else
 		// Change colour when done
 		if p.Events&EventChangeColourWhenDone != 0 {
@@ -101,7 +109,7 @@ func (p *Paginator) Spawn() error {
 	startTime := time.Now()
 
 	// Create initial message.
-	msg, err := p.Ses.DG.ChannelMessageSendEmbed(p.ChannelID, page)
+	msg, err := p.Ses.ChannelMessageSendEmbed(p.ChannelID, page)
 	if err != nil {
 		return err
 	}
@@ -109,20 +117,18 @@ func (p *Paginator) Spawn() error {
 	p.Message = msg
 
 	// Add navigation reactions
-	p.Ses.DG.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavBeginning)
-	p.Ses.DG.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavLeft)
-	p.Ses.DG.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavRight)
-	p.Ses.DG.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavEnd)
+	p.Ses.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavBeginning)
+	p.Ses.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavLeft)
+	p.Ses.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavRight)
+	p.Ses.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavEnd)
 
 	var reaction *discordgo.MessageReaction
 	for {
 		// Navigation timeout enabled
 		if p.NavigationTimeout != 0 {
 			select {
-			case k := <-p.Ses.NextMessageReactionAddC():
+			case k := <-nextMessageReactionAddC(p.Ses):
 				reaction = k.MessageReaction
-			// case k := <-p.Ses.NextMessageReactionRemoveC():
-			// 	reaction = k.MessageReaction
 			case <-time.After(startTime.Add(p.NavigationTimeout).Sub(time.Now())):
 				return nil
 			case <-p.Close:
@@ -132,17 +138,15 @@ func (p *Paginator) Spawn() error {
 			// Navigation timeout not enabled
 		} else {
 			select {
-			case k := <-p.Ses.NextMessageReactionAddC():
+			case k := <-nextMessageReactionAddC(p.Ses):
 				reaction = k.MessageReaction
-			// case k := <-p.Ses.NextMessageReactionRemoveC():
-			// 	reaction = k.MessageReaction
 			case <-p.Close:
 				return nil
 			}
 		}
 
 		// Ignore the bot's reactions
-		if reaction.MessageID != p.Message.ID || p.Ses.DG.State.User.ID == reaction.UserID {
+		if reaction.MessageID != p.Message.ID || p.Ses.State.User.ID == reaction.UserID {
 			continue
 		}
 
@@ -167,7 +171,7 @@ func (p *Paginator) Spawn() error {
 
 		go func() {
 			time.Sleep(time.Millisecond * 250)
-			p.Ses.DG.MessageReactionRemove(reaction.ChannelID, reaction.MessageID, reaction.Emoji.Name, reaction.UserID)
+			p.Ses.MessageReactionRemove(reaction.ChannelID, reaction.MessageID, reaction.Emoji.Name, reaction.UserID)
 		}()
 	}
 }
@@ -251,7 +255,7 @@ func (p *Paginator) Update() error {
 		return err
 	}
 
-	_, err = p.Ses.DG.ChannelMessageEditEmbed(p.Message.ChannelID, p.Message.ID, page)
+	_, err = p.Ses.ChannelMessageEditEmbed(p.Message.ChannelID, p.Message.ID, page)
 	return err
 }
 
