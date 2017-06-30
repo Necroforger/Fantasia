@@ -3,7 +3,6 @@ package widgets
 import (
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/Necroforger/discordgo"
 )
@@ -23,15 +22,10 @@ type Paginator struct {
 	Index int
 
 	// Loop back to the beginning or end when on the first or last page.
-	Loop              bool
-	NavigationTimeout time.Duration
-	Message           *discordgo.Message
-	ChannelID         string
+	Loop   bool
+	Widget *Widget
 
 	Ses *discordgo.Session
-
-	// Stop listening for events and delete the message
-	Close chan bool
 
 	DeleteMessageWhenDone bool
 	ColourWhenDone        int
@@ -43,16 +37,38 @@ type Paginator struct {
 //    ses      : Dream session
 //    channelID: channelID to spawn the paginator on
 func NewPaginator(ses *discordgo.Session, channelID string) *Paginator {
-	return &Paginator{
-		Ses:                   ses,
-		Pages:                 []*discordgo.MessageEmbed{},
-		Index:                 0,
-		Loop:                  false,
-		ChannelID:             channelID,
+	p := &Paginator{
+		Ses:   ses,
+		Pages: []*discordgo.MessageEmbed{},
+		Index: 0,
+		Loop:  false,
 		DeleteMessageWhenDone: false,
 		ColourWhenDone:        -1,
-		NavigationTimeout:     0,
+		Widget:                NewWidget(ses, channelID, nil),
 	}
+
+	p.Widget.Handle(NavBeginning, func(w *Widget, r *discordgo.MessageReaction) {
+		if err := p.Goto(0); err == nil {
+			p.Update()
+		}
+	})
+	p.Widget.Handle(NavLeft, func(w *Widget, r *discordgo.MessageReaction) {
+		if err := p.PreviousPage(); err == nil {
+			p.Update()
+		}
+	})
+	p.Widget.Handle(NavRight, func(w *Widget, r *discordgo.MessageReaction) {
+		if err := p.NextPage(); err == nil {
+			p.Update()
+		}
+	})
+	p.Widget.Handle(NavEnd, func(w *Widget, r *discordgo.MessageReaction) {
+		if err := p.Goto(len(p.Pages) - 1); err == nil {
+			p.Update()
+		}
+	})
+
+	return p
 }
 
 // Spawn spawns the paginator in channel p.ChannelID
@@ -61,12 +77,12 @@ func (p *Paginator) Spawn() error {
 		return ErrAlreadyRunning
 	}
 	p.running = true
+
 	defer func() {
 		p.running = false
-
 		// Delete Message when done
-		if p.DeleteMessageWhenDone {
-			p.Ses.ChannelMessageDelete(p.Message.ChannelID, p.Message.ID)
+		if p.DeleteMessageWhenDone && p.Widget.Message != nil {
+			p.Ses.ChannelMessageDelete(p.Widget.Message.ChannelID, p.Widget.Message.ID)
 		} else
 		// Change colour when done
 		if p.ColourWhenDone >= 0 {
@@ -75,82 +91,15 @@ func (p *Paginator) Spawn() error {
 			}
 			p.Update()
 		}
-
 	}()
 
 	page, err := p.Page()
 	if err != nil {
 		return err
 	}
+	p.Widget.Embed = page
 
-	startTime := time.Now()
-
-	// Create initial message.
-	msg, err := p.Ses.ChannelMessageSendEmbed(p.ChannelID, page)
-	if err != nil {
-		return err
-	}
-
-	p.Message = msg
-
-	// Add navigation reactions
-	p.Ses.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavBeginning)
-	p.Ses.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavLeft)
-	p.Ses.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavRight)
-	p.Ses.MessageReactionAdd(p.Message.ChannelID, p.Message.ID, NavEnd)
-
-	var reaction *discordgo.MessageReaction
-	for {
-		// Navigation timeout enabled
-		if p.NavigationTimeout != 0 {
-			select {
-			case k := <-nextMessageReactionAddC(p.Ses):
-				reaction = k.MessageReaction
-			case <-time.After(startTime.Add(p.NavigationTimeout).Sub(time.Now())):
-				return nil
-			case <-p.Close:
-				return nil
-			}
-
-			// Navigation timeout not enabled
-		} else {
-			select {
-			case k := <-nextMessageReactionAddC(p.Ses):
-				reaction = k.MessageReaction
-			case <-p.Close:
-				return nil
-			}
-		}
-
-		// Ignore the bot's reactions
-		if reaction.MessageID != p.Message.ID || p.Ses.State.User.ID == reaction.UserID {
-			continue
-		}
-
-		switch reaction.Emoji.Name {
-		case NavLeft:
-			if err := p.PreviousPage(); err == nil {
-				p.Update()
-			}
-		case NavRight:
-			if err := p.NextPage(); err == nil {
-				p.Update()
-			}
-		case NavBeginning:
-			if err := p.Goto(0); err == nil {
-				p.Update()
-			}
-		case NavEnd:
-			if err := p.Goto(len(p.Pages) - 1); err == nil {
-				p.Update()
-			}
-		}
-
-		go func() {
-			time.Sleep(time.Millisecond * 250)
-			p.Ses.MessageReactionRemove(reaction.ChannelID, reaction.MessageID, reaction.Emoji.Name, reaction.UserID)
-		}()
-	}
+	return p.Widget.Spawn()
 }
 
 // Add a page to the paginator
@@ -223,7 +172,7 @@ func (p *Paginator) Goto(index int) error {
 
 // Update updates the message with the current state of the paginator
 func (p *Paginator) Update() error {
-	if p.Message == nil {
+	if p.Widget.Message == nil {
 		return ErrNilMessage
 	}
 
@@ -232,7 +181,7 @@ func (p *Paginator) Update() error {
 		return err
 	}
 
-	_, err = p.Ses.ChannelMessageEditEmbed(p.Message.ChannelID, p.Message.ID, page)
+	_, err = p.Widget.UpdateEmbed(page)
 	return err
 }
 

@@ -32,9 +32,9 @@ type Widget struct {
 	Close             chan bool
 
 	// Handlers binds emoji names to functions
-	handler map[string]WidgetHandler
+	Handlers map[string]WidgetHandler
 	// keys stores the handlers keys in the order they were added
-	keys []string
+	Keys []string
 
 	running bool
 }
@@ -42,12 +42,12 @@ type Widget struct {
 // NewWidget returns a pointer to a Widget object
 //    ses      : discordgo session
 //    channelID: channelID to spawn the widget on
-func NewWidget(ses *discordgo.Session, embed *discordgo.MessageEmbed, channelID string) *Widget {
+func NewWidget(ses *discordgo.Session, channelID string, embed *discordgo.MessageEmbed) *Widget {
 	return &Widget{
 		ChannelID: channelID,
 		Ses:       ses,
-		keys:      []string{},
-		handler:   map[string]WidgetHandler{},
+		Keys:      []string{},
+		Handlers:  map[string]WidgetHandler{},
 		Close:     make(chan bool),
 		Embed:     embed,
 	}
@@ -77,7 +77,7 @@ func (w *Widget) Spawn() error {
 	w.Message = msg
 
 	// Add reaction buttons
-	for _, v := range w.keys {
+	for _, v := range w.Keys {
 		w.Ses.MessageReactionAdd(w.Message.ChannelID, w.Message.ID, v)
 	}
 
@@ -107,7 +107,7 @@ func (w *Widget) Spawn() error {
 			continue
 		}
 
-		if v, ok := w.handler[reaction.Emoji.Name]; ok {
+		if v, ok := w.Handlers[reaction.Emoji.Name]; ok {
 			v(w, reaction)
 		}
 
@@ -122,11 +122,16 @@ func (w *Widget) Spawn() error {
 //    emojiName: The unicode value of the emoji
 //    handler  : handler function to call when the emoji is clicked
 //               func(*Widget, *discordgo.MessageReaction)
-func (w *Widget) Handle(emojiName string, handler WidgetHandler) {
-	if _, ok := w.handler[emojiName]; !ok {
-		w.keys = append(w.keys, emojiName)
-		w.handler[emojiName] = handler
+func (w *Widget) Handle(emojiName string, handler WidgetHandler) error {
+	if _, ok := w.Handlers[emojiName]; !ok {
+		w.Keys = append(w.Keys, emojiName)
+		w.Handlers[emojiName] = handler
 	}
+	// if the widget is running, append the added emoji to the message.
+	if w.Running() && w.Message != nil {
+		return w.Ses.MessageReactionAdd(w.Message.ChannelID, w.Message.ID, emojiName)
+	}
+	return nil
 }
 
 // Running returns w.running
