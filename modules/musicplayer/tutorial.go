@@ -58,7 +58,7 @@ func (m *Module) CmdTutorial(ctx *system.Context) {
 		MessageEmbed
 
 	// Change the colour to yellow when the tutorial is no longer listening
-	paginator.Events = widgets.EventChangeColourWhenDone
+	paginator.ChangeColourWhenDone = true
 	paginator.Add(QuickGuide, QueueHelp, Navigating, SaveAndLoad)
 	paginator.SetPageFooters()
 	paginator.NavigationTimeout = time.Minute * 5

@@ -1,20 +1,12 @@
 package widgets
 
 import (
-	"errors"
 	"fmt"
 	"sync"
 	"time"
 
 	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/discordgo"
-)
-
-// error vars
-var (
-	ErrAlreadyRunning   = errors.New("err: Widget already running")
-	ErrIndexOutOfBounds = errors.New("err: Index is out of bounds")
-	ErrNilMessage       = errors.New("err: Message is nil")
 )
 
 // Navigation emojis
@@ -24,21 +16,6 @@ var (
 	NavEnd       = "⏩"
 	NavBeginning = "⏪"
 )
-
-// Paginator events
-const (
-	EventDeleteMessageWhenDone = 1 << iota
-	EventChangeColourWhenDone
-)
-
-// NextMessageReactionAddC returns a channel for the next MessageReactionAdd event
-func nextMessageReactionAddC(s *discordgo.Session) chan *discordgo.MessageReactionAdd {
-	out := make(chan *discordgo.MessageReactionAdd)
-	s.AddHandlerOnce(func(_ *discordgo.Session, e *discordgo.MessageReactionAdd) {
-		out <- e
-	})
-	return out
-}
 
 // Paginator provides a method for creating a navigatable embed
 type Paginator struct {
@@ -57,9 +34,9 @@ type Paginator struct {
 	// Stop listening for events and delete the message
 	Close chan bool
 
-	// example
-	//     paginator.Events = widgets.EventDeleteMessageWhenDone | widgets.EventChangeColourWhenDone
-	Events  int
+	DeleteMessageWhenDone bool
+	ChangeColourWhenDone  bool
+
 	running bool
 }
 
@@ -68,13 +45,14 @@ type Paginator struct {
 //    channelID: channelID to spawn the paginator on
 func NewPaginator(ses *discordgo.Session, channelID string) *Paginator {
 	return &Paginator{
-		Ses:               ses,
-		Pages:             []*discordgo.MessageEmbed{},
-		Index:             0,
-		Loop:              false,
-		ChannelID:         channelID,
-		Events:            0,
-		NavigationTimeout: 0,
+		Ses:                   ses,
+		Pages:                 []*discordgo.MessageEmbed{},
+		Index:                 0,
+		Loop:                  false,
+		ChannelID:             channelID,
+		DeleteMessageWhenDone: false,
+		ChangeColourWhenDone:  false,
+		NavigationTimeout:     0,
 	}
 }
 
@@ -88,11 +66,11 @@ func (p *Paginator) Spawn() error {
 		p.running = false
 
 		// Delete Message when done
-		if p.Events&EventDeleteMessageWhenDone != 0 {
+		if p.DeleteMessageWhenDone {
 			p.Ses.ChannelMessageDelete(p.Message.ChannelID, p.Message.ID)
 		} else
 		// Change colour when done
-		if p.Events&EventChangeColourWhenDone != 0 {
+		if p.ChangeColourWhenDone {
 			if page, err := p.Page(); err == nil {
 				page.Color = system.StatusWarning
 			}
