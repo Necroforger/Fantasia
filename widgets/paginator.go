@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/discordgo"
 	"github.com/Necroforger/dream"
 )
@@ -25,6 +26,12 @@ var (
 	NavBeginning = "⏪"
 )
 
+// Paginator events
+const (
+	EventDeleteMessageWhenDone = 1 << iota
+	EventChangeColourWhenDone
+)
+
 // Paginator provides a method for creating a navigatable embed
 type Paginator struct {
 	sync.Mutex
@@ -40,9 +47,11 @@ type Paginator struct {
 	Ses *dream.Session
 
 	// Stop listening for events and delete the message
-	Close                 chan bool
-	DeleteMessageWhenDone bool
+	Close chan bool
 
+	// example
+	//     paginator.Events = widgets.EventDeleteMessageWhenDone | widgets.EventChangeColourWhenDone
+	Events  int
 	running bool
 }
 
@@ -51,13 +60,13 @@ type Paginator struct {
 //    channelID: channelID to spawn the paginator on
 func NewPaginator(ses *dream.Session, channelID string) *Paginator {
 	return &Paginator{
-		Ses:                   ses,
-		Pages:                 []*discordgo.MessageEmbed{},
-		Index:                 0,
-		Loop:                  false,
-		ChannelID:             channelID,
-		DeleteMessageWhenDone: false,
-		NavigationTimeout:     0,
+		Ses:               ses,
+		Pages:             []*discordgo.MessageEmbed{},
+		Index:             0,
+		Loop:              false,
+		ChannelID:         channelID,
+		Events:            0,
+		NavigationTimeout: 0,
 	}
 }
 
@@ -69,9 +78,19 @@ func (p *Paginator) Spawn() error {
 	p.running = true
 	defer func() {
 		p.running = false
-		if p.DeleteMessageWhenDone {
-			p.Ses.DG.ChannelMessageDelete(p.ChannelID, p.Message.ID)
+
+		// Delete Message when done
+		if p.Events&EventDeleteMessageWhenDone != 0 {
+			p.Ses.DG.ChannelMessageDelete(p.Message.ChannelID, p.Message.ID)
+		} else
+		// Change colour when done
+		if p.Events&EventChangeColourWhenDone != 0 {
+			if page, err := p.Page(); err == nil {
+				page.Color = system.StatusWarning
+			}
+			p.Update()
 		}
+
 	}()
 
 	page, err := p.Page()

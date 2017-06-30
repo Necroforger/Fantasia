@@ -37,13 +37,6 @@ func (m *Module) CmdTutorial(ctx *system.Context) {
 		InlineAllFields().
 		MessageEmbed
 
-	SaveAndLoad := dream.NewEmbed().
-		SetTitle("Save and load playlists").
-		SetDescription("Use the save and load commands to save and load playlists").
-		SetImage("http://i.imgur.com/CJ3tQvj.gif").
-		SetColor(system.StatusNotify).
-		MessageEmbed
-
 	Navigating := dream.NewEmbed().
 		SetTitle("Navigating the queue").
 		SetDescription("Navigate the queue using the `next`, `previous`, and multipurpose `go` command" +
@@ -57,6 +50,15 @@ func (m *Module) CmdTutorial(ctx *system.Context) {
 		SetColor(system.StatusNotify).
 		MessageEmbed
 
+	SaveAndLoad := dream.NewEmbed().
+		SetTitle("Save and load playlists").
+		SetDescription("Use the save and load commands to save and load playlists").
+		SetImage("http://i.imgur.com/CJ3tQvj.gif").
+		SetColor(system.StatusNotify).
+		MessageEmbed
+
+	// Change the colour to yellow when the tutorial is no longer listening
+	paginator.Events = widgets.EventChangeColourWhenDone
 	paginator.Add(QuickGuide, QueueHelp, Navigating, SaveAndLoad)
 	paginator.SetPageFooters()
 	paginator.NavigationTimeout = time.Minute * 5
