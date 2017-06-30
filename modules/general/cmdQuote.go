@@ -18,7 +18,7 @@ func CmdQuote(ctx *system.Context) {
 	ctx.ReplyEmbed(quote.SetColor(system.StatusNotify).MessageEmbed)
 }
 
-func makeQuote(b *dream.Bot, channelID, messageID string) (*dream.Embed, error) {
+func makeQuote(b *dream.Session, channelID, messageID string) (*dream.Embed, error) {
 	msg, err := b.DG.ChannelMessage(channelID, messageID)
 	if err != nil {
 		if chann, err := b.DG.State.Channel(channelID); err == nil {

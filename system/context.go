@@ -14,7 +14,7 @@ import (
 // Context contains information about the command.
 type Context struct {
 	Msg          *discordgo.Message
-	Ses          *dream.Bot
+	Ses          *dream.Session
 	System       *System
 	CommandRoute *CommandRoute
 	Args         Args

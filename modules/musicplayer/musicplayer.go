@@ -101,7 +101,7 @@ func (m *Module) Build(s *system.System) {
 	t.On("star", m.CmdStar).Set("", "Stars the song at the given index. Starring songs is akin to a favourites system and will allow you to sort songs based on their star ratings")
 	t.On("loop", m.CmdLoop).Set("", "Controls whether the playlist should loop or not. Call with a boolean argument to change the loop mode.\n`loop [true | false]`")
 	t.On("silent", m.CmdSilence).Set("", "Set the silence of the radio. If silent is true, the radio will no longer automatically give updates on the currently playing song\nUsage: `silent [true | false]`")
-	t.On("remove", m.CmdRemove).Set("", "Remove an index, or multiple indexes, from the queue.\nProvide multiple integer arguments to remove multiple indexes.")
+	t.On("remove|delete", m.CmdRemove).Set("remove", "Remove an index, or multiple indexes, from the queue.\nProvide multiple integer arguments to remove multiple indexes.")
 	t.On("info", m.CmdInfo).Set("", "Gives information about the currently playing song")
 	t.On("shuffle", m.CmdShuffle).Set("", "Shuffles the current queue, ignoring the current song index")
 	t.On("swap", m.CmdSwap).Set("", "Swaps the song at index 'n' with index 't'\nusage: `swap [int: from] [int: to]`")
@@ -317,7 +317,11 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 				return
 			}
 			radio.Queue.Add(song)
-			ctx.ReplySuccess("queued " + song.Markdown())
+			ctx.ReplyEmbed(dream.NewEmbed().
+				SetColor(system.StatusSuccess).
+				SetDescription("queued " + song.Markdown()).
+				SetFooter(fmt.Sprintf("index: %d", radio.Queue.Index)).
+				MessageEmbed)
 		}
 		return
 	}

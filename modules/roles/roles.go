@@ -80,7 +80,7 @@ func (m *Module) Color(ctx *system.Context) {
 
 }
 
-func editOrCreateRoleIfNotExist(b *dream.Bot, guild *discordgo.Guild, rolename string, roleColor int) (*discordgo.Role, error) {
+func editOrCreateRoleIfNotExist(b *dream.Session, guild *discordgo.Guild, rolename string, roleColor int) (*discordgo.Role, error) {
 	guildRoles, err := b.GuildRoles(guild)
 	if err != nil {
 		return nil, err
@@ -110,7 +110,7 @@ func editOrCreateRoleIfNotExist(b *dream.Bot, guild *discordgo.Guild, rolename s
 	return role, nil
 }
 
-func addRoleToMemberIfNotExist(b *dream.Bot, guildID, userID, roleID string) error {
+func addRoleToMemberIfNotExist(b *dream.Session, guildID, userID, roleID string) error {
 	memberRoles, err := b.GuildMemberRoles(guildID, userID)
 	if err != nil {
 		return err
@@ -130,7 +130,7 @@ func addRoleToMemberIfNotExist(b *dream.Bot, guildID, userID, roleID string) err
 	return nil
 }
 
-func moveRoleToTop(b *dream.Bot, guildID, roleID string) error {
+func moveRoleToTop(b *dream.Session, guildID, roleID string) error {
 	guildRoles, err := b.GuildRoles(guildID)
 	if err != nil {
 		return err
@@ -160,7 +160,7 @@ func moveRoleToTop(b *dream.Bot, guildID, roleID string) error {
 	return err
 }
 
-func highestMemberRolePosition(b *dream.Bot, guildID, userID string) (int, error) {
+func highestMemberRolePosition(b *dream.Session, guildID, userID string) (int, error) {
 	memberRoles, err := b.GuildMemberRoles(guildID, userID)
 	if err != nil {
 		return -1, err

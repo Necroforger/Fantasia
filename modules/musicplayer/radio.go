@@ -23,7 +23,7 @@ const (
 	AudioContinue
 )
 
-// Radio controls queueing and playing music over a guild
+// Radio controls queueing and playing music over a  guild
 // Voice connection.
 type Radio struct {
 	sync.Mutex
@@ -116,6 +116,7 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 				disp.Stop()
 				continue
 			}
+			close(done)
 
 		case <-done:
 			// I only need to check for a closed voice connection after the done event
@@ -139,7 +140,7 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 }
 
 // Play plays a single song in the queue
-func (r *Radio) Play(b *dream.Bot, vc *discordgo.VoiceConnection) (*dream.AudioDispatcher, error) {
+func (r *Radio) Play(b *dream.Session, vc *discordgo.VoiceConnection) (*dream.AudioDispatcher, error) {
 	song, err := r.Queue.Song()
 	if err != nil {
 		return nil, err

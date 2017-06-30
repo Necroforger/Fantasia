@@ -34,11 +34,11 @@ func getIndexes(args []string, radio *Radio) []int {
 
 func getIndex(index string, radio *Radio) (int, error) {
 	switch index {
-	case "start":
+	case "start", "beginning":
 		return 0, nil
-	case "end":
+	case "end", "last":
 		return len(radio.Queue.Playlist) - 1, nil
-	case "mid":
+	case "mid", "center", "middle":
 		return len(radio.Queue.Playlist) / 2, nil
 	case "rand", "random":
 		return int(rng.Float64() * float64(len(radio.Queue.Playlist)-1)), nil
@@ -64,7 +64,10 @@ func guildIDFromContext(ctx *system.Context) (string, error) {
 	return guildID, nil
 }
 
-//ProgressBar generates a progressbar given a value, end point, and scale
+// ProgressBar generates a text progress bar.
+//    value: Current progress
+//    end  : End value
+//    scale: Size of the progress bar
 func ProgressBar(value, end, scale int) string {
 	if end == 0 {
 		return "[" + strings.Repeat("-", scale) + "]"

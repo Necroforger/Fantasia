@@ -25,7 +25,7 @@ const (
 // System  contains everything related to the bot
 type System struct {
 	sync.Mutex
-	Dream         *dream.Bot
+	Dream         *dream.Session
 	CommandRouter *CommandRouter
 	Config        Config
 
@@ -35,7 +35,7 @@ type System struct {
 
 // New returns a pointer to a new bot struct
 //		session: Dream session to run the bot off.
-func New(session *dream.Bot, config Config) *System {
+func New(session *dream.Session, config Config) *System {
 
 	router := NewCommandRouter()
 
@@ -78,7 +78,7 @@ func removePrefix(text, prefix string) string {
 }
 
 // messageHandler handles incoming messageCreate events and routes them to commands.
-func (s *System) messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
+func (s *System) messageHandler(b *dream.Session, m *discordgo.MessageCreate) {
 
 	// If the bot is a selfbot, do not respond to users that do not have the
 	// State user's ID.
@@ -122,7 +122,7 @@ func (s *System) messageHandler(b *dream.Bot, m *discordgo.MessageCreate) {
 	}
 }
 
-func (s *System) readyHandler(b *dream.Bot, e *discordgo.Ready) {
+func (s *System) readyHandler(b *dream.Session, e *discordgo.Ready) {
 	log.Printf("Bot connected as user [%s] and is serving in [%d] guilds\n", b.DG.State.User.Username, len(e.Guilds))
 }
 
