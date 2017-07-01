@@ -10,6 +10,7 @@ func (m *Module) CmdTextify(ctx *system.Context) {
 	img, err := imageFromContext(ctx)
 	if err != nil {
 		ctx.ReplyError(err)
+		return
 	}
 
 	opts := textify.NewOptions()
