@@ -355,7 +355,7 @@ func (m *Module) CmdControls(ctx *system.Context) {
 		w      = dgwidgets.NewWidget(ctx.Ses.DG, ctx.Msg.ChannelID, nil)
 		before = 10
 		after  = 10
-		index  = 0
+		index  = radio.Queue.Index
 		embed  *dream.Embed
 	)
 	radio.Silent = true
@@ -377,30 +377,31 @@ func (m *Module) CmdControls(ctx *system.Context) {
 			if radio.Dispatcher.IsStopped() {
 				status += " [ Stopped ] "
 			}
+			if song, err := radio.Queue.Song(); err == nil && (radio.Dispatcher != nil && radio.Dispatcher.IsPlaying()) {
+				embed.SetFooter(fmt.Sprintf("[%d / %d]", radio.Duration(), song.Duration) + ProgressBar(radio.Duration(), song.Duration, 100))
+			}
 		}
 		embed.Title = status
 
 		if embed.Description == "" {
 			embed.Description = "Playlist is empty"
 		}
+
 		if w.Embed != nil {
-			w.UpdateEmbed(embed.MessageEmbed)
+			_, err := w.UpdateEmbed(embed.MessageEmbed)
+			if err != nil {
+				fmt.Println(err)
+				fmt.Println(embed.Footer)
+			}
 		}
 		lastUpdate = time.Now()
 	}
 
-	done := make(chan bool)
-	// AutoUpdate
+	ticker := time.NewTicker(time.Second * 1)
 	go func() {
-		timer := time.NewTimer(time.Second * 1)
-		for {
-			select {
-			case <-timer.C:
-				if time.Now().Sub(lastUpdate) > time.Second*3 {
-					update()
-				}
-			case <-done:
-				return
+		for range ticker.C {
+			if time.Now().Sub(lastUpdate) > time.Second*4 {
+				update()
 			}
 		}
 	}()
@@ -419,7 +420,7 @@ func (m *Module) CmdControls(ctx *system.Context) {
 			radio.Dispatcher.Resume()
 
 			// Connect to the user's voice channel and start playing the queue
-		} else if radio.Dispatcher != nil && radio.Dispatcher.IsPlaying() {
+		} else if radio.IsRunning() {
 			radio.Goto(index)
 		} else {
 			vc, err := system.ConnectToVoiceChannel(ctx)
@@ -432,8 +433,8 @@ func (m *Module) CmdControls(ctx *system.Context) {
 				radio.Queue.Index = index
 			}
 			go radio.PlayQueue(ctx, vc)
-			update()
 		}
+		update()
 	})
 	// Pause Handler
 	w.Handle(dgwidgets.NavPause, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
@@ -483,7 +484,7 @@ func (m *Module) CmdControls(ctx *system.Context) {
 	})
 	// End handler
 	w.Handle(dgwidgets.NavEnd, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
-		index = len(radio.Queue.Playlist) - 1 - after
+		index = len(radio.Queue.Playlist) - after
 		update()
 	})
 	// Add song handler
@@ -495,7 +496,10 @@ func (m *Module) CmdControls(ctx *system.Context) {
 	})
 
 	w.Spawn()
-	done <- true
+	if w.Message != nil {
+		ctx.Ses.DG.ChannelMessageDelete(w.ChannelID, w.Message.ID)
+	}
+	ticker.Stop()
 }
 
 // CmdYoutubeSearchQueue searches youtube and queues the first video result found
@@ -648,6 +652,7 @@ func (m *Module) CmdInfo(ctx *system.Context) {
 	song, err := radio.Queue.Get(index)
 	if err != nil {
 		ctx.ReplyError(err)
+		return
 	}
 
 	embed := dream.NewEmbed().

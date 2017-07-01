@@ -56,7 +56,7 @@ func NewRadio(guildID string) *Radio {
 	return &Radio{
 		GuildID:  guildID,
 		Queue:    NewSongQueue(),
-		control:  make(chan int, 100),
+		control:  make(chan int),
 		AutoPlay: true,
 		Silent:   false,
 	}
@@ -86,13 +86,12 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 			return err
 		}
 
-		r.Lock()
 		r.Dispatcher = disp
-		r.Unlock()
 
 		//----------------- Print information about the currently playing song ---------------- //
 		song, err := r.Queue.Song()
 		if err == nil && !r.Silent {
+			fmt.Println("Attempting to play ", song.String())
 			ctx.ReplyEmbed(dream.NewEmbed().
 				SetTitle("Now playing").
 				SetDescription(fmt.Sprintf("[%d]: %s\nduration:\t %ds", r.Queue.Index, song.Markdown(), song.Duration)).
