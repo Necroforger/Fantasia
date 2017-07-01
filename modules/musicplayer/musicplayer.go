@@ -426,10 +426,10 @@ func (m *Module) CmdControls(ctx *system.Context) {
 		// If the dispatcher is paused, resume it.
 		if radio.Dispatcher != nil && radio.Dispatcher.IsPaused() {
 			radio.Dispatcher.Resume()
-
-			// Connect to the user's voice channel and start playing the queue
+			// Play song at position 'index'
 		} else if radio.IsRunning() {
 			radio.Goto(index)
+			// Connect to the user's voice channel and start playing the queue
 		} else {
 			vc, err := system.ConnectToVoiceChannel(ctx)
 			if err != nil {
@@ -509,9 +509,8 @@ func (m *Module) CmdControls(ctx *system.Context) {
 	})
 
 	w.Spawn()
-	if w.Message != nil {
-		ctx.Ses.DG.ChannelMessageDelete(w.ChannelID, w.Message.ID)
-	}
+	embed.Color = system.StatusWarning
+	w.UpdateEmbed(embed.MessageEmbed)
 	ticker.Stop()
 }
 
