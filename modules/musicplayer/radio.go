@@ -235,6 +235,33 @@ func (r *Radio) Duration() int {
 	return 0
 }
 
+// SongInfoEmbed returns an embed with information about the currently playing song
+func (r *Radio) SongInfoEmbed(index int) (*dream.Embed, error) {
+	if index < 0 {
+		index = r.Queue.Index
+	}
+
+	song, err := r.Queue.Get(index)
+	if err != nil {
+		return nil, err
+	}
+
+	embed := dream.NewEmbed().
+		SetTitle(song.Title).
+		SetURL(song.URL).
+		SetImage(song.Thumbnail).
+		SetDescription("Added by\t" + song.AddedBy + "\nindex\t" + fmt.Sprint(index)).
+		SetColor(system.StatusNotify)
+
+	if index == r.Queue.Index {
+		embed.SetFooter(ProgressBar(r.Duration(), song.Duration, 100) + fmt.Sprintf("[%d/%d]", r.Duration(), song.Duration))
+	} else {
+		embed.SetFooter(fmt.Sprintf("Duration: %ds", song.Duration))
+	}
+
+	return embed, nil
+}
+
 ///////////////////////////////////////////////////////////////////
 //  Song loading
 ///////////////////////////////////////////////////

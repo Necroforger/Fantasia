@@ -351,12 +351,13 @@ func (m *Module) CmdControls(ctx *system.Context) {
 	}
 
 	var (
-		radio  = m.getRadio(guildID)
-		w      = dgwidgets.NewWidget(ctx.Ses.DG, ctx.Msg.ChannelID, nil)
-		before = 10
-		after  = 10
-		index  = radio.Queue.Index
-		embed  *dream.Embed
+		radio         = m.getRadio(guildID)
+		w             = dgwidgets.NewWidget(ctx.Ses.DG, ctx.Msg.ChannelID, nil)
+		before        = 10
+		after         = 10
+		index         = radio.Queue.Index
+		embed         *dream.Embed
+		infodisplayed = false
 	)
 	radio.Silent = true
 
@@ -364,36 +365,43 @@ func (m *Module) CmdControls(ctx *system.Context) {
 
 	// Update the embed information
 	update := func() {
-		embed = EmbedQueue(radio.Queue, index, before, after)
-		embed.SetColor(system.StatusNotify)
-		var status string
-		if radio.Dispatcher != nil {
-			if radio.Dispatcher.IsPaused() {
-				status += " [ Paused ] "
+		if !infodisplayed {
+			embed = EmbedQueue(radio.Queue, index, before, after)
+			embed.SetColor(system.StatusNotify)
+			var status string
+			if radio.Dispatcher != nil {
+				if radio.Dispatcher.IsPaused() {
+					status += " [ Paused ] "
+				}
+				if radio.Dispatcher.IsPlaying() {
+					status += " [ Queue playing ] "
+				}
+				if radio.Dispatcher.IsStopped() {
+					status += " [ Stopped ] "
+				}
+				if song, err := radio.Queue.Song(); err == nil && (radio.Dispatcher != nil && radio.Dispatcher.IsPlaying()) {
+					embed.SetFooter(fmt.Sprintf("[%d / %d]", radio.Duration(), song.Duration) + ProgressBar(radio.Duration(), song.Duration, 100))
+				}
 			}
-			if radio.Dispatcher.IsPlaying() {
-				status += " [ Queue playing ] "
-			}
-			if radio.Dispatcher.IsStopped() {
-				status += " [ Stopped ] "
-			}
-			if song, err := radio.Queue.Song(); err == nil && (radio.Dispatcher != nil && radio.Dispatcher.IsPlaying()) {
-				embed.SetFooter(fmt.Sprintf("[%d / %d]", radio.Duration(), song.Duration) + ProgressBar(radio.Duration(), song.Duration, 100))
-			}
-		}
-		embed.Title = status
+			embed.Title = status
 
-		if embed.Description == "" {
-			embed.Description = "Playlist is empty"
-		}
+			if embed.Description == "" {
+				embed.Description = "Playlist is empty"
+			}
 
-		if w.Embed != nil {
-			_, err := w.UpdateEmbed(embed.MessageEmbed)
-			if err != nil {
-				fmt.Println(err)
-				fmt.Println(embed.Footer)
+			if w.Embed != nil {
+				w.UpdateEmbed(embed.MessageEmbed)
+			}
+
+		} else {
+			if e, err := radio.SongInfoEmbed(-1); err == nil {
+				embed = e
+			}
+			if w.Embed != nil {
+				w.UpdateEmbed(embed.MessageEmbed)
 			}
 		}
+
 		lastUpdate = time.Now()
 	}
 
@@ -448,6 +456,25 @@ func (m *Module) CmdControls(ctx *system.Context) {
 		radio.Stop()
 		update()
 	})
+	// Previous handler
+	w.Handle(dgwidgets.NavLeft, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		radio.Previous()
+		update()
+	})
+	// Next handler
+	w.Handle(dgwidgets.NavRight, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		radio.Next()
+		update()
+	})
+	// Select song by index
+	w.Handle(dgwidgets.NavNumbers, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		if usermsg, err := w.QueryInput("Enter the index of the song you would like to select", r.UserID, time.Second*10); err == nil {
+			if n, err := getIndex(usermsg.Content, radio); err == nil {
+				index = n
+			}
+		}
+		update()
+	})
 	// Navigate up
 	w.Handle(dgwidgets.NavUp, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
 		index -= before / 2
@@ -458,28 +485,9 @@ func (m *Module) CmdControls(ctx *system.Context) {
 		index += after / 2
 		update()
 	})
-	// Select song by index
-	w.Handle(dgwidgets.NavNumbers, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
-		if usermsg, err := w.QueryInput("Enter the index of the song you would like to select", r.UserID, time.Second*10); err == nil {
-			if n, err := strconv.Atoi(usermsg.Content); err == nil {
-				index = n
-			}
-		}
-		update()
-	})
 	// Beginning handler
 	w.Handle(dgwidgets.NavBeginning, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
 		index = 0 + before
-		update()
-	})
-	// Previous handler
-	w.Handle(dgwidgets.NavLeft, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
-		radio.Previous()
-		update()
-	})
-	// Next handler
-	w.Handle(dgwidgets.NavRight, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
-		radio.Next()
 		update()
 	})
 	// End handler
@@ -492,6 +500,11 @@ func (m *Module) CmdControls(ctx *system.Context) {
 		if usermsg, err := w.QueryInput("enter a URL or youtube search query", r.UserID, time.Second*10); err == nil {
 			QueueFromString(radio.Queue, usermsg.Content, usermsg.Author.Username, ctx.System.Config.GoogleAPIKey, m.Config.UseYoutubeDL)
 		}
+		update()
+	})
+	// Info handler
+	w.Handle(dgwidgets.NavInformation, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		infodisplayed = !infodisplayed
 		update()
 	})
 
@@ -644,28 +657,14 @@ func (m *Module) CmdInfo(ctx *system.Context) {
 	}
 	radio := m.getRadio(guildID)
 
-	var index = radio.Queue.Index
+	index := radio.Queue.Index
 	if n, err := getIndex(ctx.Args.After(), radio); err == nil {
 		index = n
 	}
-
-	song, err := radio.Queue.Get(index)
+	embed, err := radio.SongInfoEmbed(index)
 	if err != nil {
 		ctx.ReplyError(err)
 		return
-	}
-
-	embed := dream.NewEmbed().
-		SetTitle(song.Title).
-		SetURL(song.URL).
-		SetImage(song.Thumbnail).
-		SetDescription("Added by\t" + song.AddedBy + "\nindex\t" + fmt.Sprint(radio.Queue.Index)).
-		SetColor(system.StatusNotify)
-
-	if index == radio.Queue.Index {
-		embed.SetFooter(ProgressBar(radio.Duration(), song.Duration, 100) + fmt.Sprintf("[%d/%d]", radio.Duration(), song.Duration))
-	} else {
-		embed.SetFooter(fmt.Sprintf("Duration: %ds", song.Duration))
 	}
 
 	ctx.ReplyEmbed(embed.MessageEmbed)
