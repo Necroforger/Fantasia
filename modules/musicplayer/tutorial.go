@@ -63,7 +63,7 @@ func (m *Module) CmdTutorial(ctx *system.Context) {
 
 	p.SetPageFooters()
 	p.ColourWhenDone = system.StatusWarning
-	p.Widget.NavigationTimeout = time.Minute * 5
+	p.Widget.Timeout = time.Minute * 5
 
 	p.Spawn()
 }

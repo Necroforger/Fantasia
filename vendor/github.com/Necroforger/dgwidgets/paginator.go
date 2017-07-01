@@ -7,14 +7,6 @@ import (
 	"github.com/Necroforger/discordgo"
 )
 
-// Navigation emojis
-var (
-	NavRight     = "➡"
-	NavLeft      = "⬅"
-	NavEnd       = "⏩"
-	NavBeginning = "⏪"
-)
-
 // Paginator provides a method for creating a navigatable embed
 type Paginator struct {
 	sync.Mutex
@@ -88,8 +80,8 @@ func (p *Paginator) Spawn() error {
 		if p.ColourWhenDone >= 0 {
 			if page, err := p.Page(); err == nil {
 				page.Color = p.ColourWhenDone
+				p.Update()
 			}
-			p.Update()
 		}
 	}()
 

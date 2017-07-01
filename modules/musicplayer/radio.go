@@ -8,10 +8,12 @@ import (
 	"io"
 	"net/url"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/Necroforger/Fantasia/system"
+	"github.com/Necroforger/Fantasia/youtubeapi"
 	"github.com/Necroforger/discordgo"
 	"github.com/Necroforger/dream"
 	"github.com/Necroforger/ytdl"
@@ -256,7 +258,9 @@ func QueueFromURL(URL, addedBy string, queue *SongQueue, progress chan *Song) er
 		if err != nil {
 			return err
 		}
-		progress <- song
+		if progress != nil {
+			progress <- song
+		}
 		queue.Add(song)
 		return nil
 	}
@@ -334,4 +338,34 @@ func SongFromYTDL(URL, addedBy string) (*Song, error) {
 	}
 
 	return song, nil
+}
+
+// QueueFromString queues a song from string
+func QueueFromString(q *SongQueue, URL, addedBy, googleAPIKey string, UseYoutubeDL bool) error {
+	if !strings.HasPrefix(URL, "https://") && !strings.HasPrefix(URL, "http://") {
+		if googleAPIKey != "" {
+			results, err := youtubeapi.New(googleAPIKey).Search(URL, 1)
+			if err != nil {
+				return err
+			}
+			if len(results.Items) != 0 {
+				URL = results.Items[0].ID.VideoID
+			}
+		} else {
+			results, err := youtubeapi.ScrapeSearch(URL, 1)
+			if err == nil && len(results) > 0 {
+				URL = results[0]
+			}
+		}
+	}
+
+	if UseYoutubeDL {
+		return QueueFromURL(URL, addedBy, q, nil)
+	}
+	song, err := SongFromYTDL(URL, addedBy)
+	if err != nil {
+		return err
+	}
+	q.Add(song)
+	return nil
 }

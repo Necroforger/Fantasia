@@ -27,8 +27,10 @@ func EmbedQueueFilter(q *SongQueue, index, beforeIndex, afterIndex int, filterFu
 				prefix   string
 			)
 			if filterFunc(q, q.Playlist[i]) {
-				if i == index {
+				if i == q.Index {
 					songname = q.Playlist[i].Markdown()
+				} else if i == index {
+					songname = "`" + q.Playlist[i].String() + "`"
 				} else {
 					songname = q.Playlist[i].String()
 				}

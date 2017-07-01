@@ -30,6 +30,7 @@ import (
 
 	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/Fantasia/youtubeapi"
+	"github.com/Necroforger/dgwidgets"
 	"github.com/Necroforger/discordgo"
 	"github.com/Necroforger/dream"
 )
@@ -98,6 +99,7 @@ func (m *Module) Build(s *system.System) {
 	// Queue management
 	t.On("queue", m.CmdQueue).Set("", "queue")
 	t.On("ytqueue", m.CmdYoutubeSearchQueue).Set("", "Searches youtube for the given query and queues the first video found\n`ytqueue [query]`")
+	t.On("controls", m.CmdControls).Set("", "Spawn an interactive control panel for the music player")
 	t.On("star", m.CmdStar).Set("", "Stars the song at the given index. Starring songs is akin to a favourites system and will allow you to sort songs based on their star ratings")
 	t.On("loop", m.CmdLoop).Set("", "Controls whether the playlist should loop or not. Call with a boolean argument to change the loop mode.\n`loop [true | false]`")
 	t.On("silent", m.CmdSilence).Set("", "Set the silence of the radio. If silent is true, the radio will no longer automatically give updates on the currently playing song\nUsage: `silent [true | false]`")
@@ -120,7 +122,7 @@ func (m *Module) Build(s *system.System) {
 	t.On("prev|previous", m.CmdPrevious).Set("prev | previous", "Loads the previous song in the queue")
 
 	// Other
-	t.On("tutorial", m.CmdTutorial).Set("", "A multipage tutorial for using the musicplayer module.\n Call this command in a DM to prevent other people from changing the pages on you")
+	t.On("tutorial|help", m.CmdTutorial).Set("tutorial | help", "A multipage tutorial for using the musicplayer module.\n Call this command in a DM to prevent other people from changing the pages on you")
 }
 
 // CmdSilence should toggle the radio from automatically sending messages when the song changes
@@ -338,6 +340,162 @@ func (m *Module) CmdQueue(ctx *system.Context) {
 		SetColor(system.StatusNotify).
 		SetFooter("playlist length:\t" + fmt.Sprint(len(radio.Queue.Playlist))).
 		MessageEmbed)
+}
+
+// CmdControls allows you to control the musicplayer with an interactive embed
+func (m *Module) CmdControls(ctx *system.Context) {
+	guildID, err := guildIDFromContext(ctx)
+	if err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+
+	var (
+		radio  = m.getRadio(guildID)
+		w      = dgwidgets.NewWidget(ctx.Ses.DG, ctx.Msg.ChannelID, nil)
+		before = 10
+		after  = 10
+		index  = 0
+		embed  *dream.Embed
+	)
+	radio.Silent = true
+
+	lastUpdate := time.Now()
+
+	// Update the embed information
+	update := func() {
+		embed = EmbedQueue(radio.Queue, index, before, after)
+		embed.SetColor(system.StatusNotify)
+		var status string
+		if radio.Dispatcher != nil {
+			if radio.Dispatcher.IsPaused() {
+				status += " [ Paused ] "
+			}
+			if radio.Dispatcher.IsPlaying() {
+				status += " [ Queue playing ] "
+			}
+			if radio.Dispatcher.IsStopped() {
+				status += " [ Stopped ] "
+			}
+		}
+		embed.Title = status
+
+		if embed.Description == "" {
+			embed.Description = "Playlist is empty"
+		}
+		if w.Embed != nil {
+			w.UpdateEmbed(embed.MessageEmbed)
+		}
+		lastUpdate = time.Now()
+	}
+
+	done := make(chan bool)
+	// AutoUpdate
+	go func() {
+		timer := time.NewTimer(time.Second * 1)
+		for {
+			select {
+			case <-timer.C:
+				if time.Now().Sub(lastUpdate) > time.Second*3 {
+					update()
+				}
+			case <-done:
+				return
+			}
+		}
+	}()
+
+	// Initialize embed
+	update()
+	w.Embed = embed.MessageEmbed
+	w.Timeout = 5 * time.Minute
+
+	// Create handlers
+
+	// Play handler
+	w.Handle(dgwidgets.NavPlay, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		// If the dispatcher is paused, resume it.
+		if radio.Dispatcher != nil && radio.Dispatcher.IsPaused() {
+			radio.Dispatcher.Resume()
+
+			// Connect to the user's voice channel and start playing the queue
+		} else if radio.Dispatcher != nil && radio.Dispatcher.IsPlaying() {
+			radio.Goto(index)
+		} else {
+			vc, err := system.ConnectToVoiceChannel(ctx)
+			if err != nil {
+				ctx.ReplyError(err)
+				return
+			}
+			radio := m.getRadio(vc.GuildID)
+			if index >= 0 && index < len(radio.Queue.Playlist) {
+				radio.Queue.Index = index
+			}
+			go radio.PlayQueue(ctx, vc)
+			update()
+		}
+	})
+	// Pause Handler
+	w.Handle(dgwidgets.NavPause, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		if radio.Dispatcher != nil {
+			radio.Dispatcher.Pause()
+		}
+		update()
+	})
+	// Stop Handler
+	w.Handle(dgwidgets.NavStop, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		radio.Stop()
+		update()
+	})
+	// Navigate up
+	w.Handle(dgwidgets.NavUp, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		index -= before / 2
+		update()
+	})
+	// Navigate down
+	w.Handle(dgwidgets.NavDown, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		index += after / 2
+		update()
+	})
+	// Select song by index
+	w.Handle(dgwidgets.NavNumbers, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		if usermsg, err := w.QueryInput("Enter the index of the song you would like to select", r.UserID, time.Second*10); err == nil {
+			if n, err := strconv.Atoi(usermsg.Content); err == nil {
+				index = n
+			}
+		}
+		update()
+	})
+	// Beginning handler
+	w.Handle(dgwidgets.NavBeginning, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		index = 0 + before
+		update()
+	})
+	// Previous handler
+	w.Handle(dgwidgets.NavLeft, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		radio.Previous()
+		update()
+	})
+	// Next handler
+	w.Handle(dgwidgets.NavRight, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		radio.Next()
+		update()
+	})
+	// End handler
+	w.Handle(dgwidgets.NavEnd, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		index = len(radio.Queue.Playlist) - 1 - after
+		update()
+	})
+	// Add song handler
+	w.Handle(dgwidgets.NavPlus, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		if usermsg, err := w.QueryInput("enter a URL or youtube search query", r.UserID, time.Second*10); err == nil {
+			QueueFromString(radio.Queue, usermsg.Content, usermsg.Author.Username, ctx.System.Config.GoogleAPIKey, m.Config.UseYoutubeDL)
+		}
+		update()
+	})
+
+	w.Spawn()
+	done <- true
 }
 
 // CmdYoutubeSearchQueue searches youtube and queues the first video result found
