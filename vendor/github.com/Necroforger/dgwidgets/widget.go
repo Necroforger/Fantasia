@@ -1,4 +1,4 @@
-package widgets
+package dgwidgets
 
 import (
 	"errors"

@@ -4,8 +4,7 @@ import (
 	"time"
 
 	"github.com/Necroforger/Fantasia/system"
-	"github.com/Necroforger/Fantasia/widgets"
-	"github.com/Necroforger/discordgo"
+	"github.com/Necroforger/dgwidgets"
 	"github.com/Necroforger/dream"
 )
 
@@ -57,7 +56,7 @@ func (m *Module) CmdTutorial(ctx *system.Context) {
 		SetColor(system.StatusNotify).
 		MessageEmbed
 
-	p := widgets.NewPaginator(ctx.Ses.DG, ctx.Msg.ChannelID)
+	p := dgwidgets.NewPaginator(ctx.Ses.DG, ctx.Msg.ChannelID)
 
 	// Add embed pages to paginator
 	p.Add(QuickGuide, QueueHelp, Navigating, SaveAndLoad)
@@ -65,11 +64,6 @@ func (m *Module) CmdTutorial(ctx *system.Context) {
 	p.SetPageFooters()
 	p.ColourWhenDone = system.StatusWarning
 	p.Widget.NavigationTimeout = time.Minute * 5
-
-	// Add a custom handler
-	p.Widget.Handle("🔫", func(w *widgets.Widget, r *discordgo.MessageReaction) {
-		ctx.ReplyNotify("Gun pressed")
-	})
 
 	p.Spawn()
 }
