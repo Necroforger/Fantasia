@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/Necroforger/Fantasia/system"
@@ -95,6 +96,8 @@ func main() {
 		log.Println("Error creation bot session... ", err)
 		return
 	}
+	session.DG.SetCustomRateLimit("//reactions//", 1, 250*time.Millisecond)
+
 	// Open the bot session
 	session.Open()
 
