@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/Necroforger/Fantasia/system"
+	"github.com/Necroforger/dgwidgets"
+	"github.com/Necroforger/discordgo"
 	"github.com/Necroforger/dream"
 	"github.com/robertkrimen/otto"
 )
@@ -19,7 +21,12 @@ func (m *Module) EvalJS(ctx *system.Context) {
 	b := ctx.Ses
 
 	// Dangerous: Gives full access to Command router, discordgo session, tokens etc...
-	evalJSSetFunctions(ctx, vm)
+	for _, v := range ctx.System.Config.Admins {
+		if v == ctx.Msg.Author.ID {
+			evalJSSetFunctions(ctx, vm)
+			break
+		}
+	}
 
 	if len(script) != 0 {
 		ctx.ReplyEmbed(evalJSEmbed(vm, script, time.Second*1).MessageEmbed)
@@ -42,8 +49,34 @@ func (m *Module) EvalJS(ctx *system.Context) {
 			ctx.ReplyStatus(system.StatusNotify, "Left javascript interpreter")
 			return
 		}
+		chunklen := 1024
+		embed := evalJSEmbed(vm, msg.Content, time.Second*1)
+		if len(embed.Description) < chunklen {
+			b.SendEmbed(msg.ChannelID, embed)
+		} else {
+			txt := embed.Description
+			embeds := []*discordgo.MessageEmbed{}
+			for i := 0; i < int((float64(len(txt))/float64(chunklen))+0.5); i++ {
+				start := i * chunklen
+				end := start + chunklen
+				if end > len(txt) {
+					end = len(txt)
+				}
+				fmt.Println(end - start)
+				embeds = append(embeds,
+					dream.NewEmbed().
+						SetDescription(txt[start:end]).
+						SetColor(embed.Color).
+						MessageEmbed)
 
-		b.SendEmbed(msg.ChannelID, evalJSEmbed(vm, msg.Content, time.Second*1))
+			}
+			p := dgwidgets.NewPaginator(ctx.Ses.DG, ctx.Msg.ChannelID)
+			p.Add(embeds...)
+			p.SetPageFooters()
+			p.Widget.Timeout = time.Minute * 2
+			p.ColourWhenDone = system.StatusWarning
+			go p.Spawn()
+		}
 	}
 }
 
