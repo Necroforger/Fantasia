@@ -40,7 +40,12 @@ func NewPaginator(ses *discordgo.Session, channelID string) *Paginator {
 		ColourWhenDone:        -1,
 		Widget:                NewWidget(ses, channelID, nil),
 	}
+	p.addHandlers()
 
+	return p
+}
+
+func (p *Paginator) addHandlers() {
 	p.Widget.Handle(NavBeginning, func(w *Widget, r *discordgo.MessageReaction) {
 		if err := p.Goto(0); err == nil {
 			p.Update()
@@ -69,8 +74,6 @@ func NewPaginator(ses *discordgo.Session, channelID string) *Paginator {
 			}
 		}
 	})
-
-	return p
 }
 
 // Spawn spawns the paginator in channel p.ChannelID

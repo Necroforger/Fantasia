@@ -4,3 +4,4 @@ config.toml
 dca-rs.exe
 *.toml
 *.json
+*.exe~

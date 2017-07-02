@@ -425,9 +425,9 @@ func (m *Module) CmdControls(ctx *system.Context) {
 				return
 			}
 			radio := m.getRadio(vc.GuildID)
-			if index >= 0 && index < len(radio.Queue.Playlist) {
-				radio.Queue.Index = index
-			}
+			// if index >= 0 && index < len(radio.Queue.Playlist) {
+			// radio.Queue.Index = index
+			// }
 			go radio.PlayQueue(ctx, vc)
 		}
 		update()

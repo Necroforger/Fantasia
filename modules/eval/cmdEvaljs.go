@@ -1,6 +1,8 @@
 package eval
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -29,7 +31,7 @@ func (m *Module) EvalJS(ctx *system.Context) {
 	}
 
 	if len(script) != 0 {
-		ctx.ReplyEmbed(evalJSEmbed(vm, script, time.Second*1).MessageEmbed)
+		sendResult(ctx, ctx.Msg.ChannelID, evalJSEmbed(vm, script, time.Second*1).MessageEmbed)
 		return
 	}
 
@@ -54,32 +56,51 @@ func (m *Module) EvalJS(ctx *system.Context) {
 		if len(embed.Description) < chunklen {
 			b.SendEmbed(msg.ChannelID, embed)
 		} else {
-			txt := embed.Description
-			embeds := []*discordgo.MessageEmbed{}
-			for i := 0; i < int((float64(len(txt))/float64(chunklen))+0.5); i++ {
-				start := i * chunklen
-				end := start + chunklen
-				if end > len(txt) {
-					end = len(txt)
-				}
-				fmt.Println(end - start)
-				embeds = append(embeds,
-					dream.NewEmbed().
-						SetDescription(txt[start:end]).
-						SetColor(embed.Color).
-						MessageEmbed)
-
-			}
-			p := dgwidgets.NewPaginator(ctx.Ses.DG, ctx.Msg.ChannelID)
-			p.Add(embeds...)
-			p.SetPageFooters()
-			p.Widget.Timeout = time.Minute * 2
-			p.ColourWhenDone = system.StatusWarning
-			go p.Spawn()
+			sendResult(ctx, msg.ChannelID, embed.MessageEmbed)
 		}
 	}
 }
 
+func sendResult(ctx *system.Context, channelID string, embed *discordgo.MessageEmbed) {
+
+	if len(embed.Description) <= 1024 {
+		ctx.ReplyEmbed(embed)
+	}
+
+	p := dgwidgets.NewPaginator(ctx.Ses.DG, channelID)
+	p.Add(dgwidgets.EmbedsFromString(embed.Description, 1024)...)
+
+	p.Widget.Handle("💾", func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		if r.UserID != ctx.Msg.Author.ID {
+			return
+		}
+		if userchan, err := w.Ses.UserChannelCreate(r.UserID); err == nil {
+			var content string
+			extension := "txt"
+			for _, v := range p.Pages {
+				content += v.Description
+			}
+			var js interface{}
+			if err := json.Unmarshal([]byte(content), &js); err == nil {
+				if t, err := json.MarshalIndent(js, "", "\t"); err == nil {
+					content = string(t)
+					extension = "json"
+				}
+			}
+			w.Ses.ChannelFileSend(userchan.ID, "content."+extension, bytes.NewReader([]byte(content)))
+		}
+	})
+
+	for _, v := range p.Pages {
+		v.Color = embed.Color
+	}
+
+	p.SetPageFooters()
+	p.Widget.Timeout = time.Minute * 2
+	p.ColourWhenDone = system.StatusWarning
+
+	go p.Spawn()
+}
 func evalJSEmbed(vm *otto.Otto, script string, timeout time.Duration) *dream.Embed {
 	embed := dream.NewEmbed()
 
