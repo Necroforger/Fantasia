@@ -5,18 +5,6 @@ package musicplayer
 		+ youtube-dl installed to path
 		+ dca-rs
 		+ ffmpeg
-
-	WIP
-	Musicplayer is a more advanced audio module with the ability to queue and
-	manage playlists using youtube-dl.
-
-	// TODO
-		* Create graphical menu using embeds with searchable buttons
-		* Bypass the ratelimit on adding reactions to messages
-		* Make youtube-dl an optional dependency and fall back to the 'ytdl' go library if it
-		  	is not available.
-		* Create a method to queue songs.
-		* Be able to play a queue while simultaneously adding songs to it.
 */
 
 import (
