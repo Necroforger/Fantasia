@@ -95,7 +95,7 @@ func main() {
 		log.Println("Error creation bot session... ", err)
 		return
 	}
-	session.DG.LogLevel = 10
+	// session.DG.LogLevel = 10
 
 	// Open the bot session
 	session.Open()

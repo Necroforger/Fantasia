@@ -28,7 +28,7 @@ type Paginator struct {
 }
 
 // NewPaginator returns a new Paginator
-//    ses      : Dream session
+//    ses      : discordgo session
 //    channelID: channelID to spawn the paginator on
 func NewPaginator(ses *discordgo.Session, channelID string) *Paginator {
 	p := &Paginator{
@@ -81,10 +81,14 @@ func (p *Paginator) Spawn() error {
 	if p.Running() {
 		return ErrAlreadyRunning
 	}
+	p.Lock()
 	p.running = true
+	p.Unlock()
 
 	defer func() {
+		p.Lock()
 		p.running = false
+		p.Unlock()
 		// Delete Message when done
 		if p.DeleteMessageWhenDone && p.Widget.Message != nil {
 			p.Ses.ChannelMessageDelete(p.Widget.Message.ChannelID, p.Widget.Message.ID)

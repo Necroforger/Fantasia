@@ -91,7 +91,6 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 		//----------------- Print information about the currently playing song ---------------- //
 		song, err := r.Queue.Song()
 		if err == nil && !r.Silent {
-			fmt.Println("Attempting to play ", song.String())
 			ctx.ReplyEmbed(dream.NewEmbed().
 				SetTitle("Now playing").
 				SetDescription(fmt.Sprintf("[%d]: %s\nduration:\t %ds", r.Queue.Index, song.Markdown(), song.Duration)).
@@ -114,7 +113,6 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 				disp.Stop()
 				return nil
 			case AudioContinue:
-				disp.Stop()
 				continue
 			}
 			close(done)
@@ -136,7 +134,6 @@ func (r *Radio) PlayQueue(ctx *system.Context, vc *discordgo.VoiceConnection) er
 				return nil
 			}
 		}
-
 	}
 }
 
@@ -150,7 +147,7 @@ func (r *Radio) Play(b *dream.Session, vc *discordgo.VoiceConnection) (*dream.Au
 	var stream io.Reader
 
 	if r.UseYoutubeDL {
-		yt := exec.Command("youtube-dl", "-f", "bestaudio", "-o", "-", song.URL)
+		yt := exec.Command("youtube-dl", "-f", "bestaudio", "--youtube-skip-dash-manifest", "-o", "-", song.URL)
 		stream, err = yt.StdoutPipe()
 		if err != nil {
 			return nil, err

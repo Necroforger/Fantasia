@@ -373,10 +373,6 @@ func (m *Module) CmdControls(ctx *system.Context) {
 			}
 			embed.Title = status
 
-			if embed.Description == "" {
-				embed.Description = "Playlist is empty"
-			}
-
 			if w.Embed != nil {
 				w.UpdateEmbed(embed.MessageEmbed)
 			}
@@ -495,6 +491,19 @@ func (m *Module) CmdControls(ctx *system.Context) {
 		infodisplayed = !infodisplayed
 		update()
 	})
+	// Save handler
+	w.Handle(dgwidgets.NavSave, func(w *dgwidgets.Widget, r *discordgo.MessageReaction) {
+		if c, err := w.Ses.UserChannelCreate(r.UserID); err == nil {
+			radio.Queue.Lock()
+			defer radio.Queue.Unlock()
+			rd, wr := io.Pipe()
+			go func() {
+				json.NewEncoder(wr).Encode(radio.Queue.Playlist)
+				wr.Close()
+			}()
+			w.Ses.ChannelFileSend(c.ID, "playlist.json", rd)
+		}
+	})
 
 	w.Spawn()
 	embed.Color = system.StatusWarning
@@ -584,6 +593,8 @@ func (m *Module) CmdSave(ctx *system.Context) {
 		playlistName = ctx.Args.After()
 	}
 
+	radio.Queue.Lock()
+	defer radio.Queue.Unlock()
 	rd, wr := io.Pipe()
 	go func() {
 		json.NewEncoder(wr).Encode(radio.Queue.Playlist)
