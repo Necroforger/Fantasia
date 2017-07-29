@@ -11,6 +11,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/Necroforger/dgwidgets"
 
 	// Used in imageFromContext
 	_ "image/gif"
@@ -51,7 +54,7 @@ func NewConfig() *Config {
 		// Default booru commands
 		BooruCommands: [][]string{
 			{"danbooru", "http://danbooru.donmai.us"},
-			{"safebooru", "https://safebooru.org/"},
+			{"safebooru", "https://safebooru.org"},
 			{"googleimg", "http://google.com"},
 		},
 	}
@@ -186,8 +189,9 @@ func MakeBooruSearcher(booruURL string) func(*system.Context) {
 			indexTo = n
 		}
 
-		if indexTo > index+10 {
-			ctx.ReplyError("You cannot bulk view more than 10 images at a time")
+		if indexTo-index < 0 {
+			ctx.ReplyError("IndexTo is less than the indexFrom value")
+			return
 		}
 
 		posts, err := extractor.Search(booruURL, extractor.SearchQuery{
@@ -201,16 +205,31 @@ func MakeBooruSearcher(booruURL string) func(*system.Context) {
 			return
 		}
 
-		for i := index; i < indexTo; i++ {
-			if i >= 0 && i < len(posts) {
-				post := posts[i]
+		if indexTo-index == 1 {
+			if index >= 0 && index < len(posts) {
 				ctx.ReplyEmbed(dream.NewEmbed().
 					SetColor(system.StatusNotify).
-					SetImage(post.ImageURL).
+					SetImage(posts[0].ImageURL).
 					MessageEmbed)
+			} else {
+				ctx.ReplyError("Index out of bounds")
 			}
+
+			return
 		}
 
+		paginator := dgwidgets.NewPaginator(ctx.Ses.DG, ctx.Msg.ChannelID)
+		for _, post := range posts {
+			paginator.Add(dream.NewEmbed().
+				SetColor(system.StatusNotify).
+				SetImage(post.ImageURL).
+				MessageEmbed)
+		}
+		paginator.SetPageFooters()
+		paginator.Widget.Timeout = time.Minute * 3
+		paginator.DeleteReactionsWhenDone = true
+
+		paginator.Spawn()
 	}
 }
 
