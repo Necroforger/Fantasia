@@ -14,7 +14,7 @@ function unvendor(path, outdir) {
         fs.mkdir(outdir, () => {
             files.forEach( (file) => {
                 fs.readFile(path + "/" + file, "utf8", (err, data) => {
-                    fs.writeFile(outdir + file, data.toString().replace("github.com/Necroforger/discordgo", "github.com/bwmarrin/discordgo"));
+                    fs.writeFile(outdir + "/" + file, data.toString().replace("github.com/Necroforger/discordgo", "github.com/bwmarrin/discordgo"));
                 });
             });
         });

@@ -21,8 +21,9 @@ type Paginator struct {
 
 	Ses *discordgo.Session
 
-	DeleteMessageWhenDone bool
-	ColourWhenDone        int
+	DeleteMessageWhenDone   bool
+	DeleteReactionsWhenDone bool
+	ColourWhenDone          int
 
 	running bool
 }
@@ -36,9 +37,10 @@ func NewPaginator(ses *discordgo.Session, channelID string) *Paginator {
 		Pages: []*discordgo.MessageEmbed{},
 		Index: 0,
 		Loop:  false,
-		DeleteMessageWhenDone: false,
-		ColourWhenDone:        -1,
-		Widget:                NewWidget(ses, channelID, nil),
+		DeleteMessageWhenDone:   false,
+		DeleteReactionsWhenDone: false,
+		ColourWhenDone:          -1,
+		Widget:                  NewWidget(ses, channelID, nil),
 	}
 	p.addHandlers()
 
@@ -89,16 +91,20 @@ func (p *Paginator) Spawn() error {
 		p.Lock()
 		p.running = false
 		p.Unlock()
+
 		// Delete Message when done
 		if p.DeleteMessageWhenDone && p.Widget.Message != nil {
 			p.Ses.ChannelMessageDelete(p.Widget.Message.ChannelID, p.Widget.Message.ID)
-		} else
-		// Change colour when done
-		if p.ColourWhenDone >= 0 {
+		} else if p.ColourWhenDone >= 0 {
 			if page, err := p.Page(); err == nil {
 				page.Color = p.ColourWhenDone
 				p.Update()
 			}
+		}
+
+		// Delete reactions when done
+		if p.DeleteReactionsWhenDone && p.Widget.Message != nil {
+			p.Ses.MessageReactionsRemoveAll(p.Widget.ChannelID, p.Widget.Message.ID)
 		}
 	}()
 
