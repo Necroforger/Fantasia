@@ -20,6 +20,29 @@ type Context struct {
 	Args         Args
 }
 
+// Guild obtains the guild of the message sent over the context
+func (c *Context) Guild() (*discordgo.Guild, error) {
+	s := c.Ses.DG
+
+	channel, err := s.State.Channel(c.Msg.ChannelID)
+	if err != nil {
+		channel, err = s.Channel(c.Msg.ChannelID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	guild, err := s.State.Guild(channel.GuildID)
+	if err != nil {
+		guild, err = s.Guild(channel.GuildID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return guild, nil
+}
+
 // ReplyStatus sends an embed to the message channel the command was received on
 // Coloured with the given status code.
 //		status: 		Colour code of the message to send

@@ -29,7 +29,7 @@ func CmdWhois(ctx *system.Context) {
 	} else if ctx.Args.After() != "" {
 		user, err = b.DG.User(ctx.Args.After())
 		if err != nil {
-			ctx.ReplyError(err)
+			ctx.ReplyError("Error obtaining user from ID")
 			return
 		}
 	} else {
