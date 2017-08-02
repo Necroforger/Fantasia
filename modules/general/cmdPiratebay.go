@@ -138,7 +138,7 @@ func CmdPirateBay(ctx *system.Context) {
 		return dream.NewEmbed().
 			SetTitle(r.Title).
 			SetURL(r.URL).
-			SetDescription(".\n.\n[=================== magnet ==================]("+r.Magnet+")").
+			SetDescription("[💾(magnet link)]("+r.Magnet+")").
 			AddField("Uploader", "`"+r.Uploader+"`").
 			AddField("Seeders", "`"+strconv.Itoa(r.Seeders)+"`").
 			AddField("Leechers", "`"+strconv.Itoa(r.Leechers)+"`").
