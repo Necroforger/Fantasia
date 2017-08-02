@@ -14,8 +14,14 @@ func CmdCalc(ctx *system.Context) {
 		return
 	}
 
+	defer func() {
+		if err := recover(); err != nil {
+			ctx.ReplyError("Error evaluating expression")
+		}
+	}()
+
 	expression, err := govaluate.NewEvaluableExpression(ctx.Args.After())
-	result, err := expression.Evaluate(make(map[string]interface{}, 0))
+	result, err := expression.Evaluate(nil)
 	if err != nil {
 		ctx.ReplyError(err)
 		return

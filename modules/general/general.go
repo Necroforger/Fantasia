@@ -22,9 +22,12 @@ func (m *Module) Build(s *system.System) {
 	r.On("emojify", m.emojifyCommand).Set("", "Emojifies the given text")
 	r.On("ping", Ping).Set("", "responds with the amount of time taken to send and retrieve a message")
 	r.On("snowflake", Snowflake).Set("", "gives the creation date of a discord ID")
+	r.On("youtube", CmdYoutube).Set("", "Searches for the youtube video with the give title.\n`youtube video name`")
 	r.On("hex", HexDisplay).Set("", "Returns an image representation of the given hex code. example: `hex ff00ff`")
 	r.On("remind", CmdRemind).Set("", "Reminds you about something after a duration set in seconds.\n`remind 10 hello`")
 	r.On("calc", CmdCalc).Set("", "Calculates the given expression.\n`calc 10 + 10`")
+	r.On("tpb", CmdPirateBay).Set("", "Searches the pirate bay for the given query\n`tpb music`")
+
 	// Random
 	r.On("rate", CmdRate).Set("", "Rates the supplied thing on a scale of 1-10")
 	r.On("8ball", CmdEightBall).Set("", "Query the magic eightball")

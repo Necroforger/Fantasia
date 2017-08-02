@@ -42,6 +42,12 @@ func getIndex(index string, radio *Radio) (int, error) {
 		return len(radio.Queue.Playlist) / 2, nil
 	case "rand", "random":
 		return int(rng.Float64() * float64(len(radio.Queue.Playlist)-1)), nil
+	case "current", "playing":
+		return radio.Queue.Index, nil
+	case "next":
+		return radio.Queue.Index + 1, nil
+	case "prev", "previous":
+		return radio.Queue.Index - 1, nil
 	default:
 		return strconv.Atoi(index)
 	}

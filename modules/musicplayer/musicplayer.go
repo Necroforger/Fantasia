@@ -158,6 +158,10 @@ func (m *Module) CmdPlay(ctx *system.Context) {
 
 	radio := m.getRadio(vc.GuildID)
 
+	if radio.IsRunning() && radio.Dispatcher.IsPaused() {
+		radio.Dispatcher.Resume()
+	}
+
 	err = radio.PlayQueue(ctx, vc)
 	if err != nil {
 		ctx.ReplyError(err)
@@ -506,7 +510,9 @@ func (m *Module) CmdControls(ctx *system.Context) {
 	})
 
 	w.Spawn()
-	embed.Color = system.StatusWarning
+	if w.Message != nil {
+		ctx.Ses.DG.MessageReactionsRemoveAll(w.ChannelID, w.Message.ID)
+	}
 	w.UpdateEmbed(embed.MessageEmbed)
 	ticker.Stop()
 }
