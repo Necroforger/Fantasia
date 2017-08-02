@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/Necroforger/dream"
 
@@ -27,11 +28,11 @@ type PiratebayItem struct {
 }
 
 // PiratebayScrape does a piratebay search for the given query
-func PiratebayScrape(query string) ([]PiratebayItem, error) {
+func PiratebayScrape(query string, page int) ([]PiratebayItem, error) {
 	items := []PiratebayItem{}
 
 	searchURL := func(query string) string {
-		return fmt.Sprintf("https://thepiratebay.org/search/%s/0/99/0", url.QueryEscape(query))
+		return fmt.Sprintf("https://thepiratebay.org/search/%s/%d", url.QueryEscape(query), page)
 	}
 
 	doc, err := goquery.NewDocument(searchURL(query))
@@ -121,7 +122,7 @@ func CmdPirateBay(ctx *system.Context) {
 
 	ctx.Ses.DG.ChannelTyping(ctx.Msg.ChannelID)
 
-	res, err := PiratebayScrape(ctx.Args.After())
+	res, err := PiratebayScrape(ctx.Args.After(), 0)
 	if err != nil {
 		ctx.ReplyError(err)
 	}
@@ -133,14 +134,11 @@ func CmdPirateBay(ctx *system.Context) {
 		return str
 	}
 
-	if len(res) > 0 {
-		r := res[0]
-
-		PiratebayInfo(r.URL, &r)
-		ctx.ReplyEmbed(dream.NewEmbed().
+	embedItem := func(r PiratebayItem) *dream.Embed {
+		return dream.NewEmbed().
 			SetTitle(r.Title).
 			SetURL(r.URL).
-			SetDescription("[<:iconmagnet:342227624770142208>magnet]("+r.Magnet+")").
+			SetDescription(".\n.\n[=================== magnet ==================]("+r.Magnet+")").
 			AddField("Uploader", "`"+r.Uploader+"`").
 			AddField("Seeders", "`"+strconv.Itoa(r.Seeders)+"`").
 			AddField("Leechers", "`"+strconv.Itoa(r.Leechers)+"`").
@@ -148,10 +146,60 @@ func CmdPirateBay(ctx *system.Context) {
 			AddField("Uploaded", "`"+r.Uploaded+"`").
 			AddField("Description", "```"+cut(r.Description, 1024)+"```").
 			SetColor(system.StatusNotify).
-			InlineAllFields().
-			MessageEmbed)
+			InlineAllFields()
+	}
+
+	if len(res) == 0 {
+		ctx.ReplyError("No results found")
 		return
 	}
 
-	ctx.ReplyError("No results found")
+	if len(res) == 1 {
+		r := res[0]
+		PiratebayInfo(r.URL, &r)
+		ctx.ReplyEmbed(embedItem(r).MessageEmbed)
+		return
+	}
+
+	embed := dream.NewEmbed().
+		SetTitle(fmt.Sprintf("Search results [%d]", len(res))).
+		SetColor(system.StatusNotify).SetFooter(strings.Repeat("_", 156))
+
+	embed.Description = "***Enter an index to select a torrent or type `cancel` to finish***\n\n"
+
+	for i, v := range res {
+		embed.Description += fmt.Sprintf("`[%d] (%s / %s) `: __%s__ `(SE: %d | LE: %d)`\n", i, v.Category, v.Subcategory, v.Title, v.Seeders, v.Leechers)
+	}
+	msg, err := ctx.ReplyEmbed(embed.MessageEmbed)
+	if err != nil {
+		ctx.ReplyError("Error sending results")
+		return
+	}
+
+	for {
+		m := ctx.Ses.NextMessageCreate()
+		if m.Author.ID != ctx.Msg.Author.ID {
+			continue
+		}
+
+		if m.Content == "cancel" {
+			return
+		}
+		n, err := strconv.Atoi(m.Content)
+		if err != nil {
+			return
+		}
+		ctx.Ses.DG.ChannelMessageDelete(m.ChannelID, m.ID)
+
+		if n < 0 || n >= len(res) {
+			ctx.ReplyError("Index out of bounds")
+		}
+		err = PiratebayInfo(res[n].URL, &res[n])
+		if err != nil {
+			ctx.ReplyError("Error fetching torrent information")
+			return
+		}
+
+		ctx.Ses.DG.ChannelMessageEditEmbed(msg.ChannelID, msg.ID, embedItem(res[n]).MessageEmbed)
+	}
 }
