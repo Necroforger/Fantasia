@@ -15,5 +15,5 @@ func CmdChoose(ctx *system.Context) {
 	}
 
 	choices := strings.Split(ctx.Args.After(), ",")
-	ctx.ReplyNotify("I choose, **", choices[int(rand.Float64()*float64(len(choices)))], "**")
+	ctx.ReplyNotify("I choose **" + strings.TrimSpace(choices[int(rand.Float64()*float64(len(choices)))]) + "**")
 }
