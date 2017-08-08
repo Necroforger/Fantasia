@@ -1,4 +1,4 @@
-package system
+package util
 
 import (
 	"errors"
@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/discordgo"
 )
 
@@ -49,7 +50,7 @@ func RandomFileInDir(path string) (*os.File, error) {
 /////////////////////////////////////////////////////
 
 // ConnectToVoiceChannel finds and connects to a user's voice channel
-func ConnectToVoiceChannel(ctx *Context) (*discordgo.VoiceConnection, error) {
+func ConnectToVoiceChannel(ctx *system.Context) (*discordgo.VoiceConnection, error) {
 	b := ctx.Ses
 	msg := ctx.Msg
 

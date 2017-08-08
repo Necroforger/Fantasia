@@ -22,6 +22,7 @@ import (
 
 	"github.com/Necroforger/Boorudl/extractor"
 	"github.com/Necroforger/Fantasia/system"
+	"github.com/Necroforger/Fantasia/util"
 	"github.com/Necroforger/dream"
 )
 
@@ -89,6 +90,7 @@ func (m *Module) Build(s *system.System) {
 		r.On("motionblur", MakeConvolutionFunc(MatrixMotionBlur, getDivisor(MatrixMotionBlur), 1)).Set("", "`usage: motionblue [iterations]` Applies a motion blur to the given image")
 		r.On("sharpen", MakeConvolutionFunc(MatrixSharpen, getDivisor(MatrixSharpen), 1)).Set("", "`usage: motionblue [iterations]`, sharpens the given image")
 		r.On("filter", cmdCustomFilter).Set("", "Provide a custom image filter")
+		r.On("p+o+k+a+", CmdPooka).Set("pooka", "Rotates the supplied image 90 degrees")
 	}
 
 	///////////////////////////////
@@ -148,7 +150,7 @@ func MakeImageCommand(urls []string, openFiles bool) func(*system.Context) {
 			}
 
 			if info.IsDir() {
-				randFile, err := system.RandomFileInDir(path)
+				randFile, err := util.RandomFileInDir(path)
 				if err != nil {
 					ctx.ReplyError(err)
 					return

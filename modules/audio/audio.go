@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Necroforger/Fantasia/system"
+	"github.com/Necroforger/Fantasia/util"
 	"github.com/Necroforger/Fantasia/youtubeapi"
 	"github.com/Necroforger/ytdl"
 )
@@ -76,7 +77,7 @@ func MakeSoundclipFunc(urls []string, openFiles bool) func(*system.Context) {
 			path   string
 		)
 
-		vc, err := system.ConnectToVoiceChannel(ctx)
+		vc, err := util.ConnectToVoiceChannel(ctx)
 		if err != nil {
 			ctx.ReplyError(err)
 			return
@@ -104,7 +105,7 @@ func MakeSoundclipFunc(urls []string, openFiles bool) func(*system.Context) {
 			}
 
 			if info.IsDir() {
-				randFile, err := system.RandomFileInDir(path)
+				randFile, err := util.RandomFileInDir(path)
 				if err != nil {
 					ctx.ReplyError(err)
 					return
@@ -120,7 +121,7 @@ func MakeSoundclipFunc(urls []string, openFiles bool) func(*system.Context) {
 			if err != nil {
 				return
 			}
-			stream, err = system.YoutubeDLFromInfo(info)
+			stream, err = util.YoutubeDLFromInfo(info)
 			if err != nil {
 				ctx.ReplyError(err)
 			}
@@ -133,7 +134,7 @@ func MakeSoundclipFunc(urls []string, openFiles bool) func(*system.Context) {
 func (m *Module) playHandler(ctx *system.Context) {
 	b := ctx.Ses
 
-	vc, err := system.ConnectToVoiceChannel(ctx)
+	vc, err := util.ConnectToVoiceChannel(ctx)
 	if err != nil {
 		ctx.ReplyError(err)
 		return
@@ -179,7 +180,7 @@ func (m *Module) playHandler(ctx *system.Context) {
 		return
 	}
 
-	stream, err := system.YoutubeDLFromInfo(info)
+	stream, err := util.YoutubeDLFromInfo(info)
 	if err != nil {
 		ctx.ReplyError("Error downloading youtube video")
 		return

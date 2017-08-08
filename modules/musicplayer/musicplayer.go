@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/Necroforger/Fantasia/system"
+	"github.com/Necroforger/Fantasia/util"
 	"github.com/Necroforger/Fantasia/youtubeapi"
 	"github.com/Necroforger/dgwidgets"
 	"github.com/Necroforger/discordgo"
@@ -150,7 +151,7 @@ func (m *Module) CmdClear(ctx *system.Context) {
 // 		+ Playing a song from a URL
 //		+ Starting the queue if no argument is provided and nothing is playing.
 func (m *Module) CmdPlay(ctx *system.Context) {
-	vc, err := system.ConnectToVoiceChannel(ctx)
+	vc, err := util.ConnectToVoiceChannel(ctx)
 	if err != nil {
 		ctx.ReplyError(err)
 		return
@@ -419,7 +420,7 @@ func (m *Module) CmdControls(ctx *system.Context) {
 			radio.Goto(index)
 			// Connect to the user's voice channel and start playing the queue
 		} else {
-			vc, err := system.ConnectToVoiceChannel(ctx)
+			vc, err := util.ConnectToVoiceChannel(ctx)
 			if err != nil {
 				ctx.ReplyError(err)
 				return

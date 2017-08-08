@@ -144,7 +144,7 @@ func CmdPirateBay(ctx *system.Context) {
 			AddField("Leechers", "`"+strconv.Itoa(r.Leechers)+"`").
 			AddField("Size", "`"+r.Size+"`").
 			AddField("Uploaded", "`"+r.Uploaded+"`").
-			AddField("Description", "```"+cut(r.Description, 1024)+"```").
+			AddField("Description", "```"+cut(r.Description, 600)+"```").
 			SetColor(system.StatusNotify).
 			InlineAllFields()
 	}
@@ -168,8 +168,9 @@ func CmdPirateBay(ctx *system.Context) {
 	embed.Description = "***Enter an index to select a torrent or type `cancel` to finish***\n\n"
 
 	for i, v := range res {
-		embed.Description += fmt.Sprintf("`[%d] (%s / %s) `: __%s__ `(SE: %d | LE: %d)`\n", i, v.Category, v.Subcategory, v.Title, v.Seeders, v.Leechers)
+		embed.Description += fmt.Sprintf("`[%d] (%s / %s): `__%s__ `\n (SE: %d | LE: %d)`\n", i, v.Category, v.Subcategory, v.Title, v.Seeders, v.Leechers)
 	}
+
 	msg, err := ctx.ReplyEmbed(embed.MessageEmbed)
 	if err != nil {
 		ctx.ReplyError("Error sending results")

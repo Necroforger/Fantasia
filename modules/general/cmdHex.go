@@ -11,8 +11,8 @@ import (
 	"github.com/fogleman/gg"
 )
 
-// HexDisplay ...
-func HexDisplay(ctx *system.Context) {
+// CmdHexDisplay ...
+func CmdHexDisplay(ctx *system.Context) {
 	hexb, err := hex.DecodeString(ctx.Args.After())
 	if err != nil {
 		return

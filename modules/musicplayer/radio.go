@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/Necroforger/Fantasia/system"
+	"github.com/Necroforger/Fantasia/util"
 	"github.com/Necroforger/Fantasia/youtubeapi"
 	"github.com/Necroforger/discordgo"
 	"github.com/Necroforger/dream"
@@ -157,7 +158,7 @@ func (r *Radio) Play(b *dream.Session, vc *discordgo.VoiceConnection) (*dream.Au
 			return nil, err
 		}
 	} else {
-		stream, err = system.YoutubeDL(song.URL)
+		stream, err = util.YoutubeDL(song.URL)
 		if err != nil {
 			return nil, err
 		}

@@ -23,10 +23,12 @@ func (m *Module) Build(s *system.System) {
 	r.On("ping", Ping).Set("", "responds with the amount of time taken to send and retrieve a message")
 	r.On("snowflake", Snowflake).Set("", "gives the creation date of a discord ID")
 	r.On("youtube", CmdYoutube).Set("", "Searches for the youtube video with the give title.\n`youtube video name`")
-	r.On("hex", HexDisplay).Set("", "Returns an image representation of the given hex code. example: `hex ff00ff`")
+	r.On("hex", CmdHexDisplay).Set("", "Returns an image representation of the given hex code. example: `hex ff00ff`")
+	r.On("hexcheck", CmdHexCheck).Set("", "Returns the hex value of the center pixel of the given image")
 	r.On("remind", CmdRemind).Set("", "Reminds you about something after a duration set in seconds.\n`remind 10 hello`")
 	r.On("calc", CmdCalc).Set("", "Calculates the given expression.\n`calc 10 + 10`")
 	r.On("tpb", CmdPirateBay).Set("", "Searches the pirate bay for the given query\n`tpb music`")
+	r.On("gog", CmdGog).Set("", "Searches [GOG](http://gog.com/) for the given query")
 
 	// Random
 	r.On("rate", CmdRate).Set("", "Rates the supplied thing on a scale of 1-10")

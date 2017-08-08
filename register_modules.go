@@ -10,6 +10,7 @@ import (
 	"github.com/Necroforger/Fantasia/modules/information"
 	"github.com/Necroforger/Fantasia/modules/musicplayer"
 	"github.com/Necroforger/Fantasia/modules/roles"
+	"github.com/Necroforger/Fantasia/modules/themeify"
 
 	"github.com/Necroforger/Fantasia/system"
 )
@@ -29,6 +30,7 @@ type ModuleConfig struct {
 	Information bool
 	Musicplayer bool
 	Roles       bool
+	Themeify    bool
 
 	AudioConfig       *audio.Config
 	ImagesConfig      *images.Config
@@ -46,6 +48,7 @@ func NewModuleConfig() ModuleConfig {
 		Information: true,
 		Musicplayer: true,
 		Roles:       true,
+		Themeify:    true,
 
 		AudioConfig:       audio.NewConfig(),
 		ImagesConfig:      images.NewConfig(),
@@ -101,6 +104,11 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 		s.CommandRouter.SetCategory("Roles")
 		s.BuildModule(&roles.Module{})
 		log.Println("loaded roles module...")
+	}
+	if (config.Inverted && !config.Themeify) || (!config.Inverted && config.Themeify) {
+		s.CommandRouter.SetCategory("Themeify")
+		s.BuildModule(&themeify.Module{})
+		log.Println("loaded themeify module...")
 	}
 
 }
