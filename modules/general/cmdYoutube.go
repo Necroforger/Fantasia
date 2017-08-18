@@ -33,7 +33,10 @@ func CmdYoutube(ctx *system.Context) {
 		videoURLS = append(videoURLS, res...)
 	}
 
-	if len(videoURLS) > 0 {
-		ctx.Reply(videoURLS[0])
+	if len(videoURLS) == 0 {
+		ctx.ReplyError("No results found")
+		return
 	}
+
+	ctx.Reply(videoURLS[0])
 }

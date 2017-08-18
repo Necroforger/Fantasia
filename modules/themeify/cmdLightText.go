@@ -9,25 +9,22 @@ import (
 	"github.com/golang/freetype/truetype"
 )
 
-// CmdDuoText ...
-func CmdDuoText(ctx *system.Context) {
+// CmdLightText creates text that only a dark theme user can see
+func CmdLightText(ctx *system.Context) {
 	if ctx.Args.After() == "" {
-		ctx.ReplyError("Please enter your text enclosed with quotes")
+		ctx.ReplyError("Please enter some text")
 		return
 	}
 
 	fnt := truetype.NewFace(fonts.Swanse, &truetype.Options{
-		Size: 50,
+		Size: 25,
 	})
-	img := mergeImages(
-		createTextImage(ctx.Args.Get(0), LightThemeClr, fnt, 300),
-		createTextImage(ctx.Args.Get(1), DarkThemeClr, fnt, 300),
-	)
+	img := createTextImage(ctx.Args.After(), LightThemeClr, fnt, 300)
 
 	rd, wr := io.Pipe()
 	go func() {
 		png.Encode(wr, img)
 		wr.Close()
 	}()
-	ctx.Ses.DG.ChannelFileSend(ctx.Msg.ChannelID, "duotext.png", rd)
+	ctx.Ses.DG.ChannelFileSend(ctx.Msg.ChannelID, "text.png", rd)
 }

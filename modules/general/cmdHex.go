@@ -7,8 +7,10 @@ import (
 	"image/png"
 	"io"
 
+	"github.com/Necroforger/Fantasia/fonts"
 	"github.com/Necroforger/Fantasia/system"
 	"github.com/fogleman/gg"
+	"github.com/golang/freetype/truetype"
 )
 
 // CmdHexDisplay ...
@@ -36,11 +38,17 @@ func CmdHexDisplay(ctx *system.Context) {
 	gc.DrawRectangle(0, 0, float64(gc.Width()), float64(gc.Height()))
 	gc.Fill()
 
-	// gc.LoadFontFace(monospaceFont, 50)
+	gc.SetFontFace(truetype.NewFace(fonts.MonospaceTypewriter, &truetype.Options{
+		Size: 50,
+	}))
 
-	gc.SetColor(color.RGBA{255 - hexclr.R, 255 - hexclr.G, 255 - hexclr.B, 255})
+	gc.SetColor(color.RGBA{hexclr.R ^ 0xff, hexclr.G ^ 0xff, hexclr.B ^ 0xff, 255})
 	gc.DrawString(ctx.Args.After(), 10, 50)
-	// gc.LoadFontFace(monospaceFont, 15)
+
+	gc.SetFontFace(truetype.NewFace(fonts.MonospaceTypewriter, &truetype.Options{
+		Size: 15,
+	}))
+
 	gc.DrawString("RGB"+fmt.Sprint(hexb), 10, float64(gc.Height())-10)
 
 	rd, wr := io.Pipe()

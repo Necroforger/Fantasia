@@ -36,6 +36,8 @@ func (m *Module) Build(s *system.System) {
 		"Upload images as attachments or a list of URLs. Requires two images to work.")
 	r.On("duotext", CmdDuoText).Set("", "Creates text that differes based on the theme you are using."+
 		"Pass two strings enclosed by quotes. The first one will be visible in dark theme, the second will be visible in light theme.\n`duotext \"Goodnight world\", \"Hello World\"")
+	r.On("darktext", CmdDarkText).Set("", "Creates text coloured with the background of the dark theme")
+	r.On("lighttext", CmdLightText).Set("", "Creates text coloured with the background of the light theme")
 	r.On("darkimage", CmdDarkImage).Set("", "Create an image coloured with the background color of the dark theme")
 	r.On("lightimage", CmdLightImage).Set("", "Create an image with the background colour of the light theme")
 }
