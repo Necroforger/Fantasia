@@ -14,6 +14,16 @@ import (
 
 var urlRegex = regexp.MustCompile(`(http|ftp|https):\/\/([\w\-_]+(?:(?:\.[\w\-_]+)+))([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?`)
 
+// ReadCloserList is a slice of ReadClosers
+type ReadCloserList []io.ReadCloser
+
+// CloseAll closes all the ReadCloser connections
+func (r ReadCloserList) CloseAll() {
+	for _, v := range r {
+		v.Close()
+	}
+}
+
 // RequestMessage waits for a message from the given user
 //    s       : Dream session
 //    userID  : userID of the user you wish to request a message from
@@ -45,7 +55,7 @@ func RequestMessage(s *dream.Session, userID string, timeout time.Duration) (msg
 //     s       : Dream session
 //     userid  : userID of the user you wish to request the files from
 //     timeout : How long the bot should wait before returning an error. -1 to never time out.
-func RequestFiles(s *dream.Session, userID string, timeout time.Duration) (readers []io.Reader, err error) {
+func RequestFiles(s *dream.Session, userID string, timeout time.Duration) (readers ReadCloserList, err error) {
 	msg, err := RequestMessage(s, userID, timeout)
 	if err != nil {
 		return nil, err
@@ -55,10 +65,11 @@ func RequestFiles(s *dream.Session, userID string, timeout time.Duration) (reade
 	return
 }
 
-// FilesFromMessage obtains a slice of io.Readers from a message's content
+// FilesFromMessage obtains a slice of io.ReadClosers from a message's content
+// Remember to close ALL the readers when you are done.
 //    msg : message to obtain the files from
-func FilesFromMessage(msg *discordgo.Message) (readers []io.Reader) {
-	readers = []io.Reader{}
+func FilesFromMessage(msg *discordgo.Message) (readers ReadCloserList) {
+	readers = []io.ReadCloser{}
 	URLs := []string{}
 
 	for _, a := range msg.Attachments {
@@ -103,6 +114,7 @@ func ImagesFromMessage(msg *discordgo.Message) (images []image.Image) {
 		if err == nil {
 			images = append(images, img)
 		}
+		v.Close()
 	}
 
 	return
