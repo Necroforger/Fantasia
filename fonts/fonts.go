@@ -30,12 +30,12 @@ func init() {
 func loadFont(path string) *truetype.Font {
 	b, err := Asset(path)
 	if err != nil {
-		log.Println("Error loading asset: ", path, " ERR: ", err)
+		log.Println("package font: Error loading asset: ", path, " ERR: ", err)
 		return nil
 	}
 	fnt, err := truetype.Parse(b)
 	if err != nil {
-		log.Println("Error loading font: ", path, " ERR: ", err)
+		log.Println("package font: Error loading font: ", path, " ERR: ", err)
 		return nil
 	}
 	return fnt
