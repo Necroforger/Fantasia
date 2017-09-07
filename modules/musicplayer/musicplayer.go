@@ -20,7 +20,7 @@ import (
 	"github.com/Necroforger/Fantasia/util"
 	"github.com/Necroforger/Fantasia/youtubeapi"
 	"github.com/Necroforger/dgwidgets"
-	"github.com/Necroforger/discordgo"
+	"github.com/bwmarrin/discordgo"
 	"github.com/Necroforger/dream"
 )
 

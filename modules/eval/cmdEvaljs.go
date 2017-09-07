@@ -9,7 +9,7 @@ import (
 
 	"github.com/Necroforger/Fantasia/system"
 	"github.com/Necroforger/dgwidgets"
-	"github.com/Necroforger/discordgo"
+	"github.com/bwmarrin/discordgo"
 	"github.com/Necroforger/dream"
 	"github.com/robertkrimen/otto"
 )

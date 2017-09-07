@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Necroforger/discordgo"
+	"github.com/bwmarrin/discordgo"
 	"github.com/Necroforger/dream"
 	humanize "github.com/dustin/go-humanize"
 

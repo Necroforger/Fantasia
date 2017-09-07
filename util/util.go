@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/Necroforger/Fantasia/system"
-	"github.com/Necroforger/discordgo"
+	"github.com/bwmarrin/discordgo"
 )
 
 var customHTTPClient = http.Client{

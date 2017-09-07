@@ -3,7 +3,7 @@ package system
 import (
 	"fmt"
 
-	"github.com/Necroforger/discordgo"
+	"github.com/bwmarrin/discordgo"
 	"github.com/Necroforger/dream"
 )
 

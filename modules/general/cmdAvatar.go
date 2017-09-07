@@ -2,7 +2,7 @@ package general
 
 import (
 	"github.com/Necroforger/Fantasia/system"
-	"github.com/Necroforger/discordgo"
+	"github.com/bwmarrin/discordgo"
 	"github.com/Necroforger/dream"
 )
 

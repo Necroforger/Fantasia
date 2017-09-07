@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Necroforger/discordgo"
+	"github.com/bwmarrin/discordgo"
 	"github.com/Necroforger/dream"
 	"github.com/txgruppi/parseargs-go"
 )

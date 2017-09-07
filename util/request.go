@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/Necroforger/discordgo"
+	"github.com/bwmarrin/discordgo"
 	"github.com/Necroforger/dream"
 )
 

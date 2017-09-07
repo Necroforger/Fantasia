@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Necroforger/Fantasia/system"
-	"github.com/Necroforger/discordgo"
+	"github.com/bwmarrin/discordgo"
 	"github.com/Necroforger/dream"
 	humanize "github.com/dustin/go-humanize"
 )
