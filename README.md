@@ -17,17 +17,12 @@
 ______________
 # Dependencies
 ## Audio dependencies
-* [dca-rs](https://github.com/nstafie/dca-rs/releases)
 * [ffmpeg](https://ffmpeg.org/)
 * [youtubedl](https://rg3.github.io/youtube-dl/) - optional
 
-You need to have [dca-rs](https://github.com/nstafie/dca-rs/releases) in the same directory as your bot executeable in order to use audio playing commands. This is required to convert the audio to opus format.
-
-[ffmpeg](https://ffmpeg.org/) is also required for converting audio to opus format. It should be [installed to your path.](http://www.wikihow.com/Install-FFmpeg-on-Windows)
+[ffmpeg](https://ffmpeg.org/) is required for converting audio to opus format. It should be [installed to your path.](http://www.wikihow.com/Install-FFmpeg-on-Windows)
 
 Installing [youtubedl](https://rg3.github.io/youtube-dl/) will allow you to queue videos in the media player from a variety of sources, such as soundcloud and facebook rather than specifically youtube. [It should be added to your path similarly to ffmpeg.](http://www.wikihow.com/Install-YouTube-DL.py-to-Download-YouTube-Videos-to-Your-PC). If you choose not to use youtube-dl, set UseYotubeDL in the MusicPlayer config to false and it will resort to using the golang downloader, [rylio/ytdl](https://github.com/rylio/ytdl)
-
-
 
 # Installing
 Go to the [releases](https://github.com/Necroforger/Fantasia/releases) and download a version or.
