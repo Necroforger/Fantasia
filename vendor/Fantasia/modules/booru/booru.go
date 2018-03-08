@@ -123,8 +123,6 @@ func MakeBooruSearcher(booruURL string, enforceSFW bool) func(*system.Context) {
 			}
 		}()
 
-		ctx.ReplyNotify("You are searching with tags\n", tags)
-
 		posts, err := extractor.Search(booruURL, extractor.SearchQuery{
 			Limit:  limit,
 			Page:   page,
@@ -143,7 +141,7 @@ func MakeBooruSearcher(booruURL string, enforceSFW bool) func(*system.Context) {
 
 		if limit == 1 {
 			_, err = ctx.ReplyEmbed(dream.NewEmbed().
-				SetColor(system.StatusNotify).
+				SetColor(system.StatusSuccess).
 				SetImage(posts[0].ImageURL).
 				MessageEmbed)
 			if err != nil {
@@ -159,6 +157,7 @@ func MakeBooruSearcher(booruURL string, enforceSFW bool) func(*system.Context) {
 				paginator.Add(dream.NewEmbed().
 					SetColor(system.StatusNotify).
 					SetImage(post.ImageURL).
+					SetURL(post.ImageURL).
 					MessageEmbed)
 			}
 			paginator.SetPageFooters()
