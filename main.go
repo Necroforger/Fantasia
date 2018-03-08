@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/BurntSushi/toml"
-	"github.com/Necroforger/Fantasia/system"
+	"Fantasia/system"
 	"github.com/Necroforger/dream"
 )
 

@@ -3,16 +3,16 @@ package main
 import (
 	"log"
 
-	"github.com/Necroforger/Fantasia/modules/audio"
-	"github.com/Necroforger/Fantasia/modules/eval"
-	"github.com/Necroforger/Fantasia/modules/general"
-	"github.com/Necroforger/Fantasia/modules/images"
-	"github.com/Necroforger/Fantasia/modules/information"
-	"github.com/Necroforger/Fantasia/modules/musicplayer"
-	"github.com/Necroforger/Fantasia/modules/roles"
-	"github.com/Necroforger/Fantasia/modules/themeify"
+	"Fantasia/modules/audio"
+	"Fantasia/modules/eval"
+	"Fantasia/modules/general"
+	"Fantasia/modules/images"
+	"Fantasia/modules/information"
+	"Fantasia/modules/musicplayer"
+	"Fantasia/modules/roles"
+	"Fantasia/modules/themeify"
 
-	"github.com/Necroforger/Fantasia/system"
+	"Fantasia/system"
 )
 
 ////////////////////////////////////////////
