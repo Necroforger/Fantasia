@@ -3,8 +3,8 @@ package system
 import (
 	"fmt"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/Necroforger/dream"
+	"github.com/bwmarrin/discordgo"
 )
 
 //////////////////////////////////
@@ -41,6 +41,20 @@ func (c *Context) Guild() (*discordgo.Guild, error) {
 	}
 
 	return guild, nil
+}
+
+// Channel obtains the channel of the message sent
+func (c *Context) Channel() (*discordgo.Channel, error) {
+	s := c.Ses.DG
+	channel, err := s.State.Channel(c.Msg.ChannelID)
+	if err != nil {
+		channel, err = s.Channel(c.Msg.ChannelID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return channel, nil
 }
 
 // ReplyStatus sends an embed to the message channel the command was received on
