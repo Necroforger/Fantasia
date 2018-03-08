@@ -64,7 +64,7 @@ func AddBooru(r *system.CommandRouter, commandName string, booruURL string) {
 
 // MakeBooruSearcher returns a command that searches the given booru link
 //     booruURL   : address of booru to search.
-//     enforceSFW : enforces that the booru only return SFW results.
+//     enforceSFW : enforces that the command will only return SFW results in non-nsfw channels.
 func MakeBooruSearcher(booruURL string, enforceSFW bool) func(*system.Context) {
 	return func(ctx *system.Context) {
 		var (
