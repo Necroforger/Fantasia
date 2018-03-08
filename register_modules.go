@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"Fantasia/modules/audio"
+	"Fantasia/modules/booru"
 	"Fantasia/modules/eval"
 	"Fantasia/modules/general"
 	"Fantasia/modules/images"
@@ -24,6 +25,7 @@ import (
 type ModuleConfig struct {
 	Inverted    bool
 	Audio       bool
+	Booru       bool
 	Eval        bool
 	General     bool
 	Images      bool
@@ -33,6 +35,7 @@ type ModuleConfig struct {
 	Themeify    bool
 
 	AudioConfig       *audio.Config
+	BooruConfig       *booru.Config
 	ImagesConfig      *images.Config
 	MusicplayerConfig *musicplayer.Config
 }
@@ -42,6 +45,7 @@ func NewModuleConfig() ModuleConfig {
 	return ModuleConfig{
 		Inverted:    false,
 		Audio:       true,
+		Booru:       true,
 		Eval:        true,
 		General:     true,
 		Images:      true,
@@ -51,6 +55,7 @@ func NewModuleConfig() ModuleConfig {
 		Themeify:    true,
 
 		AudioConfig:       audio.NewConfig(),
+		BooruConfig:       booru.NewConfig(),
 		ImagesConfig:      images.NewConfig(),
 		MusicplayerConfig: musicplayer.NewConfig(),
 	}
@@ -66,6 +71,15 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 			s.BuildModule(&audio.Module{Config: audio.NewConfig()})
 		}
 		log.Println("loaded audio module...")
+	}
+	if (config.Inverted && !config.Booru) || (!config.Inverted && config.Booru) {
+		s.CommandRouter.SetCategory("Booru")
+		if config.BooruConfig != nil {
+			s.BuildModule(&booru.Module{Config: config.BooruConfig})
+		} else {
+			s.BuildModule(&booru.Module{Config: booru.NewConfig()})
+		}
+		log.Println("loaded booru module...")
 	}
 	if (config.Inverted && !config.Eval) || (!config.Inverted && config.Eval) {
 		s.CommandRouter.SetCategory("Eval")
