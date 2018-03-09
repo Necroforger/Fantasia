@@ -30,11 +30,12 @@ var (
 
 // Config ...
 type Config struct {
-	Token            string
-	DisabledCommands []string
-	System           system.Config
-	Modules          ModuleConfig
-	Dream            dream.Config
+	Token             string
+	DisabledCommands  []string
+	WhitelistCommands []string
+	System            system.Config
+	Modules           ModuleConfig
+	Dream             dream.Config
 }
 
 func parseFlags() {
@@ -60,10 +61,11 @@ func main() {
 
 			// Create a config file with the default options.
 			err = SaveConfig(ConfigPath, Config{
-				Dream:            dream.NewConfig(),
-				Modules:          NewModuleConfig(),
-				System:           system.NewConfig(),
-				DisabledCommands: []string{},
+				Dream:             dream.NewConfig(),
+				Modules:           NewModuleConfig(),
+				System:            system.NewConfig(),
+				DisabledCommands:  []string{},
+				WhitelistCommands: []string{},
 			})
 			if err != nil {
 				log.Println("Error saving the configuration file: ", err)
@@ -110,6 +112,16 @@ func main() {
 		sys.CommandRouter.SetDisabled(v, true)
 	}
 
+	if len(conf.WhitelistCommands) != 0 {
+		routes := sys.CommandRouter.GetAllRoutes()
+		for _, route := range routes {
+			route.Disabled = true
+		}
+		for _, w := range conf.WhitelistCommands {
+			log.Println("Whitelisting command: ", w)
+			sys.CommandRouter.SetDisabled(w, false)
+		}
+	}
 	sys.ListenForCommands()
 }
 

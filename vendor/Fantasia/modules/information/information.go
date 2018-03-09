@@ -5,8 +5,9 @@ import (
 	"strings"
 
 	"Fantasia/system"
-	"github.com/bwmarrin/discordgo"
+
 	"github.com/Necroforger/dream"
+	"github.com/bwmarrin/discordgo"
 )
 
 // Module ...
@@ -96,6 +97,9 @@ func depthcharge(r *system.CommandRouter, embed *dream.Embed, depth int) *dream.
 	}
 
 	for _, v := range r.Subrouters {
+		if v.Disabled || (v.CommandRoute != nil && v.CommandRoute.Disabled) {
+			continue
+		}
 		field := getField(v.Category())
 		field.Value += depthString(v.Name, depth, true)
 		embed = depthcharge(v.Router, embed, depth+1)
