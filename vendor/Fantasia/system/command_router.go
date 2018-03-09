@@ -226,9 +226,10 @@ func (c *CommandRouter) GetAllRoutes() []*CommandRoute {
 
 // SubCommandRouter is a subrouter for commands
 type SubCommandRouter struct {
-	Matcher *regexp.Regexp
-	Router  *CommandRouter
-	Name    string
+	Matcher  *regexp.Regexp
+	Router   *CommandRouter
+	Name     string
+	Disabled bool
 
 	// CommandRoute is retrieved when there are no matching routes found under the subrouter,
 	// But the subrouter was matched.
