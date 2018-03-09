@@ -6,8 +6,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/BurntSushi/toml"
 	"Fantasia/system"
+
+	"github.com/BurntSushi/toml"
 	"github.com/Necroforger/dream"
 )
 

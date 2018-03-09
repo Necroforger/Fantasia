@@ -9,6 +9,7 @@ import (
 	"github.com/Necroforger/dream"
 
 	"Fantasia/system"
+
 	"github.com/PuerkitoBio/goquery"
 )
 
@@ -66,7 +67,7 @@ func PiratebayScrape(query string, page int) ([]PiratebayItem, error) {
 					// URL and Title
 					item.Title = goquery.NewDocumentFromNode(c[0]).Text()
 					if val, ok := goquery.NewDocumentFromNode(c[0]).Attr("href"); ok {
-						item.URL = "https://thepiratebay.se" + val
+						item.URL = "https://thepiratebay.org" + val
 					}
 
 					// Magnet link
@@ -138,7 +139,7 @@ func CmdPirateBay(ctx *system.Context) {
 		return dream.NewEmbed().
 			SetTitle(r.Title).
 			SetURL(r.URL).
-			SetDescription("[💾(magnet link)]("+r.Magnet+")").
+			SetDescription(r.Magnet).
 			AddField("Uploader", "`"+r.Uploader+"`").
 			AddField("Seeders", "`"+strconv.Itoa(r.Seeders)+"`").
 			AddField("Leechers", "`"+strconv.Itoa(r.Leechers)+"`").
@@ -201,6 +202,9 @@ func CmdPirateBay(ctx *system.Context) {
 			return
 		}
 
-		ctx.Ses.DG.ChannelMessageEditEmbed(msg.ChannelID, msg.ID, embedItem(res[n]).MessageEmbed)
+		_, err = ctx.Ses.DG.ChannelMessageEditEmbed(msg.ChannelID, msg.ID, embedItem(res[n]).MessageEmbed)
+		if err != nil {
+			ctx.ReplyError(err)
+		}
 	}
 }

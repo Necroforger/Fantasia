@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"Fantasia/system"
+
 	"github.com/Necroforger/dream"
 	humanize "github.com/dustin/go-humanize"
 )
@@ -27,7 +28,7 @@ func (m *Module) Build(s *system.System) {
 	r.On("hexcheck", CmdHexCheck).Set("", "Returns the hex value of the center pixel of the given image")
 	r.On("remind", CmdRemind).Set("", "Reminds you about something after a duration set in seconds.\n`remind 10 hello`")
 	r.On("calc", CmdCalc).Set("", "Calculates the given expression.\n`calc 10 + 10`")
-	// r.On("tpb", CmdPirateBay).Set("", "Searches the pirate bay for the given query\n`tpb music`")
+	r.On("tpb", CmdPirateBay).Set("", "Searches the pirate bay for the given query\n`tpb music`")
 	r.On("gog", CmdGog).Set("", "Searches [GOG](http://gog.com/) for the given query")
 	r.On("invite", CmdInviteURL).Set("", "Obtain an OAUTH2 invite URL for the bot")
 
