@@ -159,4 +159,5 @@ DisabledCommands = []
 | Roles       | Role managing module                                                                        |
 | eval        | Module for evaluating code                                                                  |
 | Images      | Various image commands                                                                      |
-| Musicplayer | Queue and play songs from a variety of sources                                                           |
+| Musicplayer | Queue and play songs from a variety of sources                                              |
+| Booru       | Commands for searching boorus                                                               |
