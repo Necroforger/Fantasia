@@ -3,8 +3,11 @@ package booru
 //genmodules:config
 import (
 	"Fantasia/system"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -12,6 +15,7 @@ import (
 	"github.com/Necroforger/Boorudl/extractor"
 	"github.com/Necroforger/dgwidgets"
 	"github.com/Necroforger/dream"
+	"github.com/bwmarrin/discordgo"
 )
 
 // Config ...
@@ -44,6 +48,8 @@ func (m *Module) Build(s *system.System) {
 		r.CurrentCategory = m.Config.BooruCommandsCategory
 	}
 
+	r.On("replay", CmdOpenSave).Set("", "replays a saved list of posts")
+
 	for _, v := range m.Config.BooruCommands {
 		if len(v) < 2 {
 			log.Println("error creating booru command " + fmt.Sprint(v) + ", array must be in the form of [command name, booru url]")
@@ -51,6 +57,41 @@ func (m *Module) Build(s *system.System) {
 		}
 		AddBooru(r, v[0], v[1])
 	}
+}
+
+// CmdOpenSave opens a previously saved list of posts
+func CmdOpenSave(ctx *system.Context) {
+	var posts extractor.Posts
+	if err := func() error {
+		var fileURL string
+		switch {
+		case len(ctx.Msg.Attachments) > 0:
+			fileURL = ctx.Msg.Attachments[0].URL
+		case ctx.Args.After() != "":
+			fileURL = ctx.Args.After()
+		default:
+			ctx.ReplyNotify("Upload a saved list of posts or give a file url")
+			var nxtmsg *discordgo.MessageCreate
+			for nxtmsg = ctx.Ses.NextMessageCreate(); nxtmsg.Author.ID != ctx.Msg.Author.ID; nxtmsg = ctx.Ses.NextMessageCreate() {
+			}
+			if len(nxtmsg.Attachments) == 0 {
+				fileURL = nxtmsg.Content
+			} else {
+				fileURL = nxtmsg.Attachments[0].URL
+			}
+		}
+		resp, err := http.Get(fileURL)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		return json.NewDecoder(resp.Body).Decode(&posts)
+	}(); err != nil {
+		ctx.ReplyError(err)
+		return
+	}
+
+	viewPosts(ctx, posts, "", -1, -1)
 }
 
 // AddBooru adds a booru command to the router
@@ -143,28 +184,48 @@ func MakeBooruSearcher(booruURL string, enforceSFW bool) func(*system.Context) {
 			_, err = ctx.ReplyEmbed(dream.NewEmbed().
 				SetColor(system.StatusSuccess).
 				SetImage(posts[0].ImageURL).
+				SetTitle("source").
+				SetURL(posts[0].ImageURL).
 				MessageEmbed)
 			if err != nil {
 				ctx.ReplyError(err)
 				ctx.ReplyNotify(posts[0].ImageURL)
 			}
 		} else {
-			paginator := dgwidgets.NewPaginator(ctx.Ses.DG, ctx.Msg.ChannelID)
-			for idx, post := range posts {
-				if idx < index || idx > indexTo {
-					continue
-				}
-				paginator.Add(dream.NewEmbed().
-					SetColor(system.StatusNotify).
-					SetImage(post.ImageURL).
-					SetURL(post.ImageURL).
-					MessageEmbed)
-			}
-			paginator.SetPageFooters()
-			paginator.Widget.Timeout = time.Minute * 3
-			paginator.DeleteReactionsWhenDone = true
-
-			paginator.Spawn()
+			viewPosts(ctx, posts, tags, index, indexTo)
 		}
 	}
+}
+
+func viewPosts(ctx *system.Context, posts extractor.Posts, tags string, index, indexTo int) {
+	paginator := dgwidgets.NewPaginator(ctx.Ses.DG, ctx.Msg.ChannelID)
+	for idx, post := range posts {
+		if (indexTo != -1 && idx > indexTo) || (index != -1 && idx < index) {
+			continue
+		}
+		paginator.Add(dream.NewEmbed().
+			SetColor(system.StatusSuccess).
+			SetImage(post.ImageURL).
+			SetURL(post.ImageURL).
+			MessageEmbed)
+	}
+	paginator.Widget.Handle(dgwidgets.NavSave, func(w *dgwidgets.Widget, s *discordgo.MessageReaction) {
+		rd, wr := io.Pipe()
+		go func() {
+			json.NewEncoder(wr).Encode(posts)
+			wr.Close()
+		}()
+		channel, err := ctx.Ses.DG.UserChannelCreate(s.UserID)
+		if err != nil {
+			ctx.ReplyError(err)
+			return
+		}
+		ctx.Ses.DG.ChannelMessageSend(channel.ID, "You saved: `"+tags+"`")
+		ctx.Ses.DG.ChannelFileSend(channel.ID, "images.json", rd)
+	})
+	paginator.SetPageFooters()
+	paginator.Widget.Timeout = time.Minute * 3
+	paginator.DeleteReactionsWhenDone = true
+
+	paginator.Spawn()
 }
