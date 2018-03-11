@@ -112,6 +112,7 @@ func main() {
 		sys.CommandRouter.SetDisabled(v, true)
 	}
 
+	// Whitelist specified commands
 	if len(conf.WhitelistCommands) != 0 {
 		routes := sys.CommandRouter.GetAllRoutes()
 		for _, route := range routes {
@@ -122,6 +123,7 @@ func main() {
 			sys.CommandRouter.SetDisabled(w, false)
 		}
 	}
+
 	sys.ListenForCommands()
 }
 
