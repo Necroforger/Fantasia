@@ -4,3 +4,4 @@ config.toml
 *.json
 *.exe~
 *.exe
+*.bat
