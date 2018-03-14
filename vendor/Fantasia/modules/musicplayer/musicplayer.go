@@ -19,6 +19,7 @@ import (
 	"Fantasia/system"
 	"Fantasia/util"
 	"Fantasia/youtubeapi"
+
 	"github.com/Necroforger/dgwidgets"
 	"github.com/Necroforger/dream"
 	"github.com/bwmarrin/discordgo"

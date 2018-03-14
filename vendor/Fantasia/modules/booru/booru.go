@@ -1,3 +1,5 @@
+// package booru
+
 package booru
 
 //genmodules:config
@@ -27,9 +29,10 @@ type Config struct {
 // NewConfig returns the default configuration
 func NewConfig() *Config {
 	return &Config{
-		// Default booru commands
+		// BooruCommands
+		// [command name] [booru URL] [true/false; enforce rating:safe in non-nsfw channels]
 		BooruCommands: [][]string{
-			{"googleimg", "http://google.com"},
+			{"googleimg", "https://google.com", "false"},
 			{"safebooru", "https://safebooru.org"},
 			{"danbooru", "http://danbooru.donmai.us"},
 		},
@@ -55,7 +58,13 @@ func (m *Module) Build(s *system.System) {
 			log.Println("error creating booru command " + fmt.Sprint(v) + ", array must be in the form of [command name, booru url]")
 			continue
 		}
-		AddBooru(r, v[0], v[1])
+
+		enforceSFW := true
+		if len(v) > 2 {
+			enforceSFW = !(v[2] == "false")
+		}
+
+		AddBooru(r, v[0], v[1], enforceSFW)
 	}
 }
 
@@ -95,8 +104,8 @@ func CmdOpenSave(ctx *system.Context) {
 }
 
 // AddBooru adds a booru command to the router
-func AddBooru(r *system.CommandRouter, commandName string, booruURL string) {
-	r.On(commandName, MakeBooruSearcher(booruURL, true)).
+func AddBooru(r *system.CommandRouter, commandName string, booruURL string, enforceSFW bool) {
+	r.On(commandName, MakeBooruSearcher(booruURL, enforceSFW)).
 		Set("", "Returns an image result from ["+commandName+"]("+booruURL+")\n"+
 			"Usage: `"+commandName+" [tags] ~index[-indexTo]`\n"+
 			"Example: `"+commandName+" cirno~0-10` would return a list of posts from index 0-10.\n"+
@@ -109,6 +118,7 @@ func AddBooru(r *system.CommandRouter, commandName string, booruURL string) {
 func MakeBooruSearcher(booruURL string, enforceSFW bool) func(*system.Context) {
 	return func(ctx *system.Context) {
 		var (
+			page    = 0
 			index   = 0
 			limit   = 1
 			indexTo = 1
@@ -120,7 +130,10 @@ func MakeBooruSearcher(booruURL string, enforceSFW bool) func(*system.Context) {
 			if n, err := strconv.Atoi(r[0]); err == nil {
 				index = n
 				tags = s[0]
+			} else {
+				ctx.ReplyError("Error converting index to integer: ", err)
 			}
+
 			if len(r) > 1 {
 				if n, err := strconv.Atoi(r[1]); err == nil {
 					indexTo = n
@@ -141,8 +154,14 @@ func MakeBooruSearcher(booruURL string, enforceSFW bool) func(*system.Context) {
 			limit = 30
 		}
 
-		page := index / limit
-		index %= limit
+		// Custom pagination for google
+		if booruURL == "http://google.com" || booruURL == "https://google.com" {
+			limit = 100
+			page = 0
+		} else {
+			page = index / limit
+			index %= limit
+		}
 
 		func() {
 			if enforceSFW {
@@ -171,7 +190,10 @@ func MakeBooruSearcher(booruURL string, enforceSFW bool) func(*system.Context) {
 			Random: true,
 		})
 		if err != nil {
-			ctx.ReplyError("Error searching for posts: ", err)
+			ctx.ReplyError("Error searching for posts: ", err,
+				"\nYour tags were: ", tags,
+				"\nPage: ", page,
+				"\nindex: ", index)
 			return
 		}
 
@@ -180,16 +202,23 @@ func MakeBooruSearcher(booruURL string, enforceSFW bool) func(*system.Context) {
 			return
 		}
 
-		if limit == 1 {
+		if (indexTo - index) == 1 {
+			var post extractor.Post
+			if index >= 0 && index < len(posts) {
+				post = posts[index]
+			} else {
+				ctx.ReplyError("Post out of bounds, returning the first result")
+				post = posts[0]
+			}
 			_, err = ctx.ReplyEmbed(dream.NewEmbed().
 				SetColor(system.StatusSuccess).
-				SetImage(posts[0].ImageURL).
+				SetImage(post.ImageURL).
 				SetTitle("source").
-				SetURL(posts[0].ImageURL).
+				SetURL(post.ImageURL).
 				MessageEmbed)
 			if err != nil {
 				ctx.ReplyError(err)
-				ctx.ReplyNotify(posts[0].ImageURL)
+				ctx.ReplyNotify(post.ImageURL)
 			}
 		} else {
 			viewPosts(ctx, posts, tags, index, indexTo)
