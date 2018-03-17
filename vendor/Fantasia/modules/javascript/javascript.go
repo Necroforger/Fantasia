@@ -2,6 +2,8 @@ package javascript
 
 import (
 	"Fantasia/system"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -9,6 +11,7 @@ import (
 	"sync"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/howeyc/fsnotify"
 
 	"github.com/robertkrimen/otto"
 )
@@ -23,11 +26,19 @@ type Config struct {
 
 	// Scripts are individual script files to be run
 	Scripts []string
+
+	// ReloadOnFileUpdate causes the scripts to automatically reload
+	// When a file update occurs
+	ReloadOnFileUpdate bool
 }
 
 // NewConfig ...
 func NewConfig() *Config {
-	return &Config{}
+	return &Config{
+		ScriptDirs:         []string{"scripts"},
+		Scripts:            []string{},
+		ReloadOnFileUpdate: false,
+	}
 }
 
 // Module ...
@@ -48,12 +59,10 @@ func (m *Module) Build(s *system.System) {
 			ctx.ReplyError("Only an admin can use this command")
 			return
 		}
-
-		m.vmMutex.Lock()
-		defer m.vmMutex.Unlock()
-
-		m.clearVMs()
-		m.loadVMs()
+		if err := m.reloadVMs(); err != nil {
+			ctx.ReplyError("error reloading javascript vms: ", err)
+			return
+		}
 		ctx.ReplySuccess("Reloaded javascript VMs")
 	}).Set("", "Reload the javascript virtual machines")
 
@@ -66,6 +75,46 @@ func (m *Module) Build(s *system.System) {
 		log.Println(err)
 		return
 	}
+
+	if err := m.startFSWatcher(); err != nil {
+		log.Println(err)
+		return
+	}
+}
+
+func (m *Module) reloadVMs() error {
+	m.vmMutex.Lock()
+	defer m.vmMutex.Unlock()
+
+	m.clearVMs()
+	return m.loadVMs()
+}
+
+func (m *Module) startFSWatcher() error {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		for {
+			select {
+			case <-watcher.Event:
+				m.reloadVMs()
+				log.Println("reloaded javascript vms")
+			case err := <-watcher.Error:
+				log.Println("javascript module fsnotify error: ", err)
+			}
+		}
+	}()
+
+	for _, v := range m.Config.ScriptDirs {
+		err = watcher.Watch(v)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (m *Module) addMessageListener() error {
@@ -134,7 +183,14 @@ func (m *Module) loadVMs() error {
 	return nil
 }
 
-func (m *Module) createVMFromFile(filepath string) (*otto.Otto, error) {
+func (m *Module) createVMFromFile(filepath string) (ot *otto.Otto, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			log.Println("error creating VM from file: ", err)
+			err = errors.New(fmt.Sprint(e))
+		}
+	}()
+
 	vm := otto.New()
 	b, err := ioutil.ReadFile(filepath)
 	if err != nil {
