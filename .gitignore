@@ -2,7 +2,6 @@ Fantasia.exe
 config.toml
 *.toml
 *.json
-*.exe~
 *.exe
 *.bat
-scripts
+scripts/
