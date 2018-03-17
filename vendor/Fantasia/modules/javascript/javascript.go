@@ -70,8 +70,13 @@ func (m *Module) Build(s *system.System) {
 
 func (m *Module) addMessageListener() error {
 	m.Sys.Dream.DG.AddHandler(func(s *discordgo.Session, msg *discordgo.MessageCreate) {
-		m.vmMutex.RLock()
-		defer m.vmMutex.RUnlock()
+		m.vmMutex.Lock()
+		defer m.vmMutex.Unlock()
+
+		if msg == nil {
+			log.Println("javascript message listener: msg is nil")
+			return
+		}
 
 		for _, v := range m.VMs {
 			if onmsg, err := v.Get("onMessage"); err == nil {
@@ -81,6 +86,7 @@ func (m *Module) addMessageListener() error {
 				}
 			}
 		}
+
 	})
 
 	return nil
@@ -148,6 +154,9 @@ func (m *Module) createVMFromFile(filepath string) (*otto.Otto, error) {
 func (m *Module) addVMMethods(vm *otto.Otto) {
 	vm.Set("addCommand", func(name, description, handler otto.Value) {
 		m.Sys.CommandRouter.On(name.String(), func(ctx *system.Context) {
+			m.vmMutex.Lock()
+			defer m.vmMutex.Unlock()
+
 			handler.Call(handler, ctx)
 		}).Set("", description.String())
 	})
