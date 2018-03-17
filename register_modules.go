@@ -9,6 +9,7 @@ import (
 	"Fantasia/modules/general"
 	"Fantasia/modules/images"
 	"Fantasia/modules/information"
+	"Fantasia/modules/javascript"
 	"Fantasia/modules/musicplayer"
 	"Fantasia/modules/roles"
 	"Fantasia/modules/themeify"
@@ -30,6 +31,7 @@ type ModuleConfig struct {
 	General     bool
 	Images      bool
 	Information bool
+	Javascript  bool
 	Musicplayer bool
 	Roles       bool
 	Themeify    bool
@@ -37,6 +39,7 @@ type ModuleConfig struct {
 	AudioConfig       *audio.Config
 	BooruConfig       *booru.Config
 	ImagesConfig      *images.Config
+	JavascriptConfig  *javascript.Config
 	MusicplayerConfig *musicplayer.Config
 }
 
@@ -50,6 +53,7 @@ func NewModuleConfig() ModuleConfig {
 		General:     true,
 		Images:      true,
 		Information: true,
+		Javascript:  true,
 		Musicplayer: true,
 		Roles:       true,
 		Themeify:    true,
@@ -57,6 +61,7 @@ func NewModuleConfig() ModuleConfig {
 		AudioConfig:       audio.NewConfig(),
 		BooruConfig:       booru.NewConfig(),
 		ImagesConfig:      images.NewConfig(),
+		JavascriptConfig:  javascript.NewConfig(),
 		MusicplayerConfig: musicplayer.NewConfig(),
 	}
 }
@@ -104,6 +109,15 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 		s.CommandRouter.SetCategory("Information")
 		s.BuildModule(&information.Module{})
 		log.Println("loaded information module...")
+	}
+	if (config.Inverted && !config.Javascript) || (!config.Inverted && config.Javascript) {
+		s.CommandRouter.SetCategory("Javascript")
+		if config.JavascriptConfig != nil {
+			s.BuildModule(&javascript.Module{Config: config.JavascriptConfig})
+		} else {
+			s.BuildModule(&javascript.Module{Config: javascript.NewConfig()})
+		}
+		log.Println("loaded javascript module...")
 	}
 	if (config.Inverted && !config.Musicplayer) || (!config.Inverted && config.Musicplayer) {
 		s.CommandRouter.SetCategory("Musicplayer")

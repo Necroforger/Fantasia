@@ -5,8 +5,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/Necroforger/dream"
+	"github.com/bwmarrin/discordgo"
 	"github.com/txgruppi/parseargs-go"
 )
 
@@ -133,4 +133,14 @@ func (s *System) readyHandler(b *dream.Session, e *discordgo.Ready) {
 // Module is the interface for building a module
 type Module interface {
 	Build(*System)
+}
+
+// IsAdmin returns if the user is an admin
+func (s *System) IsAdmin(userID string) bool {
+	for _, a := range s.Config.Admins {
+		if a == userID {
+			return true
+		}
+	}
+	return false
 }
