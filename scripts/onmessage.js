@@ -20,9 +20,7 @@ function onMessage(sys, msg) {
   }
 
   // Prevent the bot from responding to itself
-  if (sys.Dream.DG.State.User.ID == msg.Author.ID) {
-    return;
-  }
+  if (sys.Dream.DG.State.User.ID == msg.Author.ID) return;
 
   runCommand(msg.Content, reply);
 }
