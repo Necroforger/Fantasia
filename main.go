@@ -1,10 +1,12 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"log"
 	"os"
+	"strings"
 
 	"Fantasia/system"
 
@@ -139,7 +141,12 @@ func LoadConfig(path string) (*Config, error) {
 	}
 
 	var c Config
-	_, err = toml.DecodeReader(f, &c)
+
+	if strings.HasSuffix(".json", path) {
+		err = json.NewDecoder(f).Decode(&c)
+	} else {
+		_, err = toml.DecodeReader(f, &c)
+	}
 	return &c, err
 }
 
@@ -147,6 +154,12 @@ func LoadConfig(path string) (*Config, error) {
 func SaveConfig(path string, conf Config) error {
 	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
+		return err
+	}
+
+	if strings.HasSuffix(path, ".json") {
+		b, err := json.MarshalIndent(conf, "", "\t")
+		f.Write(b)
 		return err
 	}
 
