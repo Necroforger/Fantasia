@@ -18,6 +18,8 @@ import (
 
 //genmodules:config
 
+const jsCommandCategory = "js_commands"
+
 // Config ...
 type Config struct {
 	// ScriptDirs are the directories scripts are stored in.
@@ -82,11 +84,27 @@ func (m *Module) Build(s *system.System) {
 	}
 }
 
+// clearAddedCommands removes commands added by javascript vms
+func (m *Module) clearAddedCommands() {
+	m.Sys.CommandRouter.Lock()
+	defer m.Sys.CommandRouter.Unlock()
+
+	j := len(m.Sys.CommandRouter.Routes)
+	for i := 0; i < j; i++ {
+		if m.Sys.CommandRouter.Routes[i].Category == jsCommandCategory {
+			m.Sys.CommandRouter.Routes = append(m.Sys.CommandRouter.Routes[:i], m.Sys.CommandRouter.Routes[i+1:]...)
+			i--
+			j--
+		}
+	}
+}
+
 func (m *Module) reloadVMs() error {
 	m.vmMutex.Lock()
 	defer m.vmMutex.Unlock()
 
 	m.clearVMs()
+	m.clearAddedCommands()
 	return m.loadVMs()
 }
 
@@ -214,6 +232,6 @@ func (m *Module) addVMMethods(vm *otto.Otto) {
 			defer m.vmMutex.Unlock()
 
 			handler.Call(handler, ctx)
-		}).Set("", description.String())
+		}).Set("", description.String(), "js_commands")
 	})
 }
