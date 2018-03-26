@@ -5,6 +5,7 @@ import (
 
 	"Fantasia/modules/audio"
 	"Fantasia/modules/booru"
+	"Fantasia/modules/dashboard"
 	"Fantasia/modules/eval"
 	"Fantasia/modules/general"
 	"Fantasia/modules/images"
@@ -27,6 +28,7 @@ type ModuleConfig struct {
 	Inverted    bool
 	Audio       bool
 	Booru       bool
+	Dashboard   bool
 	Eval        bool
 	General     bool
 	Images      bool
@@ -38,6 +40,7 @@ type ModuleConfig struct {
 
 	AudioConfig       *audio.Config
 	BooruConfig       *booru.Config
+	DashboardConfig   *dashboard.Config
 	ImagesConfig      *images.Config
 	JavascriptConfig  *javascript.Config
 	MusicplayerConfig *musicplayer.Config
@@ -49,6 +52,7 @@ func NewModuleConfig() ModuleConfig {
 		Inverted:    false,
 		Audio:       true,
 		Booru:       true,
+		Dashboard:   true,
 		Eval:        true,
 		General:     true,
 		Images:      true,
@@ -60,6 +64,7 @@ func NewModuleConfig() ModuleConfig {
 
 		AudioConfig:       audio.NewConfig(),
 		BooruConfig:       booru.NewConfig(),
+		DashboardConfig:   dashboard.NewConfig(),
 		ImagesConfig:      images.NewConfig(),
 		JavascriptConfig:  javascript.NewConfig(),
 		MusicplayerConfig: musicplayer.NewConfig(),
@@ -85,6 +90,15 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 			s.BuildModule(&booru.Module{Config: booru.NewConfig()})
 		}
 		log.Println("loaded booru module...")
+	}
+	if (config.Inverted && !config.Dashboard) || (!config.Inverted && config.Dashboard) {
+		s.CommandRouter.SetCategory("Dashboard")
+		if config.DashboardConfig != nil {
+			s.BuildModule(&dashboard.Module{Config: config.DashboardConfig})
+		} else {
+			s.BuildModule(&dashboard.Module{Config: dashboard.NewConfig()})
+		}
+		log.Println("loaded dashboard module...")
 	}
 	if (config.Inverted && !config.Eval) || (!config.Inverted && config.Eval) {
 		s.CommandRouter.SetCategory("Eval")
