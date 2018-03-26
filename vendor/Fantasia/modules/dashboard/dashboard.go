@@ -4,12 +4,15 @@ import (
 	"Fantasia/system"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/gorilla/handlers"
 
 	"github.com/gorilla/mux"
 )
 
 //genmodules:config
-//go:generate go-bindata -debug -pkg dashboard assets/...
+//go:generate go-bindata-assetfs -pkg dashboard assets/...
 
 // Config ...
 type Config struct {
@@ -19,16 +22,17 @@ type Config struct {
 	// Password used to log into the dashboard
 	Password string
 
-	// TemplateDir is the directory to parse templates from.
-	// If none is supplied, the embedded assets will be used.
-	// EX: templates/* will parse all files in the dir templates.
-	TemplatePath string
+	// Set to true if you want to use a custom asset directory
+	CustomAssets bool
+
+	// AssetDirectory contains the server files
+	AssetDirectory string
 }
 
 // NewConfig returns the default config
 func NewConfig() *Config {
 	c := &Config{
-		Address:  ":9090",
+		Address:  "9090",
 		Password: "remilia",
 	}
 	return c
@@ -57,9 +61,25 @@ func (m *Module) Build(sys *system.System) {
 		Addr:    ":" + m.Config.Address,
 		Handler: r,
 	}
+
+	go m.Server.ListenAndServe()
 }
 
 // ConstructRoutes constructs the dashboard's routes
 func (m *Module) ConstructRoutes(r *mux.Router) {
+	var assetdir http.FileSystem
 
+	r.Use(func(h http.Handler) http.Handler {
+		return handlers.LoggingHandler(os.Stdout, h)
+	})
+
+	// Static file server
+	if m.Config.CustomAssets {
+		assetdir = http.Dir(m.Config.AssetDirectory)
+		m.Log("Custom asset directory set to: ", m.Config.AssetDirectory)
+	} else {
+		assetdir = assetFS()
+	}
+
+	r.PathPrefix("/").Handler(http.FileServer(assetdir))
 }
