@@ -29,7 +29,7 @@ type Stats struct {
 func NewStats(name string, limit int) *Stats {
 	return &Stats{
 		Name:  name,
-		Limit: -1,
+		Limit: limit,
 		Data:  []Point{},
 	}
 }
@@ -42,9 +42,9 @@ type Point struct {
 
 // Push pushes to the end of the slice
 func (s *Stats) Push(n int, label string) {
-	// s.Lock()
+	s.Lock()
 	s.Data = append(s.Data, Point{n, label})
-	// s.Unlock()
+	s.Unlock()
 
 	if s.Limit != -1 && len(s.Data) >= s.Limit {
 		s.Shift()
@@ -53,8 +53,8 @@ func (s *Stats) Push(n int, label string) {
 
 // Shift removes an element from the beginning of the slice
 func (s *Stats) Shift() (Point, error) {
-	// s.Lock()
-	// defer s.Unlock()
+	s.Lock()
+	defer s.Unlock()
 
 	if len(s.Data) == 0 {
 		return Point{}, errors.New("No data")
@@ -66,8 +66,8 @@ func (s *Stats) Shift() (Point, error) {
 
 // Format ...
 func (s *Stats) Format() FormattedStats {
-	// s.Lock()
-	// defer s.Unlock()
+	s.Lock()
+	defer s.Unlock()
 
 	f := FormattedStats{
 		Data:   make([]int, len(s.Data)),
