@@ -5,14 +5,21 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/shirou/gopsutil/mem"
+
+	"github.com/shirou/gopsutil/cpu"
 
 	"github.com/gorilla/handlers"
 
 	"github.com/gorilla/mux"
 )
 
+const trackerSleepDuration = time.Second * 1
+
 //genmodules:config
-//go:generate go-bindata-assetfs -pkg dashboard assets/...
+//go:generate go-bindata-assetfs -pkg dashboard assets/index.html assets/dist/build.js
 
 // Config ...
 type Config struct {
@@ -27,13 +34,20 @@ type Config struct {
 
 	// AssetDirectory contains the server files
 	AssetDirectory string
+
+	// LogRequests logs requests to STDOUT
+	LogRequests bool
+
+	// Time format charts will use
+	TimeFormat string
 }
 
 // NewConfig returns the default config
 func NewConfig() *Config {
 	c := &Config{
-		Address:  "9090",
-		Password: "remilia",
+		Address:    "9090",
+		Password:   "remilia",
+		TimeFormat: "15:04",
 	}
 	return c
 }
@@ -43,6 +57,8 @@ type Module struct {
 	Config *Config
 	Server http.Server
 	// tmpl   *template.Template
+
+	Stats []*Stats
 }
 
 // Log logs data
@@ -56,6 +72,7 @@ func (m *Module) Build(sys *system.System) {
 
 	r := mux.NewRouter()
 	m.ConstructRoutes(r)
+	m.TrackStats()
 
 	m.Server = http.Server{
 		Addr:    ":" + m.Config.Address,
@@ -69,9 +86,11 @@ func (m *Module) Build(sys *system.System) {
 func (m *Module) ConstructRoutes(r *mux.Router) {
 	var assetdir http.FileSystem
 
-	r.Use(func(h http.Handler) http.Handler {
-		return handlers.LoggingHandler(os.Stdout, h)
-	})
+	if m.Config.LogRequests {
+		r.Use(func(h http.Handler) http.Handler {
+			return handlers.LoggingHandler(os.Stdout, h)
+		})
+	}
 
 	// Static file server
 	if m.Config.CustomAssets {
@@ -81,5 +100,50 @@ func (m *Module) ConstructRoutes(r *mux.Router) {
 		assetdir = assetFS()
 	}
 
+	r.HandleFunc("/api/stats/{name}/", m.statsHandler)
 	r.PathPrefix("/").Handler(http.FileServer(assetdir))
+}
+
+// TrackStats ...
+func (m *Module) TrackStats() {
+	statsLimit := 100
+	m.Stats = append(m.Stats,
+		NewStats("mem", statsLimit),
+		NewStats("cpu", statsLimit),
+		NewStats("messages", statsLimit),
+	)
+	go m.TrackCPU()
+	go m.TrackMem()
+}
+
+// TrackCPU ...
+func (m *Module) TrackCPU() {
+	c := m.findStats("cpu")
+	for {
+		percent, err := cpu.Percent(0, false)
+		if err != nil {
+			m.Log("error getting CPU percentage")
+			continue
+		}
+
+		c.Push(int(percent[0]), time.Now().Format("15:04"))
+
+		time.Sleep(trackerSleepDuration)
+	}
+}
+
+// TrackMem ...
+func (m *Module) TrackMem() {
+	c := m.findStats("mem")
+	for {
+		memory, err := mem.VirtualMemory()
+		if err != nil {
+			m.Log("error getting mem percentage")
+			continue
+		}
+
+		c.Push(int(memory.UsedPercent), time.Now().Format("15:04"))
+
+		time.Sleep(trackerSleepDuration)
+	}
 }

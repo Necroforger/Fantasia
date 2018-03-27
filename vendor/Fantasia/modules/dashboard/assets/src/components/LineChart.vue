@@ -11,7 +11,10 @@ export default {
         labels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         datasets: [
           {
+            pointRadius: 0,
+            tension: 0,
             label: this.label,
+            borderWidth: 0.7,
             backgroundColor: "rgba(255, 0, 255, 0.09)",
             borderColor: "green",
             data: (() => {
@@ -52,9 +55,10 @@ export default {
     this.fetchUpdate();
     setInterval(() => {
       this.fetchUpdate();
-    }, 1000);
+    }, 5000);
   },
   methods: {
+    // update the chart
     fetchUpdate() {
       console.log(`${this.label}: attempting to fetch updates`);
       if (!this.endpoint) {
@@ -64,6 +68,14 @@ export default {
       let xhr = new XMLHttpRequest();
       xhr.onreadystatechange = () => {
         if (xhr.readyState == 4) {
+          if (xhr.status != 200) {
+            console.log(`${this.label}: request did not return 200 OK [${xhr.status}]`)
+            return;
+          }
+          if (!xhr.response) {
+            console.log(`${this.label}: xhr.response does not exist`);
+            return
+          }
           console.log(`${this.label}: updating with:` + xhr.response);
           this.context.datasets[0].data = xhr.response.data;
           this.context.labels = xhr.response.labels;
@@ -71,8 +83,11 @@ export default {
         }
       };
       xhr.open("GET", this.endpoint, true);
+      xhr.responseType = "json";
       xhr.send();
     },
+
+    // render the chart
     render() {
       this.renderChart(this.context, this.config);
     }
