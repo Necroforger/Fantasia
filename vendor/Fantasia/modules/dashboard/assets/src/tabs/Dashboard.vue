@@ -1,0 +1,72 @@
+<template>
+  <div class="row-three">
+    <!-- CPU Usage -->
+    <Card title="CPU usage" content=''>
+      <LineChart label="CPU Usage" class="half-height" id="cpu-usage"/>
+    </Card>
+
+    <!-- Memory usage -->
+    <Card title="Memory usage">
+      <LineChart label="Memory usage" class="half-height" id="memory-usage"/>
+    </Card>
+
+    <!-- Messages per minute -->
+    <Card title="Messages per minute">
+      <LineChart label="Messages per minute" class="half-height"></LineChart>
+    </Card>
+
+    <!-- Online users -->
+    <Card title="Users online">
+      <LineChart automax="true" class="half-height" label="users"></LineChart>
+    </Card>
+  </div>
+</template>
+
+<script>
+import LineChart from "../components/LineChart";
+import Card from "../components/Card";
+
+export default {
+  components: {
+    LineChart,
+    Card,
+  },
+  name: "Dashboard",
+  data() {
+    return {};
+  }
+};
+</script>
+
+<style>
+body {
+  margin: 0px;
+  background-color: #232323;
+}
+
+.row-two {
+  display: grid;
+  grid-template-columns: repeat(2, calc(100% / 2));
+  /* grid-column-gap: 50px; */
+}
+
+.row-three {
+  display: grid;
+  grid-template-columns: repeat(3, calc(100% / 3));
+}
+
+.half-height {
+  height: 300px;
+}
+
+#app {
+  font-family: "Avenir", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #939393;
+}
+
+a {
+  color: #42b983;
+}
+</style>
