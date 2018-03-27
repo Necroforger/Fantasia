@@ -2,22 +2,17 @@
   <div class="row-three">
     <!-- CPU Usage -->
     <Card title="CPU usage" content=''>
-      <LineChart label="CPU Usage" class="half-height" id="cpu-usage"/>
+      <LineChart endpoint="/api/stats/cpu/" label="CPU Usage" class="half-height" id="cpu-usage"/>
     </Card>
 
     <!-- Memory usage -->
     <Card title="Memory usage">
-      <LineChart label="Memory usage" class="half-height" id="memory-usage"/>
+      <LineChart endpoint="/api/stats/mem/" label="Memory usage" class="half-height" id="memory-usage"/>
     </Card>
 
     <!-- Messages per minute -->
     <Card title="Messages per minute">
-      <LineChart label="Messages per minute" class="half-height"></LineChart>
-    </Card>
-
-    <!-- Online users -->
-    <Card title="Users online">
-      <LineChart automax="true" class="half-height" label="users"></LineChart>
+      <LineChart endpoint="/api/stats/messages/" label="Messages per minute" class="half-height"></LineChart>
     </Card>
   </div>
 </template>
