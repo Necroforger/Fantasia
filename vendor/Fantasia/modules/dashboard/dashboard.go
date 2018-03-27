@@ -106,7 +106,7 @@ func (m *Module) ConstructRoutes(r *mux.Router) {
 
 // TrackStats ...
 func (m *Module) TrackStats() {
-	statsLimit := 100
+	statsLimit := 1000
 	m.Stats = append(m.Stats,
 		NewStats("mem", statsLimit),
 		NewStats("cpu", statsLimit),
