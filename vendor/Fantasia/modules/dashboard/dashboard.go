@@ -126,7 +126,7 @@ func (m *Module) TrackCPU() {
 			continue
 		}
 
-		c.Push(int(percent[0]), time.Now().Format("15:04"))
+		c.Push(int(percent[0]), time.Now().Format(m.Config.TimeFormat))
 
 		time.Sleep(trackerSleepDuration)
 	}
@@ -142,7 +142,7 @@ func (m *Module) TrackMem() {
 			continue
 		}
 
-		c.Push(int(memory.UsedPercent), time.Now().Format("15:04"))
+		c.Push(int(memory.UsedPercent), time.Now().Format(m.Config.TimeFormat))
 
 		time.Sleep(trackerSleepDuration)
 	}
