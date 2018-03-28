@@ -8,7 +8,7 @@ import (
 )
 
 // YoutubeDLFromInfo ...
-func YoutubeDLFromInfo(info *ytdl.VideoInfo) (io.Reader, error) {
+func YoutubeDLFromInfo(info *ytdl.VideoInfo) (io.ReadCloser, error) {
 	if len(info.Formats.Best(ytdl.FormatAudioEncodingKey)) == 0 {
 		return nil, errors.New("Error processing video")
 	}
@@ -29,7 +29,7 @@ func YoutubeDLFromInfo(info *ytdl.VideoInfo) (io.Reader, error) {
 }
 
 // YoutubeDL ...
-func YoutubeDL(URL string) (io.Reader, error) {
+func YoutubeDL(URL string) (io.ReadCloser, error) {
 	info, err := ytdl.GetVideoInfo(URL)
 	if err != nil {
 		return nil, err

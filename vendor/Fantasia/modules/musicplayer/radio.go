@@ -15,6 +15,7 @@ import (
 	"Fantasia/system"
 	"Fantasia/util"
 	"Fantasia/youtubeapi"
+
 	"github.com/Necroforger/dream"
 	"github.com/Necroforger/ytdl"
 	"github.com/bwmarrin/discordgo"
@@ -145,7 +146,7 @@ func (r *Radio) Play(b *dream.Session, vc *discordgo.VoiceConnection) (*dream.Au
 		return nil, err
 	}
 
-	var stream io.Reader
+	var stream io.ReadCloser
 
 	if r.UseYoutubeDL {
 		yt := exec.Command("youtube-dl", "-f", "bestaudio", "--youtube-skip-dash-manifest", "-o", "-", song.URL)
