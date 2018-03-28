@@ -9,6 +9,7 @@ import (
 	"Fantasia/system"
 	"Fantasia/util"
 	"Fantasia/youtubeapi"
+
 	"github.com/Necroforger/ytdl"
 )
 
@@ -73,7 +74,7 @@ func AddSoundclip(r *system.CommandRouter, name, description string, urls []stri
 func MakeSoundclipFunc(urls []string, openFiles bool) func(*system.Context) {
 	return func(ctx *system.Context) {
 		var (
-			stream io.Reader
+			stream io.ReadCloser
 			path   string
 		)
 
