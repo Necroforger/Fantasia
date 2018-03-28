@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"runtime"
 	"sync"
 
 	"github.com/gorilla/mux"
@@ -109,5 +110,26 @@ func (m *Module) statsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("error writing stats json for " + vars["name"] + " : " + err.Error())
 		return
+	}
+}
+
+// ResponseData ...
+type ResponseData struct {
+	Content string `json:"content"`
+}
+
+func (m *Module) writeData(w http.ResponseWriter, v interface{}) {
+	w.WriteHeader(200)
+	json.NewEncoder(w).Encode(ResponseData{Content: fmt.Sprint(v)})
+}
+
+func (m *Module) statHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	switch vars["name"] {
+	case "goroutines":
+		m.writeData(w, runtime.NumGoroutine())
+	case "guilds":
+		m.writeData(w, len(m.Sys.Dream.DG.State.Guilds))
 	}
 }

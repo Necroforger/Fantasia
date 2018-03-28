@@ -21,13 +21,16 @@ export default {
 <style>
 .card {
   border: 5px solid #303030;
-  padding: 20px;
+  padding-left: 10px;
+  padding-right: 10px;
   border-style: dashed;
   margin: 10px;
+  background-color: #202020;
 }
 .card h1 {
   font-size: 20px;
   margin-bottom: 1px;
+  margin-top: 5px;
 }
 .card hr {
   color: #303030;

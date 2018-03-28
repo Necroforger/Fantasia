@@ -58,6 +58,7 @@ func NewConfig() *Config {
 type Module struct {
 	Config *Config
 	Server http.Server
+	Sys    *system.System
 	// tmpl   *template.Template
 
 	Stats []*Stats
@@ -70,6 +71,8 @@ func (m *Module) Log(data ...interface{}) {
 
 // Build ...
 func (m *Module) Build(sys *system.System) {
+	m.Sys = sys
+
 	m.Log("Dashboard is a WIP")
 
 	r := mux.NewRouter()
@@ -102,6 +105,7 @@ func (m *Module) ConstructRoutes(r *mux.Router) {
 		assetdir = assetFS()
 	}
 
+	r.HandleFunc("/api/stat/{name}/", m.statHandler)
 	r.HandleFunc("/api/stats/{name}/", m.statsHandler)
 	r.PathPrefix("/").Handler(http.FileServer(assetdir))
 }
