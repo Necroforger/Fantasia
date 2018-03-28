@@ -7,6 +7,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/shirou/gopsutil/net"
+
 	"github.com/shirou/gopsutil/mem"
 
 	"github.com/shirou/gopsutil/cpu"
@@ -110,10 +112,12 @@ func (m *Module) TrackStats() {
 	m.Stats = append(m.Stats,
 		NewStats("mem", statsLimit),
 		NewStats("cpu", statsLimit),
-		NewStats("messages", statsLimit),
+		NewStats("download", 60),
+		NewStats("upload", 60),
 	)
 	go m.TrackCPU()
 	go m.TrackMem()
+	go m.TrackNet()
 }
 
 // TrackCPU ...
@@ -143,6 +147,42 @@ func (m *Module) TrackMem() {
 		}
 
 		c.Push(int(memory.UsedPercent), time.Now().Format(m.Config.TimeFormat))
+
+		time.Sleep(trackerSleepDuration)
+	}
+}
+
+// TrackNet tracks the network
+func (m *Module) TrackNet() {
+	c := m.findStats("download")
+	d := m.findStats("upload")
+
+	oldstats, err := net.IOCounters(false)
+	if err != nil {
+		m.Log("error getting iocounters")
+		return
+	}
+
+	time.Sleep(trackerSleepDuration)
+
+	for {
+		stats, err := net.IOCounters(false)
+		if err != nil {
+			m.Log("error getting iocounters")
+			continue
+		}
+
+		c.Push(
+			int(stats[0].BytesRecv)-int(oldstats[0].BytesRecv),
+			time.Now().Format(m.Config.TimeFormat),
+		)
+
+		d.Push(
+			int(stats[0].BytesSent)-int(oldstats[0].BytesSent),
+			time.Now().Format(m.Config.TimeFormat),
+		)
+
+		oldstats = stats
 
 		time.Sleep(trackerSleepDuration)
 	}
