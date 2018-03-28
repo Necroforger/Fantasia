@@ -4,7 +4,7 @@ import { Line } from "vue-chartjs";
 export default {
   name: "LineChart",
   extends: Line,
-  props: ["label", "endpoint", "max", "automax"],
+  props: ["label", "autostart", "endpoint", "max", "automax"],
   data() {
     return {
       context: {
@@ -36,10 +36,10 @@ export default {
             {
               ticks: this.automax
                 ? {
-                    beginAtZero: true
+                    beginAtZero: !(this.autostart)
                   }
                 : {
-                    beginAtZero: true,
+                    beginAtZero: !(this.autostart),
                     max: this.max ? parseInt(this.max) : 100
                   }
             }

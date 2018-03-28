@@ -10,9 +10,14 @@
       <LineChart endpoint="/api/stats/mem/" label="Memory usage" class="half-height" id="memory-usage"/>
     </Card>
 
-    <!-- Messages per minute -->
-    <Card title="Messages per minute">
-      <LineChart endpoint="/api/stats/messages/" label="Messages per minute" class="half-height"></LineChart>
+    <!-- Network download -->
+    <Card title="Download">
+      <LineChart automax="true" endpoint="/api/stats/download/" label="BytesRecv" class="half-height"></LineChart>
+    </Card>
+
+    <!-- Network upload -->
+    <Card title="Upload">
+      <LineChart automax="true" endpoint="/api/stats/upload/" label="BytesSent" class="half-height"></LineChart>
     </Card>
   </div>
 </template>
@@ -24,7 +29,7 @@ import Card from "../components/Card";
 export default {
   components: {
     LineChart,
-    Card,
+    Card
   },
   name: "Dashboard",
   data() {
