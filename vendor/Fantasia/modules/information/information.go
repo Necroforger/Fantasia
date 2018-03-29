@@ -39,7 +39,7 @@ func (m *Module) Help(ctx *system.Context) {
 		SetColor(system.StatusNotify).
 		SetThumbnail(ctx.Ses.DG.State.User.AvatarURL("2048")).
 		InlineAllFields().
-		SetDescription("type `help [command]` for more information\nCommands separated with `|` represent alternative names.\nIndented commands are subroutes of their parent commands").
+		SetDescription("`Bot prefix: " + ctx.System.Config.Prefix + "` type `help [command]` for more information\nCommands separated with `|` represent alternative names.\nIndented commands are subroutes of their parent commands").
 		MessageEmbed)
 	if err != nil {
 		ctx.ReplyError(err)

@@ -90,13 +90,19 @@ func (s *System) messageHandler(b *dream.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	// It is not a command if it does not contain a prefix
-	if !strings.HasPrefix(m.Content, s.Config.Prefix) {
+	var searchText string
+	botmention := b.DG.State.User.Mention()
+	if strings.HasPrefix(m.Content, botmention) { // Contains a bot mention
+		if m.Content == botmention {
+			b.SendMessage(m, "Type `"+s.Config.Prefix+"help` or "+botmention+" help for a list of commands")
+			return
+		}
+		searchText = removePrefix(m.Content, botmention+" ")
+	} else if strings.HasPrefix(m.Content, s.Config.Prefix) { // If the message contains a normal prefix
+		searchText = removePrefix(m.Content, s.Config.Prefix)
+	} else { // No prefix is found
 		return
 	}
-
-	// Remove the prefix from the text if it exists.
-	searchText := removePrefix(m.Content, s.Config.Prefix)
 
 	// Search for the first route match and execute the command If it exists.
 	if route, loc := s.CommandRouter.FindEnabledMatch(searchText); route != nil && !route.Disabled {
