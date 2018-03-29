@@ -85,7 +85,7 @@ func (m *Module) Build(s *system.System) {
 	if m.Config.UseSubrouter {
 		r, _ := system.NewSubCommandRouter(`^m(usicplayer)?(\s|$)`, "m | musicplayer")
 		r.Router.Prefix = "^"
-		r.Set("", "musicplayer subrouter, controls the various actions related to music playing")
+		r.Set("", "musicplayer subrouter, controls the various actions related to music playing\n Prefix all commands in this module with m or musicplayer")
 		s.CommandRouter.AddSubrouter(r)
 		t = r.Router
 	} else {

@@ -127,9 +127,35 @@ func (m *Module) statHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	switch vars["name"] {
+	case "audiodispatchers":
+		m.writeData(w, m.countAudioDispatchers())
+	case "members":
+		m.writeData(w, m.countTotalMembers())
 	case "goroutines":
 		m.writeData(w, runtime.NumGoroutine())
 	case "guilds":
 		m.writeData(w, len(m.Sys.Dream.DG.State.Guilds))
 	}
+}
+
+// countUsers returns the total number of users the bot can see in each guild
+func (m *Module) countTotalMembers() int {
+	var members int
+	for _, g := range m.Sys.Dream.DG.State.Guilds {
+		members += g.MemberCount
+	}
+	return members
+}
+
+// counts the running audio dispatchers
+func (m *Module) countAudioDispatchers() int {
+	var dispatcherCount int
+	for _, guild := range m.Sys.Dream.DG.State.Guilds {
+		if dispatcher, err := m.Sys.Dream.GuildAudioDispatcher(guild.ID); err == nil {
+			if !dispatcher.IsStopped() {
+				dispatcherCount++
+			}
+		}
+	}
+	return dispatcherCount
 }
