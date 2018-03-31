@@ -36,10 +36,10 @@ export default {
             {
               ticks: this.automax
                 ? {
-                    beginAtZero: !(this.autostart)
+                    beginAtZero: !this.autostart
                   }
                 : {
-                    beginAtZero: !(this.autostart),
+                    beginAtZero: !this.autostart,
                     max: this.max ? parseInt(this.max) : 100
                   }
             }
@@ -69,22 +69,31 @@ export default {
       xhr.onreadystatechange = () => {
         if (xhr.readyState == 4) {
           if (xhr.status != 200) {
-            console.log(`${this.label}: request did not return 200 OK [${xhr.status}]`)
+            console.log(
+              `${this.label}: request did not return 200 OK [${xhr.status}]`
+            );
             return;
           }
           if (!xhr.response) {
             console.log(`${this.label}: xhr.response does not exist`);
-            return
+            return;
           }
           console.log(`${this.label}: updating with:` + xhr.response);
-          this.context.datasets[0].data = xhr.response.data;
-          this.context.labels = xhr.response.labels;
+
+          this.updatePoints(xhr.response.data);
           this.render();
         }
       };
       xhr.open("GET", this.endpoint, true);
       xhr.responseType = "json";
       xhr.send();
+    },
+
+    updatePoints(dataset) {
+      for (i in dataset.data) {
+        this.context.datasets[0].data = dataset.data[i];
+        this.context.labels = dataset.labels[i];
+      }
     },
 
     // render the chart
