@@ -80,7 +80,7 @@ export default {
           }
           console.log(`${this.label}: updating with:` + xhr.response);
 
-          this.updatePoints(xhr.response.data);
+          this.updatePoints(xhr.response);
           this.render();
         }
       };
@@ -90,9 +90,9 @@ export default {
     },
 
     updatePoints(dataset) {
-      for (i in dataset.data) {
-        this.context.datasets[0].data = dataset.data[i];
-        this.context.labels = dataset.labels[i];
+      for (let i in dataset.data) {
+        this.context.datasets[0].data[i] = dataset.data[i];
+        this.context.labels[i] = dataset.labels[i];
       }
     },
 
