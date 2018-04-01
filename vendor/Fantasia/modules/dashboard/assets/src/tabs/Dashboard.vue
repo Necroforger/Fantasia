@@ -23,9 +23,9 @@
       <Card title="Stats">
         <div class="spacer" />
         <div class="row-two">
-          <Stat title="Guilds" endpoint="/api/stat/guilds/" />
-          <Stat title="Goroutines" endpoint="/api/stat/goroutines/" />
-          <Stat title="Members" endpoint="/api/stat/members/" />
+          <Stat title="Guilds"           endpoint="/api/stat/guilds/" />
+          <Stat title="Goroutines"       endpoint="/api/stat/goroutines/" />
+          <Stat title="Members"          endpoint="/api/stat/members/" />
           <Stat title="AudioDispatchers" endpoint="/api/stat/audiodispatchers/" />
         </div>
       </Card>

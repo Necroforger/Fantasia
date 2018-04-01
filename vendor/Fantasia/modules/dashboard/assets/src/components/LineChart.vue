@@ -90,6 +90,8 @@ export default {
     },
 
     updatePoints(dataset) {
+      // Destroy the chart
+      this.$data._chart.destroy();
       for (let i in dataset.data) {
         this.context.datasets[0].data[i] = dataset.data[i];
         this.context.labels[i] = dataset.labels[i];
