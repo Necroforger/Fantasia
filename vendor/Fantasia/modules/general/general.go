@@ -32,6 +32,10 @@ func (m *Module) Build(s *system.System) {
 	r.On("gog", CmdGog).Set("", "Searches [GOG](http://gog.com/) for the given query")
 	r.On("invite", CmdInviteURL).Set("", "Obtain an OAUTH2 invite URL for the bot")
 
+	// Conversion
+	r.On("tobinary", CmdToBinary).Set("", "convert the given text to binary")
+	r.On("frombinary", CmdFromBinary).Set("", "converts the given text from binary to utf-8 text")
+
 	// Random
 	r.On("rate", CmdRate).Set("", "Rates the supplied thing on a scale of 1-10")
 	r.On("8ball", CmdEightBall).Set("", "Query the magic eightball")
