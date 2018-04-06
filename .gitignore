@@ -5,4 +5,4 @@ config.toml
 *.exe
 *.bat
 scripts/
-Fantasia
+.Fantasia
