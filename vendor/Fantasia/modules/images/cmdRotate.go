@@ -2,8 +2,10 @@ package images
 
 import (
 	"image"
+	"image/color"
 	"image/png"
 	"io"
+	"strconv"
 	"time"
 
 	"github.com/disintegration/imaging"
@@ -30,7 +32,19 @@ func CmdRotate(ctx *system.Context) {
 		img = imgs[0]
 	}
 
-	img = imaging.Rotate90(img)
+	var angle float64
+	if ctx.Args.After() != "" {
+		n, err := strconv.ParseFloat(ctx.Args.After(), 64)
+		if err != nil {
+			ctx.ReplyError("invalid angle")
+			return
+		}
+		angle = n
+	} else {
+		angle = 90
+	}
+
+	img = imaging.Rotate(img, angle, color.Black)
 
 	rd, wr := io.Pipe()
 	go func() {

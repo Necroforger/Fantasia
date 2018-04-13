@@ -5,6 +5,7 @@ import (
 
 	"Fantasia/modules/audio"
 	"Fantasia/modules/booru"
+	"Fantasia/modules/channelpipe"
 	"Fantasia/modules/dashboard"
 	"Fantasia/modules/eval"
 	"Fantasia/modules/general"
@@ -28,6 +29,7 @@ type ModuleConfig struct {
 	Inverted    bool
 	Audio       bool
 	Booru       bool
+	Channelpipe bool
 	Dashboard   bool
 	Eval        bool
 	General     bool
@@ -52,6 +54,7 @@ func NewModuleConfig() ModuleConfig {
 		Inverted:    false,
 		Audio:       true,
 		Booru:       true,
+		Channelpipe: true,
 		Dashboard:   true,
 		Eval:        true,
 		General:     true,
@@ -90,6 +93,11 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 			s.BuildModule(&booru.Module{Config: booru.NewConfig()})
 		}
 		log.Println("loaded booru module...")
+	}
+	if (config.Inverted && !config.Channelpipe) || (!config.Inverted && config.Channelpipe) {
+		s.CommandRouter.SetCategory("Channelpipe")
+		s.BuildModule(&channelpipe.Module{})
+		log.Println("loaded channelpipe module...")
 	}
 	if (config.Inverted && !config.Dashboard) || (!config.Inverted && config.Dashboard) {
 		s.CommandRouter.SetCategory("Dashboard")

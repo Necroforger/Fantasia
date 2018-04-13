@@ -80,6 +80,11 @@ func removePrefix(text, prefix string) string {
 // messageHandler handles incoming messageCreate events and routes them to commands.
 func (s *System) messageHandler(b *dream.Session, m *discordgo.MessageCreate) {
 
+	// Ignore bots
+	if m.Author.Bot {
+		return
+	}
+
 	// If the bot is a selfbot, do not respond to users that do not have the
 	// State user's ID.
 	if s.Config.Selfbot && b.DG.State.User != nil && m.Author.ID != b.DG.State.User.ID {
