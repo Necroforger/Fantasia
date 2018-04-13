@@ -6,3 +6,4 @@ config.toml
 *.bat
 scripts/
 .Fantasia
+bindings.json

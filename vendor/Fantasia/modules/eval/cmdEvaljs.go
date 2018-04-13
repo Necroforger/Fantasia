@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	"Fantasia/system"
+
 	"github.com/Necroforger/dgwidgets"
-	"github.com/bwmarrin/discordgo"
 	"github.com/Necroforger/dream"
+	"github.com/bwmarrin/discordgo"
 	"github.com/robertkrimen/otto"
 )
 
@@ -41,7 +41,6 @@ func (m *Module) EvalJS(ctx *system.Context) {
 	for {
 
 		msg := b.NextMessageCreate()
-		fmt.Println(msg.Content)
 
 		if msg.Author.ID != ctx.Msg.Author.ID {
 			continue
