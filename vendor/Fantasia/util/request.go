@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/Necroforger/dream"
+	"github.com/bwmarrin/discordgo"
 )
 
 var urlRegex = regexp.MustCompile(`(http|ftp|https):\/\/([\w\-_]+(?:(?:\.[\w\-_]+)+))([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?`)
