@@ -62,7 +62,7 @@ func (m *Module) Help(ctx *system.Context) {
 	embed := depthcharge(ctx.System.CommandRouter, nil, 0)
 
 	for _, v := range embed.Fields {
-		v.Value = "```" + v.Value + "```"
+		v.Value = "```\n" + v.Value + "```"
 	}
 
 	sort.Sort(sort.Reverse(CategoriesBySize(embed.Fields)))
