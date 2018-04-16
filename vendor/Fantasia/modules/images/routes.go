@@ -19,14 +19,16 @@ func (m *Module) CreateCommands() {
 	// !______________________________________________________!
 	r.On("hue", m.NewEffectCommandInt(adjust.Hue)).Set("", "adjusts the hue of the supplied image;\nex: `hue [degree]`")
 
-	r.On("saturate", m.NewEffectCommandFloat(adjust.Saturation)).Set("", "Adjusts the saturation of an image;\nex: `saturation [value]`")
+	r.On("saturation", m.NewEffectCommandFloat(adjust.Saturation)).Set("", "Adjusts the saturation of an image;\nex: `saturation [value]`")
 	r.On("contrast", m.NewEffectCommandFloat(adjust.Contrast)).Set("", "Adjusts the contrast of an image;\nex: `contrast [value]`")
 	r.On("gamma", m.NewEffectCommandFloat(adjust.Gamma)).Set("", "Adjusts the gamma of an image;\nex: `gamma [value]`")
 	r.On("brightness", m.NewEffectCommandFloat(adjust.Brightness)).Set("", "Adjusts the brightness of an image;\nex: `brightness [value]`")
 
 	// =================== Effects ============================
 	// !______________________________________________________!
-	r.On("pixelate", m.NewEffectCommandFloat(Pixelate, constraints(1, 0, ODefault(0.1)))).Set("", "Piexelates an image")
+	r.On("pixelate", m.NewEffectCommandFloat(Pixelate, constraints(1, 0, ODefault(0.1)))).Set("", "Piexelates an image\nUsage: `pixelate [scale 0-1.0]")
+	r.On("jpegify", m.NewEffectCommandFloat(Jpegify, constraints(100, 0, ODefault(1)))).Set("", "Almost as good as lossy audio\nUsage: `jpegify [quality 0-100]`")
+	r.On("overlay", m.CmdOverlay).Set("", "Overlay one image ontop of another")
 
 	r.On("sharpen", m.NewEffectCmdSingle(effect.Sharpen)).Set("", "Applies a sharpen effect to an image")
 	r.On("invert", m.NewEffectCmdSingle(effect.Invert)).Set("", "inverts an image")
@@ -43,6 +45,7 @@ func (m *Module) CreateCommands() {
 	// !__________________________________________________!
 	r.On("blur", m.NewEffectCommandFloat(blur.Gaussian, constraints(10, 0))).Set("", "creates a gaussian blur:\nUsage: `blur [radius]`")
 	r.On("boxblur", m.NewEffectCommandFloat(blur.Box, constraints(10, 0))).Set("", "creates a box blue:\nUsage: `boxblur [radius]")
+
 }
 
 // constraints [max] [min]
