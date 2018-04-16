@@ -15,7 +15,7 @@ func (m *Module) CmdListBinding(ctx *system.Context) {
 		ctx.ReplyError(err)
 	}
 	guildID := guild.ID
-	content += "Bindings in " + guild.Name + "\n"
+	content += "`Bindings in " + guild.Name + "`\n"
 
 	m.bmu.RLock()
 	defer m.bmu.RUnlock()
