@@ -108,11 +108,11 @@ func ImageURLsInMessage(msg *discordgo.Message) []string {
 	}
 
 	for _, embed := range msg.Embeds {
-		if embed.Image != nil && embed.Image.URL != "" {
-			URLs = append(URLs, embed.Image.URL)
+		if embed.Image != nil && embed.Image.ProxyURL != "" {
+			URLs = append(URLs, embed.Image.ProxyURL)
 		}
-		if embed.Thumbnail != nil && embed.Thumbnail.URL != "" {
-			URLs = append(URLs, embed.Thumbnail.URL)
+		if embed.Thumbnail != nil && embed.Thumbnail.ProxyURL != "" {
+			URLs = append(URLs, embed.Thumbnail.ProxyURL)
 		}
 	}
 
