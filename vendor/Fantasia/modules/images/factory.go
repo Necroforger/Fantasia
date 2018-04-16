@@ -28,12 +28,14 @@ func (m *Module) NewEffectCmdSingle(fn func(image.Image) *image.RGBA) func(ctx *
 type EffectOptions struct {
 	Max, Min                   float64
 	ConstrainMax, ConstrainMin bool
+	UseDefault                 bool
+	Default                    float64
 }
 
 // NewEffectCommandFloat produces an effect command that accepts an image and a float
 func (m *Module) NewEffectCommandFloat(fn func(img image.Image, amount float64) *image.RGBA, opts ...EffectOptions) func(ctx *system.Context) {
 	return func(ctx *system.Context) {
-		if ctx.Args.Get(0) == "" {
+		if ctx.Args.Get(0) == "" && (len(opts) != 0 && !opts[0].UseDefault) {
 			ctx.ReplyError("Please supply a float")
 			return
 		}
@@ -46,10 +48,16 @@ func (m *Module) NewEffectCommandFloat(fn func(img image.Image, amount float64) 
 			ctx.ReplyError(ErrNoImagesFound)
 			return
 		}
-		amount, err := strconv.ParseFloat(ctx.Args.Get(0), 64)
-		if err != nil {
-			ctx.ReplyError("Error parsing float")
-			return
+
+		var amount float64
+		if ctx.Args.Get(0) != "" {
+			amount, err = strconv.ParseFloat(ctx.Args.Get(0), 64)
+			if err != nil {
+				ctx.ReplyError("Error parsing float")
+				return
+			}
+		} else if len(opts) != 0 && opts[0].UseDefault {
+			amount = opts[0].Default
 		}
 
 		if len(opts) != 0 {
