@@ -5,7 +5,9 @@ import (
 	"image"
 	"image/png"
 	"io"
+	"log"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -116,7 +118,28 @@ func ImageURLsInMessage(msg *discordgo.Message) []string {
 		}
 	}
 
+	if len(msg.Embeds) == 0 {
+		for _, u := range urlRegex.FindAllString(msg.Content, -1) {
+			if IsImageURL(u) {
+				URLs = append(URLs, u)
+			}
+		}
+	}
+
 	return URLs
+}
+
+// IsImageURL guesses if a URL is an image
+func IsImageURL(path string) bool {
+	t, err := url.Parse(path)
+	if err != nil {
+		log.Println("error parsing URL")
+	} else {
+		if HasImageSuffix(t.Path) {
+			return true
+		}
+	}
+	return false
 }
 
 // PullImagesFromCache ...
@@ -160,6 +183,12 @@ func HasImage(msg *discordgo.Message) bool {
 
 	for _, v := range msg.Attachments {
 		if HasImageSuffix(v.Filename) {
+			return true
+		}
+	}
+
+	for _, u := range urlRegex.FindAllString(msg.Content, -1) {
+		if IsImageURL(u) {
 			return true
 		}
 	}

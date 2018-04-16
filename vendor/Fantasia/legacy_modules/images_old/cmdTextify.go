@@ -1,4 +1,4 @@
-package images
+package images_old
 
 import (
 	"Fantasia/system"
