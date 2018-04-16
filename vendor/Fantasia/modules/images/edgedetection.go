@@ -6,7 +6,8 @@ import (
 	"github.com/anthonynsimon/bild/convolution"
 )
 
-func edgeDetect(img image.Image) *image.RGBA {
+// EdgeDetect detects edges in an image
+func EdgeDetect(img image.Image) *image.RGBA {
 	k := convolution.Kernel{
 		Matrix: []float64{
 			-1, -1, -1,
