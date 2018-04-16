@@ -2,6 +2,7 @@ package information
 
 import (
 	"errors"
+	"sort"
 	"strings"
 
 	"Fantasia/system"
@@ -17,6 +18,29 @@ type Module struct{}
 func (m *Module) Build(s *system.System) {
 	r := s.CommandRouter
 	r.On("help", m.Help).Set("", "Displays a help menu with the available commands")
+}
+
+// CategoriesBySize sorts categories by size
+type CategoriesBySize []*discordgo.MessageEmbedField
+
+// Size ...
+func (c CategoriesBySize) Size() int {
+	return len(c)
+}
+
+// Len ...
+func (c CategoriesBySize) Len() int {
+	return len(c)
+}
+
+// Less ...
+func (c CategoriesBySize) Less(a, b int) bool {
+	return len(c[a].Value) < len(c[b].Value)
+}
+
+// Swap ...
+func (c CategoriesBySize) Swap(a, b int) {
+	c[a], c[b] = c[b], c[a]
 }
 
 // Help maps a list of available commands and descends into subrouters.
@@ -35,9 +59,17 @@ func (m *Module) Help(ctx *system.Context) {
 		return
 	}
 
-	_, err := ctx.ReplyEmbed(depthcharge(ctx.System.CommandRouter, nil, 0).
+	embed := depthcharge(ctx.System.CommandRouter, nil, 0)
+
+	for _, v := range embed.Fields {
+		v.Value = "```" + v.Value + "```"
+	}
+
+	sort.Sort(sort.Reverse(CategoriesBySize(embed.Fields)))
+
+	_, err := ctx.ReplyEmbed(embed.
 		SetColor(system.StatusNotify).
-		SetThumbnail(ctx.Ses.DG.State.User.AvatarURL("2048")).
+		// SetThumbnail(ctx.Ses.DG.State.User.AvatarURL("512")).
 		InlineAllFields().
 		SetDescription("`Bot prefix: " + ctx.System.Config.Prefix + "` type `help [command]` for more information\nCommands separated with `|` represent alternative names.\nIndented commands are subroutes of their parent commands").
 		MessageEmbed)
