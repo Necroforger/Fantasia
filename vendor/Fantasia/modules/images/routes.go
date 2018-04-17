@@ -4,6 +4,7 @@ import (
 	"image"
 
 	"github.com/anthonynsimon/bild/blur"
+	"github.com/anthonynsimon/bild/transform"
 
 	"github.com/anthonynsimon/bild/adjust"
 
@@ -28,6 +29,7 @@ func (m *Module) CreateCommands() {
 	// !______________________________________________________!
 	r.On("pixelate", m.NewEffectCommandFloat(Pixelate, constraints(1, 0, ODefault(0.1)))).Set("", "Piexelates an image\nUsage: `pixelate [scale 0-1.0]")
 	r.On("jpegify", m.NewEffectCommandFloat(Jpegify, constraints(100, 0, ODefault(1)))).Set("", "Almost as good as lossy audio\nUsage: `jpegify [quality 0-100]`")
+	r.On("textify", m.CmdTextify).Set("", "Converts an image to text")
 	r.On("overlay", m.CmdOverlay).Set("", "Overlay one image ontop of another")
 
 	r.On("sharpen", m.NewEffectCmdSingle(effect.Sharpen)).Set("", "Applies a sharpen effect to an image")
@@ -46,6 +48,13 @@ func (m *Module) CreateCommands() {
 	r.On("blur", m.NewEffectCommandFloat(blur.Gaussian, constraints(10, 0))).Set("", "creates a gaussian blur:\nUsage: `blur [radius]`")
 	r.On("boxblur", m.NewEffectCommandFloat(blur.Box, constraints(10, 0))).Set("", "creates a box blue:\nUsage: `boxblur [radius]")
 
+	// ================= Transform =======================
+	// !_________________________________________________!
+	r.On("rotate", m.NewEffectCommandFloat(Rotate, constraints(360, -360))).Set("", "rotate an image [n] degrees\nUsage: `rotate [degrees]`")
+	r.On("shearh", m.NewEffectCommandFloat(transform.ShearH, constraints(360, -360))).Set("", "shear horizontal\nUsage: `shearh [amount]`")
+	r.On("shearv", m.NewEffectCommandFloat(transform.ShearV, constraints(360, -360))).Set("", "shear vertical\nUsage: `shearh [amount]`")
+	r.On("fliph", m.NewEffectCmdSingle(transform.FlipH)).Set("", "flip an image over the horizontal axis")
+	r.On("flipv", m.NewEffectCmdSingle(transform.FlipV)).Set("", "flip an image over the vertical axis")
 }
 
 // constraints [max] [min]
