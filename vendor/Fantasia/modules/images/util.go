@@ -135,7 +135,7 @@ func IsImageURL(path string) bool {
 	if err != nil {
 		log.Println("error parsing URL")
 	} else {
-		if HasImageSuffix(t.Path) {
+		if HasImageSuffix(strings.ToLower(t.Path)) {
 			return true
 		}
 	}
