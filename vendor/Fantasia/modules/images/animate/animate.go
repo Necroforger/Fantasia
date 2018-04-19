@@ -129,3 +129,12 @@ func Animate(src image.Image, fn Effect, opts *Options) *gif.GIF {
 
 	return &g
 }
+
+// AddGif adds two gifs together
+func AddGif(a, b *gif.GIF) *gif.GIF {
+	return &gif.GIF{
+		Image:    append(a.Image, b.Image...),
+		Delay:    append(a.Delay, b.Delay...),
+		Disposal: append(a.Disposal, b.Disposal...),
+	}
+}
