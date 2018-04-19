@@ -46,6 +46,7 @@ func Animate(src image.Image, fn Effect, from, to, increment float64, delay int)
 		g.Disposal[i] = gif.DisposalNone
 	}
 
+	// Have the number of running goroutines limited by the number of cpus
 	var wg sync.WaitGroup
 	ncpu := runtime.GOMAXPROCS(0)
 	tokens := make(chan struct{}, ncpu)
@@ -57,7 +58,17 @@ func Animate(src image.Image, fn Effect, from, to, increment float64, delay int)
 	for i := from; i < to; i += increment {
 		<-tokens
 		go func(i float64) {
-			g.Image[int(i/increment)] = colorquant.Quant{}.Quantize(fn(src, i), 256).(*image.Paletted)
+			dst := image.NewPaletted(src.Bounds(), nil)
+			mod := fn(src, i)
+			dst.Palette = colorquant.Quant{}.Quantize(mod, 256).(*image.Paletted).Palette
+
+			colorquant.Dither{Filter: [][]float32{ // Floyd steinburg dithering
+				[]float32{0.0, 0.0, 0.0, 7.0 / 48.0, 5.0 / 48.0},
+				[]float32{3.0 / 48.0, 5.0 / 48.0, 7.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0},
+				[]float32{1.0 / 48.0, 3.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0, 1.0 / 48.0},
+			}}.Quantize(mod, dst, 256, true, true)
+
+			g.Image[int(i/increment)] = dst
 			tokens <- struct{}{}
 			wg.Done()
 		}(i)
