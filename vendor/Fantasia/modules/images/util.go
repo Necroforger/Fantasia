@@ -54,7 +54,9 @@ func ReplyGif(ctx *system.Context, g *gif.GIF) {
 }
 
 // CompressGif attempts to compress a Gif's images
-func CompressGif(src *gif.GIF) *gif.GIF {
+//    src      : source gif to compress
+//    distance : allowed color distance for colors to be considered equal
+func CompressGif(src *gif.GIF, distance uint32) *gif.GIF {
 	dst := &gif.GIF{
 		Image:    make([]*image.Paletted, len(src.Image)),
 		Disposal: make([]byte, len(src.Disposal)),
@@ -66,7 +68,7 @@ func CompressGif(src *gif.GIF) *gif.GIF {
 	}
 
 	diff := func(a, b uint32) bool {
-		if a >= b-500 && a <= b+500 {
+		if a >= b-distance && a <= b+distance {
 			return false
 		}
 		return true
