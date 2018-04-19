@@ -3,6 +3,7 @@ package images
 import (
 	"Fantasia/system"
 	"image"
+	"image/color"
 	"image/gif"
 	"image/png"
 	"io"
@@ -57,10 +58,46 @@ func CompressGif(src *gif.GIF) *gif.GIF {
 	dst := &gif.GIF{
 		Image:    make([]*image.Paletted, len(src.Image)),
 		Disposal: make([]byte, len(src.Disposal)),
+		Delay:    src.Delay,
 	}
 	// Set disposal to none.
 	for i := 0; i < len(dst.Disposal); i++ {
-		dst.Disposal[i] = gif.DisposalNone
+		dst.Disposal[i] = 1
+	}
+
+	diff := func(a, b uint32) bool {
+		if a >= b-500 && a <= b+500 {
+			return false
+		}
+		return true
+	}
+
+	var frame = src.Image[0]
+	dst.Image[0] = frame
+	for i := 1; i < len(src.Image); i++ {
+		cp := src.Image[i]
+		np := image.NewPaletted(src.Image[i].Bounds(), cp.Palette)
+		np.Palette[0] = color.RGBA{0, 0, 0, 0} // Insert an alpha pixel into the palette
+
+		w, h := cp.Bounds().Dx(), cp.Bounds().Dy()
+		for y := 0; y < h; y++ {
+			for x := 0; x < w; x++ {
+				pidx := y*cp.Stride + x*1
+				// Compare the colours of frame(last image) and cp(current paletted),
+				// if they are different, add the pixel to new paletted (np)
+				r, g, b, a := cp.Palette[cp.Pix[pidx]].RGBA()
+				r1, g1, b1, a1 := frame.Palette[frame.Pix[pidx]].RGBA()
+
+				if diff(r, r1) || diff(g, g1) || diff(b, b1) || diff(a, a1) {
+					np.Pix[pidx] = cp.Pix[pidx]
+				} else {
+					np.Pix[pidx] = uint8(np.Palette.Index(color.RGBA{0, 0, 0, 0}))
+				}
+			}
+		}
+
+		dst.Image[i] = np
+		frame = cp // Update last frame
 	}
 
 	return dst
