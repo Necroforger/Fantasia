@@ -1,9 +1,12 @@
 package images
 
 import (
+	"Fantasia/modules/images/animate"
 	"Fantasia/system"
 	"image"
 	"strconv"
+
+	"github.com/nfnt/resize"
 )
 
 // NewEffectCmdSingle ...
@@ -72,6 +75,25 @@ func (m *Module) NewEffectCommandFloat(fn func(img image.Image, amount float64) 
 
 		ctx.Reply(amount)
 		ReplyImage(ctx, fn(images[0], amount))
+	}
+}
+
+// NewGifCommand creates an animated effect command
+func (m *Module) NewGifCommand(fn animate.Effect, opts *animate.Options) func(ctx *system.Context) {
+	return func(ctx *system.Context) {
+		images, err := m.PullImages(1, ctx.Msg.ChannelID, ctx.Msg)
+		if err != nil {
+			ctx.ReplyError(err)
+			return
+		}
+		if len(images) == 0 {
+			ctx.ReplyError("No images found")
+			return
+		}
+
+		// Resize image to something small
+		images[0] = resize.Thumbnail(300, 300, images[0], resize.NearestNeighbor)
+		ReplyGif(ctx, animate.Animate(images[0], fn, opts))
 	}
 }
 

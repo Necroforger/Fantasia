@@ -1,6 +1,7 @@
 package images
 
 import (
+	"Fantasia/modules/images/animate"
 	"Fantasia/modules/images/exeffects"
 	"image"
 
@@ -20,7 +21,7 @@ func (m *Module) CreateCommands() {
 	// =================== Adjustments ========================
 	// !______________________________________________________!
 	r.On("hue", m.NewEffectCommandInt(adjust.Hue)).Set("", "adjusts the hue of the supplied image;\nex: `hue [degree]`")
-	r.On("hueshift", m.CmdHueshift).Set("", "Creates an image with an animated hue")
+	r.On("animatehue", m.NewGifCommand(exeffects.Hue, &animate.Options{From: 0, To: 360, Increment: 10, Delay: 10})).Set("", "Creates an image with an animated hue")
 
 	r.On("saturation", m.NewEffectCommandFloat(adjust.Saturation)).Set("", "Adjusts the saturation of an image;\nex: `saturation [value]`")
 	r.On("contrast", m.NewEffectCommandFloat(adjust.Contrast)).Set("", "Adjusts the contrast of an image;\nex: `contrast [value]`")
@@ -31,6 +32,7 @@ func (m *Module) CreateCommands() {
 	// !______________________________________________________!
 	r.On("pixelate", m.NewEffectCommandFloat(exeffects.Pixelate, constraints(1, 0, ODefault(0.1)))).Set("", "Piexelates an image\nUsage: `pixelate [scale 0-1.0]")
 	r.On("jpegify", m.NewEffectCommandFloat(exeffects.Jpegify, constraints(100, 0, ODefault(1)))).Set("", "Almost as good as lossy audio\nUsage: `jpegify [quality 0-100]`")
+	r.On("animatejpegify", m.NewGifCommand(exeffects.Jpegify, &animate.Options{From: 50, To: 1, Increment: 5, Delay: 10})).Set("", "Animates the jpegification of an image")
 	r.On("textify", m.CmdTextify).Set("", "Converts an image to text")
 	r.On("overlay", m.CmdOverlay).Set("", "Overlay one image ontop of another")
 
@@ -53,6 +55,7 @@ func (m *Module) CreateCommands() {
 	// ================= Transform =======================
 	// !_________________________________________________!
 	r.On("rotate", m.NewEffectCommandFloat(exeffects.Rotate, constraints(360, -360))).Set("", "rotate an image [n] degrees\nUsage: `rotate [degrees]`")
+	r.On("animaterotate", m.NewGifCommand(exeffects.Rotate, &animate.Options{From: 0, To: 360, Increment: 10, Delay: 10})).Set("", "Animates the rotation of an image")
 	r.On("shearh", m.NewEffectCommandFloat(transform.ShearH, constraints(360, -360))).Set("", "shear horizontal\nUsage: `shearh [amount]`")
 	r.On("shearv", m.NewEffectCommandFloat(transform.ShearV, constraints(360, -360))).Set("", "shear vertical\nUsage: `shearh [amount]`")
 	r.On("fliph", m.NewEffectCmdSingle(transform.FlipH)).Set("", "flip an image over the horizontal axis")
