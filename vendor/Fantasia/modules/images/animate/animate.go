@@ -12,6 +12,13 @@ import (
 // Effect is an image effect that accepts an amount as a parameter
 type Effect func(src image.Image, amount float64) *image.RGBA
 
+// FloydSteinberg is a dithering filter
+var FloydSteinberg = [][]float32{
+	[]float32{0.0, 0.0, 0.0, 7.0 / 48.0, 5.0 / 48.0},
+	[]float32{3.0 / 48.0, 5.0 / 48.0, 7.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0},
+	[]float32{1.0 / 48.0, 3.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0, 1.0 / 48.0},
+}
+
 // Animate creates a GIF animation from an Effect
 func Animate(src image.Image, fn Effect, from, to, increment float64, delay int) *gif.GIF {
 	// Set the minimum delay for gifs at 10 ms
@@ -61,12 +68,7 @@ func Animate(src image.Image, fn Effect, from, to, increment float64, delay int)
 			dst := image.NewPaletted(src.Bounds(), nil)
 			mod := fn(src, i)
 			dst.Palette = colorquant.Quant{}.Quantize(mod, 256).(*image.Paletted).Palette
-
-			colorquant.Dither{Filter: [][]float32{ // Floyd steinburg dithering
-				[]float32{0.0, 0.0, 0.0, 7.0 / 48.0, 5.0 / 48.0},
-				[]float32{3.0 / 48.0, 5.0 / 48.0, 7.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0},
-				[]float32{1.0 / 48.0, 3.0 / 48.0, 5.0 / 48.0, 3.0 / 48.0, 1.0 / 48.0},
-			}}.Quantize(mod, dst, 256, true, true)
+			colorquant.Dither{Filter: FloydSteinberg}.Quantize(mod, dst, 256, true, true)
 
 			g.Image[int(i/increment)] = dst
 			tokens <- struct{}{}
