@@ -1,7 +1,6 @@
 package animate
 
 import (
-	"fmt"
 	"image"
 	"image/gif"
 	"runtime"
@@ -58,7 +57,6 @@ func Animate(src image.Image, fn Effect, from, to, increment float64, delay int)
 	for i := from; i < to; i += increment {
 		<-tokens
 		go func(i float64) {
-			fmt.Println(i/increment, " IDX : ", gsize, " I : ", i)
 			g.Image[int(i/increment)] = colorquant.Quant{}.Quantize(fn(src, i), 256).(*image.Paletted)
 			tokens <- struct{}{}
 			wg.Done()
