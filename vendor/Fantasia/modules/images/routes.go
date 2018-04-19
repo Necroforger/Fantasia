@@ -63,8 +63,7 @@ func (m *Module) CreateCommands() {
 	r.On("flipv", m.NewEffectCmdSingle(transform.FlipV)).Set("", "flip an image over the vertical axis")
 }
 
-// constraints [max] [min]
-// construncts a constrain
+// constraints simplifies adding constraints a to a command
 func constraints(args ...interface{}) EffectOptions {
 	c := EffectOptions{}
 
