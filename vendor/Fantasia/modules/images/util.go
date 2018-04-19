@@ -31,10 +31,16 @@ var ImageSuffixes = []string{
 func ReplyImage(ctx *system.Context, img image.Image) {
 	rd, wr := io.Pipe()
 	go func() {
-		png.Encode(wr, img)
+		err := png.Encode(wr, img)
+		if err != nil {
+			ctx.ReplyError("Error encoding png: ", err)
+		}
 		wr.Close()
 	}()
-	ctx.Ses.DG.ChannelFileSend(ctx.Msg.ChannelID, "image.png", rd)
+	_, err := ctx.Ses.DG.ChannelFileSend(ctx.Msg.ChannelID, "image.png", rd)
+	if err != nil {
+		ctx.ReplyError("Error sending file to channel: ", err)
+	}
 }
 
 // ReplyGif replies to the sender with the given gif
@@ -212,7 +218,10 @@ func IsImageURL(path string) bool {
 	return false
 }
 
-// PullImagesFromCache ...
+// PullImagesFromCache pulls images from the cache
+//    cache     : message cache to pull from
+//    limit     : maximum number of images to retrieve
+//    channelID : channelID of messages to retrieve
 func PullImagesFromCache(cache *MessageCache, limit int, channelID string) ([]image.Image, error) {
 	images := make([]image.Image, 0, limit)
 
