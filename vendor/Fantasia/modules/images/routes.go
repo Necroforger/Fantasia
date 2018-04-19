@@ -1,6 +1,7 @@
 package images
 
 import (
+	"Fantasia/modules/images/exeffects"
 	"image"
 
 	"github.com/anthonynsimon/bild/blur"
@@ -19,6 +20,7 @@ func (m *Module) CreateCommands() {
 	// =================== Adjustments ========================
 	// !______________________________________________________!
 	r.On("hue", m.NewEffectCommandInt(adjust.Hue)).Set("", "adjusts the hue of the supplied image;\nex: `hue [degree]`")
+	r.On("hueshift", m.CmdHueshift).Set("", "Creates an image with an animated hue")
 
 	r.On("saturation", m.NewEffectCommandFloat(adjust.Saturation)).Set("", "Adjusts the saturation of an image;\nex: `saturation [value]`")
 	r.On("contrast", m.NewEffectCommandFloat(adjust.Contrast)).Set("", "Adjusts the contrast of an image;\nex: `contrast [value]`")
@@ -27,8 +29,8 @@ func (m *Module) CreateCommands() {
 
 	// =================== Effects ============================
 	// !______________________________________________________!
-	r.On("pixelate", m.NewEffectCommandFloat(Pixelate, constraints(1, 0, ODefault(0.1)))).Set("", "Piexelates an image\nUsage: `pixelate [scale 0-1.0]")
-	r.On("jpegify", m.NewEffectCommandFloat(Jpegify, constraints(100, 0, ODefault(1)))).Set("", "Almost as good as lossy audio\nUsage: `jpegify [quality 0-100]`")
+	r.On("pixelate", m.NewEffectCommandFloat(exeffects.Pixelate, constraints(1, 0, ODefault(0.1)))).Set("", "Piexelates an image\nUsage: `pixelate [scale 0-1.0]")
+	r.On("jpegify", m.NewEffectCommandFloat(exeffects.Jpegify, constraints(100, 0, ODefault(1)))).Set("", "Almost as good as lossy audio\nUsage: `jpegify [quality 0-100]`")
 	r.On("textify", m.CmdTextify).Set("", "Converts an image to text")
 	r.On("overlay", m.CmdOverlay).Set("", "Overlay one image ontop of another")
 
@@ -38,7 +40,7 @@ func (m *Module) CreateCommands() {
 	r.On("sepia", m.NewEffectCmdSingle(effect.Sepia)).Set("", "applies a sepia effect to an image")
 	r.On("sobel", m.NewEffectCmdSingle(effect.Sobel)).Set("", "applies a sobel effect to an image")
 	r.On("grayscale", m.NewEffectCmdSingle(func(img image.Image) *image.RGBA { return clone.AsRGBA(effect.Grayscale(img)) })).Set("", "applies a grayscale effect to an image")
-	r.On("edgedetect", m.NewEffectCmdSingle(EdgeDetect)).Set("", "Perform an edge detection")
+	r.On("edgedetect", m.NewEffectCmdSingle(exeffects.EdgeDetect)).Set("", "Perform an edge detection")
 
 	r.On("erode", m.NewEffectCommandFloat(effect.Erode, constraints(3))).Set("", "applies an erode effect to an image\nUsage: `erode [radius]`")
 	r.On("dilate", m.NewEffectCommandFloat(effect.Dilate, constraints(5, 0))).Set("", "Dilate the image.\nUsage: `dilate [radius]`")
@@ -50,7 +52,7 @@ func (m *Module) CreateCommands() {
 
 	// ================= Transform =======================
 	// !_________________________________________________!
-	r.On("rotate", m.NewEffectCommandFloat(Rotate, constraints(360, -360))).Set("", "rotate an image [n] degrees\nUsage: `rotate [degrees]`")
+	r.On("rotate", m.NewEffectCommandFloat(exeffects.Rotate, constraints(360, -360))).Set("", "rotate an image [n] degrees\nUsage: `rotate [degrees]`")
 	r.On("shearh", m.NewEffectCommandFloat(transform.ShearH, constraints(360, -360))).Set("", "shear horizontal\nUsage: `shearh [amount]`")
 	r.On("shearv", m.NewEffectCommandFloat(transform.ShearV, constraints(360, -360))).Set("", "shear vertical\nUsage: `shearh [amount]`")
 	r.On("fliph", m.NewEffectCmdSingle(transform.FlipH)).Set("", "flip an image over the horizontal axis")

@@ -3,6 +3,7 @@ package images
 import (
 	"Fantasia/system"
 	"image"
+	"image/gif"
 	"image/png"
 	"io"
 	"log"
@@ -33,6 +34,22 @@ func ReplyImage(ctx *system.Context, img image.Image) {
 		wr.Close()
 	}()
 	ctx.Ses.DG.ChannelFileSend(ctx.Msg.ChannelID, "image.png", rd)
+}
+
+// ReplyGif replies to the sender with the given gif
+func ReplyGif(ctx *system.Context, g *gif.GIF) {
+	rd, wr := io.Pipe()
+	go func() {
+		err := gif.EncodeAll(wr, g)
+		if err != nil {
+			ctx.ReplyError("error encoding gif: ", err)
+		}
+		wr.Close()
+	}()
+	_, err := ctx.Ses.DG.ChannelFileSend(ctx.Msg.ChannelID, "image.gif", rd)
+	if err != nil {
+		ctx.ReplyError("Error uploading gif: ", err)
+	}
 }
 
 // PullImages requests images from the user, or retrieves them from the cache.
