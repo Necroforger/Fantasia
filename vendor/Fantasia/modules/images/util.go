@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"image/gif"
+	_ "image/jpeg" // Needed to decode jpegs
 	"image/png"
 	"io"
 	"log"
