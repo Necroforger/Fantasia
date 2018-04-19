@@ -64,12 +64,11 @@ func (m *Module) NewEffectCommandFloat(fn func(img image.Image, amount float64) 
 		}
 
 		if len(opts) != 0 {
-			o := opts[0]
-			if o.ConstrainMax && amount > o.Max {
-				amount = o.Max
+			if opts[0].ConstrainMax && amount > opts[0].Max {
+				amount = opts[0].Max
 			}
-			if o.ConstrainMin && amount < o.Min {
-				amount = o.Min
+			if opts[0].ConstrainMin && amount < opts[0].Min {
+				amount = opts[0].Min
 			}
 		}
 
@@ -94,42 +93,5 @@ func (m *Module) NewGifCommand(fn animate.Effect, opts *animate.Options) func(ct
 		// Resize image to something small
 		images[0] = resize.Thumbnail(300, 300, images[0], resize.NearestNeighbor)
 		ReplyGif(ctx, animate.Animate(images[0], fn, opts))
-	}
-}
-
-// NewEffectCommandInt ...
-func (m *Module) NewEffectCommandInt(fn func(img image.Image, amount int) *image.RGBA, opts ...EffectOptions) func(ctx *system.Context) {
-	return func(ctx *system.Context) {
-		if ctx.Args.Get(0) == "" {
-			ctx.ReplyError("Please supply an integer")
-			return
-		}
-
-		images, err := m.PullImages(1, ctx.Msg.ChannelID, ctx.Msg)
-		if err != nil {
-			ctx.ReplyError("Error fetching images: ", err)
-			return
-		}
-		if len(images) == 0 {
-			ctx.ReplyError(ErrNoImagesFound)
-			return
-		}
-
-		amount, err := strconv.Atoi(ctx.Args.Get(0))
-		if err != nil {
-			ctx.ReplyError("error parsing integer", err)
-		}
-
-		if len(opts) != 0 {
-			o := opts[0]
-			if o.ConstrainMax && amount > int(o.Max) {
-				amount = int(o.Max)
-			}
-			if o.ConstrainMin && amount < int(o.Min) {
-				amount = int(o.Min)
-			}
-		}
-
-		ReplyImage(ctx, fn(images[0], amount))
 	}
 }

@@ -57,7 +57,7 @@ func Animate(src image.Image, fn Effect, opts *Options) *gif.GIF {
 		opts.Increment = -opts.Increment
 	}
 
-	gsize := int(((opts.To - opts.From) / opts.Increment) + 0.5) // Round up
+	gsize := int(((opts.To - opts.From) / opts.Increment) + 0.9) // Round up
 	g := gif.GIF{
 		Image:    make([]*image.Paletted, gsize),
 		Delay:    make([]int, gsize),
@@ -112,7 +112,11 @@ func Animate(src image.Image, fn Effect, opts *Options) *gif.GIF {
 		for i, j := 0, len(tmp)-1; i < j; i, j = i+1, j-1 {
 			tmp[i], tmp[j] = tmp[j], tmp[i]
 		}
-		g.Image = append(tmp, g.Image...)
+		if reverse {
+			g.Image = append(tmp, g.Image...)
+		} else {
+			g.Image = append(g.Image, tmp...)
+		}
 		g.Delay = append(g.Delay, g.Delay...)
 		g.Disposal = append(g.Disposal, g.Disposal...)
 	}
