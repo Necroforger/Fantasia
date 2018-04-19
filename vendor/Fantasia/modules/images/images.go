@@ -45,7 +45,7 @@ func (m *Module) Build(sys *system.System) {
 	m.CreateCommands()
 
 	// Add messages with images to the state
-	go m.TrackImages()
+	m.TrackImages()
 }
 
 // TrackImages tracks messages that are images and inserts them into the cache
