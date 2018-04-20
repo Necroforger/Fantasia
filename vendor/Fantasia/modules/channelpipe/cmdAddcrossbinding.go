@@ -34,6 +34,7 @@ func (m *Module) CmdAddCrossBinding(ctx *system.Context) {
 	bindingFrom, err := CreateBinding(ctx.Ses, guildToID, dstID, channelID)
 	if err != nil {
 		ctx.ReplyError("Error creating binding from channel2 to channel1; ", err)
+		return
 	}
 
 	err = m.AddBinding(bindingFrom)
