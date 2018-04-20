@@ -138,7 +138,7 @@ func (m *Module) Build(s *system.System) {
 	r.On("listbindings", m.CmdListBinding).Set("", "Lists the bindings in the current guild")
 
 	m.LoadBindings()
-	go m.Listen()
+	m.Listen()
 }
 
 // FeedbackLoopIDs returns a list of IDs that will cause a feedback loop if
