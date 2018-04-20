@@ -12,6 +12,11 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
+// Errors
+var (
+	ErrWebhookNotFound = errors.New("Error: Webhook not found")
+)
+
 // ContentFromMessage extracts creates a Content struct from a discordgo message
 func ContentFromMessage(m *discordgo.Message) *discordgo.WebhookParams {
 	c := &discordgo.WebhookParams{}
@@ -53,7 +58,11 @@ func CreateBinding(s *dream.Session, guildID, channelID, dstID string) (*Binding
 		}
 		sink = NewWebhookSink(hook)
 	} else {
-		return nil, errors.New("Channel outputs are not yet supported")
+		hook, err := CreateOrGetChannelWebhook(s, dstID, channelID)
+		if err != nil {
+			return nil, err
+		}
+		sink = NewWebhookSink(hook)
 	}
 
 	// Create and save binding
@@ -62,6 +71,45 @@ func CreateBinding(s *dream.Session, guildID, channelID, dstID string) (*Binding
 		Sink:   sink,
 	}
 	return binding, nil
+}
+
+// CreateChannelWebhook creates a webhook on a channel
+func CreateChannelWebhook(s *dream.Session, channelID string, webhookname string) (*discordgo.Webhook, error) {
+	return s.DG.WebhookCreate(channelID, webhookname, "")
+}
+
+// CreateOrGetChannelWebhook creates or gets an existing webhook with name webhookname on the given channelID
+func CreateOrGetChannelWebhook(s *dream.Session, channelID string, webhookname string) (*discordgo.Webhook, error) {
+	w, err := ChannelWebhookByName(s, channelID, webhookname)
+	if err != nil {
+		if err == ErrWebhookNotFound {
+			return CreateChannelWebhook(s, channelID, webhookname)
+		}
+		return nil, err
+	}
+	return w, nil
+}
+
+// ChannelWebhookByName returns a channel webhook by name
+func ChannelWebhookByName(s *dream.Session, channelID string, webhookname string) (*discordgo.Webhook, error) {
+	webhooks, err := s.DG.ChannelWebhooks(channelID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, w := range webhooks {
+		if w.Name == webhookname {
+			return w, nil
+		}
+	}
+
+	return nil, ErrWebhookNotFound
+}
+
+// CrossBind binds two bindings so that messages are passed back and forth between both channels.
+func CrossBind(s *dream.Session, from, to *Binding) error {
+
+	return nil
 }
 
 // GetBindingArguments returns the arguments from a binding command

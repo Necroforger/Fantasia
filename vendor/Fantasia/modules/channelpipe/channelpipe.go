@@ -139,8 +139,14 @@ func (m *Module) Build(s *system.System) {
 		"Usage: addbinding [channelid] (webhook | channelid)\n"+
 		"Ex: `addbinding webhookURL` will bind the current channel's messages to the given webhook")
 
+	r.On("addcrossbinding", m.CmdAddCrossBinding).Set("", "Binds two channels back and forth so that messages sent in one appear in the other and vice versa\n"+
+		"Usage: addcrossbinding [channelID] (channelID)\n"+
+		"If the first channelid is not specified, it will bind your current channel to the destination channel you specify\n"+
+		"Ex: `addcrossbinding somechannelid`")
+
 	r.On("removebinding", m.CmdRemoveBinding).Set("", "Removes a binding from the current channel to the specified destination\n"+
-		"usage: `removebinding [channelid] [channelid]`")
+		"usage: `removebinding [channelid] [channelid]`\n"+
+		"If no arguments are specified it will remove the first binding found four your current channel")
 
 	r.On("listbindings", m.CmdListBinding).Set("", "Lists the bindings in the current guild")
 
