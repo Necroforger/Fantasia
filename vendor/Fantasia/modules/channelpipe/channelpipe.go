@@ -2,7 +2,7 @@ package channelpipe
 
 import (
 	"Fantasia/system"
-	"encoding/json"
+	"encoding/gob"
 	"errors"
 	"log"
 	"os"
@@ -16,6 +16,11 @@ var (
 	ErrBindingNotFound      = errors.New("Could not find binding")
 	ErrBindingAlreadyExists = errors.New("Binding already exists")
 	ErrFeedbackLoop         = errors.New("Both channel IDs are the same, this would cause a feedback loop")
+)
+
+// SaveFile is the location of the save file
+const (
+	SaveFile = "channelpipe.gob"
 )
 
 // Config ..
@@ -95,13 +100,13 @@ func (m *Module) SaveBindings() error {
 	m.fmu.Lock()
 	defer m.fmu.Unlock()
 
-	f, err := os.OpenFile("bindings.json", os.O_WRONLY|os.O_CREATE, 0666)
+	f, err := os.OpenFile(SaveFile, os.O_WRONLY|os.O_CREATE, 0666)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	return json.NewEncoder(f).Encode(m.Bindings)
+	return gob.NewEncoder(f).Encode(m.Bindings)
 }
 
 // LoadBindings loads the bindings from disk
@@ -112,13 +117,13 @@ func (m *Module) LoadBindings() error {
 	m.fmu.Lock()
 	defer m.fmu.Unlock()
 
-	f, err := os.OpenFile("bindings.json", os.O_RDONLY, 0666)
+	f, err := os.OpenFile(SaveFile, os.O_RDONLY, 0666)
 	if err != nil {
 		log.Println(err)
 		return err
 	}
 
-	json.NewDecoder(f).Decode(&m.Bindings)
+	gob.NewDecoder(f).Decode(&m.Bindings)
 
 	return nil
 }
@@ -127,6 +132,8 @@ func (m *Module) LoadBindings() error {
 func (m *Module) Build(s *system.System) {
 	m.Sys = s
 	r := s.CommandRouter
+
+	gob.Register(Sink(&WebhookSink{}))
 
 	r.On("addbinding", m.CmdAddBinding).Set("", "adds a binding from the current channel to specified destination\n"+
 		"Usage: addbinding [channelid] (webhook | channelid)\n"+
