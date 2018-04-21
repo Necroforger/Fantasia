@@ -158,6 +158,10 @@ func (m *Module) Build(s *system.System) {
 		"usage: `removebinding [channelid] [channelid]`\n"+
 		"If no arguments are specified it will remove the first binding found four your current channel")
 
+	r.On("removecrossbinding", m.CmdRemoveCrossBinding).Set("", "Removes a cross binding between two channels and deletes the associated webhooks if any were created\n"+
+		"usage: `removecrossbinding [channelid] [channelid]`\n",
+		"If only one argument is specified, it will fill in the first channel ID with your current channel and use the argument supplied as the second")
+
 	r.On("listbindings", m.CmdListBinding).Set("", "Lists the bindings in the current guild")
 
 	m.LoadBindings()

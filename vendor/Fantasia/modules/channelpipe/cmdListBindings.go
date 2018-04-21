@@ -2,6 +2,7 @@ package channelpipe
 
 import (
 	"Fantasia/system"
+	"fmt"
 
 	"github.com/Necroforger/dgwidgets"
 )
@@ -20,9 +21,18 @@ func (m *Module) CmdListBinding(ctx *system.Context) {
 	m.bmu.RLock()
 	defer m.bmu.RUnlock()
 
+	channelName := func(cid string) string {
+		c, err := ctx.Ses.DG.State.Channel(cid)
+		if err != nil {
+			return "unknown"
+		}
+		return c.Name
+	}
+
 	for _, v := range m.Bindings {
 		if v.Source.GuildID == guildID {
-			content += "`" + v.Source.ChannelID + "` -> `" + v.Sink.ChannelID() + "`\n"
+			content += fmt.Sprintf("`%s(%s)` -> %s(%s)",
+				channelName(v.Source.ChannelID), v.Source.ChannelID, channelName(v.Sink.ChannelID()), v.Sink.ChannelID())
 		}
 	}
 
