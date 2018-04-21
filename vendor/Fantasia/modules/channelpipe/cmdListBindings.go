@@ -31,7 +31,7 @@ func (m *Module) CmdListBinding(ctx *system.Context) {
 
 	for _, v := range m.Bindings {
 		if v.Source.GuildID == guildID {
-			content += fmt.Sprintf("`%s(%s)` -> %s(%s)",
+			content += fmt.Sprintf("`%s(%s)` -> `%s(%s)`\n",
 				channelName(v.Source.ChannelID), v.Source.ChannelID, channelName(v.Sink.ChannelID()), v.Sink.ChannelID())
 		}
 	}

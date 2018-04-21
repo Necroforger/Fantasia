@@ -25,13 +25,13 @@ func (m *Module) CmdAddCrossBinding(ctx *system.Context) {
 		return
 	}
 
-	guildToID, err := ctx.Ses.GuildID(dstID)
+	dstChannel, err := ctx.Ses.Channel(dstID)
 	if err != nil {
 		ctx.ReplyError("Error finding destination guild; Is the bot in the guild you want to bind to?")
 		return
 	}
 
-	bindingFrom, err := CreateBinding(ctx.Ses, guildToID, dstID, channelID)
+	bindingFrom, err := CreateBinding(ctx.Ses, dstChannel.GuildID, dstID, channelID)
 	if err != nil {
 		ctx.ReplyError("Error creating binding from channel2 to channel1; ", err)
 		return

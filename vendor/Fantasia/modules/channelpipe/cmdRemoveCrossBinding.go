@@ -46,4 +46,6 @@ func (m *Module) CmdRemoveCrossBinding(ctx *system.Context) {
 		ctx.ReplyError("Error deleting webhook 2: ", err)
 		return
 	}
+
+	ctx.ReplySuccess("Removed crossbinding")
 }
