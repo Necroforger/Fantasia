@@ -44,6 +44,16 @@ type Module struct {
 	fmu      sync.Mutex   // file mutex
 }
 
+// Binding finds a binding
+func (m *Module) Binding(channelID, dstID string) (*Binding, error) {
+	for _, b := range m.Bindings {
+		if b.Source.ChannelID == channelID && b.Sink.ChannelID() == dstID {
+			return b, nil
+		}
+	}
+	return nil, ErrBindingNotFound
+}
+
 // AddBinding adds a binding
 func (m *Module) AddBinding(b *Binding) error {
 	m.bmu.Lock()

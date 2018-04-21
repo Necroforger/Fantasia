@@ -48,6 +48,15 @@ func FetchWebhook(path string) (*discordgo.Webhook, error) {
 	return &w, err
 }
 
+// DeleteChannelWebhookByName deletes a channel webhook by name
+func DeleteChannelWebhookByName(s *dream.Session, channelID, webhookname string) error {
+	webhook, err := ChannelWebhookByName(s, channelID, webhookname)
+	if err != nil {
+		return err
+	}
+	return s.DG.WebhookDelete(webhook.ID)
+}
+
 // CreateBinding creates a binding with the given options
 func CreateBinding(s *dream.Session, guildID, channelID, dstID string) (*Binding, error) {
 	var sink Sink
@@ -108,7 +117,6 @@ func ChannelWebhookByName(s *dream.Session, channelID string, webhookname string
 
 // CrossBind binds two bindings so that messages are passed back and forth between both channels.
 func CrossBind(s *dream.Session, from, to *Binding) error {
-
 	return nil
 }
 
