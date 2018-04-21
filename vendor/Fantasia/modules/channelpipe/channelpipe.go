@@ -189,18 +189,19 @@ func (m *Module) Listen() {
 		m.bmu.RLock()
 		defer m.bmu.RUnlock()
 
+	loop:
 		for _, b := range m.Bindings {
 			if b.IsPaused() { // Do not send messages if the binding is paused
 				continue
 			}
 
-			for _, v := range m.FeedbackLoopIDs(b) {
-				if msg.Author.ID == v {
-					return
-				}
-			}
-
 			if msg.ChannelID == b.Source.ChannelID {
+				for _, v := range m.FeedbackLoopIDs(b) {
+					if msg.Author.ID == v {
+						continue loop
+					}
+				}
+
 				b.Sink.Send(s, ContentFromMessage(msg.Message))
 			}
 		}
