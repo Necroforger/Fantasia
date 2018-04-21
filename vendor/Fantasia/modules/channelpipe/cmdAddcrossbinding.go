@@ -48,4 +48,6 @@ func (m *Module) CmdAddCrossBinding(ctx *system.Context) {
 		return
 	}
 	ctx.ReplySuccess("Crossbound " + channelID + " to " + dstID)
+
+	m.SaveBindings()
 }
