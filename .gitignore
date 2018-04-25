@@ -4,6 +4,7 @@ config.toml
 *.json
 *.exe
 *.bat
+*.gob
 scripts/
 .Fantasia
 bindings.json
