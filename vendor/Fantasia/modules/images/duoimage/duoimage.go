@@ -71,8 +71,6 @@ func Merge(srca, srcb image.Image, o *Options) *image.RGBA {
 		ymod = 2
 	}
 
-	log.Println(xmod, ymod)
-
 	// The destination image is the same size as srca.
 	dst := image.NewRGBA(srca.Bounds())
 	ca, cb := clone.AsRGBA(srca), clone.AsRGBA(srcb)
