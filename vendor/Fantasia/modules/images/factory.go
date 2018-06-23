@@ -95,3 +95,21 @@ func (m *Module) NewGifCommand(fn animate.Effect, opts *animate.Options) func(ct
 		ReplyGif(ctx, animate.Animate(images[0], fn, opts))
 	}
 }
+
+// NewBlendCommand creates a command that accepts two images
+func (m *Module) NewBlendCommand(fn func(srca, srcb image.Image) *image.RGBA) func(ctx *system.Context) {
+	return func(ctx *system.Context) {
+		images, err := m.PullImages(2, ctx.Msg.ChannelID, ctx.Msg)
+		if err != nil {
+			ctx.ReplyError(err)
+			return
+		}
+
+		if len(images) < 2 {
+			ctx.ReplyError("You need atleast two images in the cache to use this command")
+			return
+		}
+
+		ReplyImage(ctx, fn(images[0], images[1]))
+	}
+}

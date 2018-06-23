@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/url"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
@@ -291,6 +293,7 @@ func QueueFromURL(URL, addedBy string, queue *SongQueue, progress chan *Song) er
 	}
 
 	ytdl := exec.Command("youtube-dl", "-j", "-i", URL)
+	ytdl.Stderr = os.Stdout
 	ytdlout, err := ytdl.StdoutPipe()
 	if err != nil {
 		return err
@@ -319,6 +322,7 @@ func QueueFromURL(URL, addedBy string, queue *SongQueue, progress chan *Song) er
 		song := &Song{}
 		er := json.Unmarshal(totalLine, song)
 		if er != nil {
+			log.Println("musicplayer: error unmarshaling song json: ", err)
 			continue
 		}
 

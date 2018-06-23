@@ -34,7 +34,9 @@ func (m *Module) CreateCommands() {
 	r.On("jpegify", m.NewEffectCommandFloat(exeffects.Jpegify, constraints(oMax(100), oMin(0), oDefault(1)))).Set("", "Almost as good as lossy audio\nUsage: `jpegify [quality 0-100]`")
 	r.On("animatejpegify", m.NewGifCommand(exeffects.Jpegify, &animate.Options{From: 100, To: 1, Increment: 5, Delay: 10})).Set("", "Animates the jpegification of an image")
 	r.On("textify", m.CmdTextify).Set("", "Converts an image to text")
-	r.On("overlay", m.CmdOverlay).Set("", "Overlay one image ontop of another")
+	r.On("overlay", m.NewBlendCommand(exeffects.Overlay)).Set("", "Overlays the last sent image over the image sent before it")
+	r.On("duoimage", m.NewBlendCommand(exeffects.DuoImage)).Set("", "Merge two images so that one is visible only on discord light theme, "+
+		"and the other only visible on discord dark theme")
 
 	r.On("sharpen", m.NewEffectCmdSingle(effect.Sharpen)).Set("", "Applies a sharpen effect to an image")
 	r.On("invert", m.NewEffectCmdSingle(effect.Invert)).Set("", "inverts an image")
