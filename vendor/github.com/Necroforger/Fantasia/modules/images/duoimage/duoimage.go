@@ -71,21 +71,28 @@ func Merge(srca, srcb image.Image, o *Options) *image.RGBA {
 		ymod = 2
 	}
 
+	var nwidth, nheight int
+	if srca.Bounds().Dx() > srcb.Bounds().Dx() {
+		nwidth = srca.Bounds().Dx()
+	} else {
+		nwidth = srcb.Bounds().Dx()
+	}
+	if srca.Bounds().Dy() > srcb.Bounds().Dy() {
+		nheight = srca.Bounds().Dy()
+	} else {
+		nheight = srcb.Bounds().Dy()
+	}
+
 	// The destination image is the same size as srca.
-	dst := image.NewRGBA(srca.Bounds())
+	dst := image.NewRGBA(image.Rect(0, 0, nwidth, nheight))
 	ca, cb := clone.AsRGBA(srca), clone.AsRGBA(srcb)
 
 	// Reduce the colour schemes of the image to
 	// A transparent or colour of the given theme
 	ca = Reduce(ca, []int{0x0, LightThemeClr})
 	cb = Reduce(cb, []int{DarkThemeClr, 0x00})
-
-	// debugWriteImage(ca, "tempCA.png")
-	// debugWriteImage(cb, "tempCB.png")
-
-	// Pad the pixels of CB to be the same dimensions as CA
-	// cb = clone.Pad(cb, ca.Rect.Dx(), ca.Rect.Dy(), clone.NoFill)
-	cb = Pad(cb, ca.Rect.Dx(), cb.Rect.Dy())
+	cb = Pad(cb, nwidth, nheight)
+	ca = Pad(ca, nwidth, nheight)
 
 	width := ca.Rect.Dx()
 
@@ -118,7 +125,7 @@ func Merge(srca, srcb image.Image, o *Options) *image.RGBA {
 //     height : height of the new dimensions
 func Pad(source image.Image, width, height int) *image.RGBA {
 	src := clone.AsRGBA(source)
-	var w, h int
+	var w, h int = width, height
 
 	if src.Rect.Dx() > width {
 		w = src.Rect.Dx()
@@ -133,7 +140,7 @@ func Pad(source image.Image, width, height int) *image.RGBA {
 	}
 
 	dst := image.NewRGBA(image.Rect(0, 0, w, h))
-	draw.Draw(dst, dst.Rect, src, image.ZP, draw.Over)
+	draw.Draw(dst, dst.Rect, src, image.ZP, draw.Src)
 
 	return dst
 }
