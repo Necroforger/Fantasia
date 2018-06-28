@@ -1,5 +1,5 @@
 HOME=$(pwd)
-MODULES=$HOME/vendor/Fantasia/modules
+MODULES=$HOME/vendor/github.com/Necroforger/Fantasia/modules
 
 # Generate modules and config
 go generate

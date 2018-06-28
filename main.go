@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"Fantasia/system"
+	"github.com/Necroforger/Fantasia/system"
 
 	"github.com/BurntSushi/toml"
 	"github.com/Necroforger/dream"

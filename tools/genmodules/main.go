@@ -20,9 +20,9 @@ import (
 	"log"
 
 	{{range . -}}
-	"Fantasia/modules/{{.Name}}"
+	"github.com/Necroforger/Fantasia/modules/{{.Name}}"
 	{{end}}
-	"Fantasia/system"
+	"github.com/Necroforger/Fantasia/system"
 )
 
 ////////////////////////////////////////////
@@ -107,7 +107,7 @@ func main() {
 		currentDir = filepath.Dir(".")
 	)
 
-	modules, err := ioutil.ReadDir("vendor/Fantasia/modules")
+	modules, err := ioutil.ReadDir("vendor/github.com/Necroforger/Fantasia/modules")
 	if err != nil {
 		fmt.Println("error: modules folder does not exist")
 		return
@@ -121,7 +121,7 @@ func main() {
 
 	// Scan over all the main package files to see if they have a Configuration available.
 	for i, v := range modules {
-		data, err := ioutil.ReadFile(filepath.Join(currentDir, "vendor/Fantasia/modules", v.Name(), v.Name()+".go"))
+		data, err := ioutil.ReadFile(filepath.Join(currentDir, "vendor/github.com/Necroforger/Fantasia/modules", v.Name(), v.Name()+".go"))
 		if err != nil {
 			fmt.Println(err)
 			continue

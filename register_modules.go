@@ -3,20 +3,20 @@ package main
 import (
 	"log"
 
-	"Fantasia/modules/audio"
-	"Fantasia/modules/booru"
-	"Fantasia/modules/channelpipe"
-	"Fantasia/modules/dashboard"
-	"Fantasia/modules/eval"
-	"Fantasia/modules/general"
-	"Fantasia/modules/images"
-	"Fantasia/modules/information"
-	"Fantasia/modules/javascript"
-	"Fantasia/modules/musicplayer"
-	"Fantasia/modules/roles"
-	"Fantasia/modules/themeify"
+	"github.com/Necroforger/Fantasia/modules/audio"
+	"github.com/Necroforger/Fantasia/modules/booru"
+	"github.com/Necroforger/Fantasia/modules/channelpipe"
+	"github.com/Necroforger/Fantasia/modules/dashboard"
+	"github.com/Necroforger/Fantasia/modules/eval"
+	"github.com/Necroforger/Fantasia/modules/general"
+	"github.com/Necroforger/Fantasia/modules/images"
+	"github.com/Necroforger/Fantasia/modules/information"
+	"github.com/Necroforger/Fantasia/modules/javascript"
+	"github.com/Necroforger/Fantasia/modules/musicplayer"
+	"github.com/Necroforger/Fantasia/modules/roles"
+	"github.com/Necroforger/Fantasia/modules/themeify"
 
-	"Fantasia/system"
+	"github.com/Necroforger/Fantasia/system"
 )
 
 ////////////////////////////////////////////
