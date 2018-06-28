@@ -202,7 +202,7 @@ func MakeBooruSearcher(booruURL string, enforceSFW bool) func(*system.Context) {
 			return
 		}
 
-		if (indexTo - index) == 1 {
+		if (indexTo-index) == 1 || len(posts) == 1 {
 			var post extractor.Post
 			if index >= 0 && index < len(posts) {
 				post = posts[index]
