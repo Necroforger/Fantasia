@@ -104,16 +104,24 @@ func (s *System) messageHandler(b *dream.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
+	// Override default prefix with custom guild prefix if set
+	var prefix string
+	if guild, err := s.DB.GetGuild(m.GuildID); err == nil {
+		prefix = guild.Prefix
+	} else {
+		prefix = s.Config.Prefix
+	}
+
 	var searchText string
 	botmention := b.DG.State.User.Mention()
 	if strings.HasPrefix(m.Content, botmention) { // Contains a bot mention
 		if m.Content == botmention {
-			b.SendMessage(m, "Type `"+s.Config.Prefix+"help` or "+botmention+" help for a list of commands")
+			b.SendMessage(m, "Type `"+prefix+"help` or "+botmention+" help for a list of commands")
 			return
 		}
 		searchText = removePrefix(m.Content, botmention+" ")
-	} else if strings.HasPrefix(m.Content, s.Config.Prefix) { // If the message contains a normal prefix
-		searchText = removePrefix(m.Content, s.Config.Prefix)
+	} else if strings.HasPrefix(m.Content, prefix) { // If the message contains a normal prefix
+		searchText = removePrefix(m.Content, prefix)
 	} else { // No prefix is found
 		return
 	}

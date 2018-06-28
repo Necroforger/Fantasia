@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 
-	"github.com/Necroforger/Fantasia/modules/audio"
 	"github.com/Necroforger/Fantasia/modules/booru"
 	"github.com/Necroforger/Fantasia/modules/channelpipe"
 	"github.com/Necroforger/Fantasia/modules/dashboard"
@@ -27,7 +26,6 @@ import (
 // ModuleConfig ...
 type ModuleConfig struct {
 	Inverted    bool
-	Audio       bool
 	Booru       bool
 	Channelpipe bool
 	Dashboard   bool
@@ -40,7 +38,6 @@ type ModuleConfig struct {
 	Roles       bool
 	Themeify    bool
 
-	AudioConfig       *audio.Config
 	BooruConfig       *booru.Config
 	DashboardConfig   *dashboard.Config
 	ImagesConfig      *images.Config
@@ -52,7 +49,6 @@ type ModuleConfig struct {
 func NewModuleConfig() ModuleConfig {
 	return ModuleConfig{
 		Inverted:    false,
-		Audio:       true,
 		Booru:       true,
 		Channelpipe: true,
 		Dashboard:   true,
@@ -65,7 +61,6 @@ func NewModuleConfig() ModuleConfig {
 		Roles:       true,
 		Themeify:    true,
 
-		AudioConfig:       audio.NewConfig(),
 		BooruConfig:       booru.NewConfig(),
 		DashboardConfig:   dashboard.NewConfig(),
 		ImagesConfig:      images.NewConfig(),
@@ -76,15 +71,6 @@ func NewModuleConfig() ModuleConfig {
 
 // RegisterModules builds a list of modules into the given system
 func RegisterModules(s *system.System, config ModuleConfig) {
-	if (config.Inverted && !config.Audio) || (!config.Inverted && config.Audio) {
-		s.CommandRouter.SetCategory("Audio")
-		if config.AudioConfig != nil {
-			s.BuildModule(&audio.Module{Config: config.AudioConfig})
-		} else {
-			s.BuildModule(&audio.Module{Config: audio.NewConfig()})
-		}
-		log.Println("loaded audio module...")
-	}
 	if (config.Inverted && !config.Booru) || (!config.Inverted && config.Booru) {
 		s.CommandRouter.SetCategory("Booru")
 		if config.BooruConfig != nil {

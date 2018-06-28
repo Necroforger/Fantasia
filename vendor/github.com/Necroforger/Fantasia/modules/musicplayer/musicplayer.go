@@ -93,6 +93,8 @@ func (m *Module) Build(s *system.System) {
 	}
 
 	// Queue management
+	t.On("join", func(ctx *system.Context) { ctx.Ses.UserVoiceStateJoin(ctx.Msg.Author.ID, false, true) }).Set("", "Joins the calling user's voice channel")
+	t.On("leave", func(ctx *system.Context) { ctx.Ses.GuildVoiceConnectionDisconnect(ctx.Msg) }).Set("", "Disconnects from the current guild voice channel")
 	t.On("queue", m.CmdQueue).Set("", "queue")
 	t.On("ytqueue", m.CmdYoutubeSearchQueue).Set("", "Searches youtube for the given query and queues the first video found\n`ytqueue [query]`")
 	t.On("controls", m.CmdControls).Set("", "Spawn an interactive control panel for the music player")
