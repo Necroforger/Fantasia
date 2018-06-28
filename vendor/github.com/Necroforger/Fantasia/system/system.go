@@ -5,6 +5,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/boltdb/bolt"
+
 	"github.com/Necroforger/dream"
 	"github.com/bwmarrin/discordgo"
 	"github.com/txgruppi/parseargs-go"
@@ -28,6 +30,7 @@ type System struct {
 	Dream         *dream.Session
 	CommandRouter *CommandRouter
 	Config        Config
+	DB            *Database
 
 	// listening : True if the bot is already listening for commands.
 	listening bool
@@ -35,15 +38,21 @@ type System struct {
 
 // New returns a pointer to a new bot struct
 //		session: Dream session to run the bot off.
-func New(session *dream.Session, config Config) *System {
+func New(session *dream.Session, config Config) (*System, error) {
 
 	router := NewCommandRouter()
+
+	db, err := bolt.Open(config.DatabaseFile, 0666, nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return &System{
 		Dream:         session,
 		Config:        config,
 		CommandRouter: router,
-	}
+		DB:            &Database{db},
+	}, nil
 }
 
 // ListenForCommands starts listening for commands on MessageCreate events.

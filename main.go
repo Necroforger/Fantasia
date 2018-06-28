@@ -105,7 +105,11 @@ func main() {
 	// Open the bot session
 	session.Open()
 
-	sys := system.New(session, conf.System)
+	sys, err := system.New(session, conf.System)
+	if err != nil {
+		log.Println("Error creating system: ", err)
+		return
+	}
 	RegisterModules(sys, conf.Modules)
 
 	// Remove disabled commands

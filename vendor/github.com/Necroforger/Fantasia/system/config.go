@@ -8,6 +8,9 @@ type Config struct {
 	Admins []string
 	// GoogleAPIKey is used for querying the youtube API for search results.
 	GoogleAPIKey string
+
+	// BoltDB database file
+	DatabaseFile string
 }
 
 // NewConfig returns a default system configuration.
@@ -17,5 +20,6 @@ func NewConfig() Config {
 		Prefix:       "!",
 		Selfbot:      false,
 		GoogleAPIKey: "",
+		DatabaseFile: "database.db",
 	}
 }
