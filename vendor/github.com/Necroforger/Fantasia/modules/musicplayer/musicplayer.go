@@ -168,6 +168,33 @@ func (m *Module) CmdPlay(ctx *system.Context) {
 
 	radio := m.getRadio(vc.GuildID)
 
+	if ctx.Args.After() != "" {
+		if err := func() error {
+			ctx.ReplyNotify("Attempting to queue, select, and play song:\n", ctx.Args.After())
+			err := QueueFromString(radio.Queue, ctx.Args.After(), ctx.Msg.Author.Username, ctx.System.Config.GoogleAPIKey, m.Config.UseYoutubeDL)
+			if err != nil {
+				ctx.ReplyError("Error queueing song: ", err)
+				return err
+			}
+			radio.Queue.Goto(len(radio.Queue.Playlist) - 1)
+			if err != nil {
+				ctx.ReplyError(err)
+				return err
+			}
+			if radio.IsRunning() {
+				err := radio.Stop()
+				if err != nil {
+					ctx.ReplyError("Error stopping radio: ", err)
+					return err
+				}
+				time.Sleep(time.Millisecond * 300) // TODO obliterate this from existance
+			}
+			return nil
+		}(); err != nil {
+			return
+		}
+	}
+
 	if radio.IsRunning() && radio.Dispatcher.IsPaused() {
 		radio.Dispatcher.Resume()
 	}

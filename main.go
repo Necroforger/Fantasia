@@ -6,6 +6,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"os/signal"
 	"strings"
 
 	"github.com/Necroforger/Fantasia/system"
@@ -105,6 +106,7 @@ func main() {
 	// Open the bot session
 	session.Open()
 
+	log.Println("Opening database file: ", conf.System.DatabaseFile)
 	sys, err := system.New(session, conf.System)
 	if err != nil {
 		log.Println("Error creating system: ", err)
@@ -131,6 +133,12 @@ func main() {
 	}
 
 	sys.ListenForCommands()
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Kill, os.Interrupt)
+	<-c
+	log.Println("Shutting down...")
+	sys.DB.Close() // Close the database
 }
 
 //////////////////////////////////////////////

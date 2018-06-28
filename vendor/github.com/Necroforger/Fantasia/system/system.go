@@ -42,7 +42,7 @@ func New(session *dream.Session, config Config) (*System, error) {
 
 	router := NewCommandRouter()
 
-	db, err := bolt.Open(config.DatabaseFile, 0666, nil)
+	db, err := bolt.Open(config.DatabaseFile, 0600, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +64,6 @@ func (s *System) ListenForCommands() {
 	s.Dream.AddHandler(s.messageHandler)
 	s.Dream.AddHandler(s.readyHandler)
 	s.listening = true
-
-	<-make(chan int)
 }
 
 // BuildModule adds a modules commands to the system
