@@ -57,9 +57,7 @@ func CmdConfig(ctx *system.Context) {
 }
 
 // SetString sets a string value
-func SetString(ctx *system.Context, name, defaultVal string, value *string) {
-	gconfig := ctx.Get("gconfig").(*models.Guild)
-
+func SetString(ctx *system.Context, gconfig *models.Guild, name, defaultVal string, value *string) {
 	if ctx.Args.After() != "" {
 		if ctx.Args.After() == flagDefault {
 			*value = defaultVal
@@ -78,9 +76,7 @@ func SetString(ctx *system.Context, name, defaultVal string, value *string) {
 }
 
 // SetStrings sets a []string variable
-func SetStrings(ctx *system.Context, name string, defaultVal []string, value *[]string) {
-	gconfig := ctx.Get("gconfig").(*models.Guild)
-
+func SetStrings(ctx *system.Context, gconfig *models.Guild, name string, defaultVal []string, value *[]string) {
 	if ctx.Args.After() != "" {
 		if ctx.Args.After() == flagDefault {
 			*value = defaultVal
@@ -100,12 +96,14 @@ func SetStrings(ctx *system.Context, name string, defaultVal []string, value *[]
 
 // CmdPrefix sets a guild command prefix
 func CmdPrefix(ctx *system.Context) {
-	SetString(ctx, "Prefix", "", &ctx.Get("gconfig").(*models.Guild).Prefix)
+	gconfig := ctx.Get("gconfig").(*models.Guild)
+	SetString(ctx, gconfig, "Prefix", "", &gconfig.Prefix)
 }
 
 // CmdAdmins sets the list of admins
 func CmdAdmins(ctx *system.Context) {
-	SetStrings(ctx, "Admins", []string{}, &ctx.Get("gconfig").(*models.Guild).Admins)
+	gconfig := ctx.Get("gconfig").(*models.Guild)
+	SetStrings(ctx, gconfig, "Admins", []string{}, &gconfig.Admins)
 }
 
 // Auth is authentication middleware
@@ -116,7 +114,6 @@ func Auth(fn func(ctx *system.Context)) func(ctx *system.Context) {
 			ctx.ReplyError("Error getting guild configuration: ", err)
 			return
 		}
-		ctx.Set("gconfig", gconfig)
 
 		isAdmin, err := ctx.IsAdmin()
 		if err != nil {
@@ -129,6 +126,7 @@ func Auth(fn func(ctx *system.Context)) func(ctx *system.Context) {
 			return
 		}
 
+		ctx.Set("gconfig", gconfig)
 		fn(ctx)
 	}
 }
