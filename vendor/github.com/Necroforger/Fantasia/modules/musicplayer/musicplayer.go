@@ -120,7 +120,7 @@ func (m *Module) Build(s *system.System) {
 	t.On("prev|previous", m.CmdPrevious).Set("prev | previous", "Loads the previous song in the queue")
 
 	// Other
-	t.On("tutorial|help", m.CmdTutorial).Set("tutorial | help", "A multipage tutorial for using the musicplayer module.\n Call this command in a DM to prevent other people from changing the pages on you")
+	t.On("tutorial", m.CmdTutorial).Set("tutorial | help", "A multipage tutorial for using the musicplayer module.\n Call this command in a DM to prevent other people from changing the pages on you")
 }
 
 // CmdSilence should toggle the radio from automatically sending messages when the song changes

@@ -2,6 +2,7 @@ package system
 
 import (
 	"log"
+	"regexp"
 	"strings"
 	"sync"
 
@@ -84,6 +85,20 @@ func removePrefix(text, prefix string) string {
 	return text
 }
 
+var mentionRegexp = regexp.MustCompile("<@!?.+>")
+var onlyContainsMentionRegexp = regexp.MustCompile("^<@!?.+>$")
+
+func commandFromMention(text, userID string) string {
+	if locs := mentionRegexp.FindAllStringIndex(text, -1); locs != nil {
+		for _, loc := range locs {
+			if strings.Contains(text[loc[0]:loc[1]], userID) {
+				return strings.Replace(text, text[loc[0]:loc[1]], "", 1)[loc[0]:]
+			}
+		}
+	}
+	return text
+}
+
 // messageHandler handles incoming messageCreate events and routes them to commands.
 func (s *System) messageHandler(b *dream.Session, m *discordgo.MessageCreate) {
 
@@ -104,20 +119,27 @@ func (s *System) messageHandler(b *dream.Session, m *discordgo.MessageCreate) {
 
 	// Override default prefix with custom guild prefix if set
 	var prefix string
-	if guild, err := s.DB.GetGuild(m.GuildID); err == nil {
+	if guild, err := s.DB.GetGuild(m.GuildID); err == nil && guild.Prefix != "" {
 		prefix = guild.Prefix
 	} else {
 		prefix = s.Config.Prefix
 	}
 
 	var searchText string
-	botmention := b.DG.State.User.Mention()
-	if strings.HasPrefix(m.Content, botmention) { // Contains a bot mention
-		if m.Content == botmention {
-			b.SendMessage(m, "Type `"+prefix+"help` or "+botmention+" help for a list of commands")
+	var mentionsBot bool
+	for _, v := range m.Mentions {
+		if v.ID == s.Dream.DG.State.User.ID {
+			mentionsBot = true
+			break
+		}
+	}
+
+	if mentionsBot { // Contains a bot mention
+		if onlyContainsMentionRegexp.MatchString(m.Content) {
+			b.SendMessage(m, "Type `"+prefix+"help` or "+s.Dream.DG.State.User.Mention()+" help for a list of commands")
 			return
 		}
-		searchText = removePrefix(m.Content, botmention+" ")
+		searchText = strings.TrimPrefix(commandFromMention(m.Content, s.Dream.DG.State.User.ID), " ")
 	} else if strings.HasPrefix(m.Content, prefix) { // If the message contains a normal prefix
 		searchText = removePrefix(m.Content, prefix)
 	} else { // No prefix is found

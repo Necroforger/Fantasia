@@ -8,11 +8,11 @@ import (
 	"github.com/Necroforger/Fantasia/modules/dashboard"
 	"github.com/Necroforger/Fantasia/modules/eval"
 	"github.com/Necroforger/Fantasia/modules/general"
+	"github.com/Necroforger/Fantasia/modules/guildconfig"
 	"github.com/Necroforger/Fantasia/modules/images"
 	"github.com/Necroforger/Fantasia/modules/information"
 	"github.com/Necroforger/Fantasia/modules/javascript"
 	"github.com/Necroforger/Fantasia/modules/musicplayer"
-	"github.com/Necroforger/Fantasia/modules/roles"
 	"github.com/Necroforger/Fantasia/modules/themeify"
 
 	"github.com/Necroforger/Fantasia/system"
@@ -31,11 +31,11 @@ type ModuleConfig struct {
 	Dashboard   bool
 	Eval        bool
 	General     bool
+	Guildconfig bool
 	Images      bool
 	Information bool
 	Javascript  bool
 	Musicplayer bool
-	Roles       bool
 	Themeify    bool
 
 	BooruConfig       *booru.Config
@@ -54,11 +54,11 @@ func NewModuleConfig() ModuleConfig {
 		Dashboard:   true,
 		Eval:        true,
 		General:     true,
+		Guildconfig: true,
 		Images:      true,
 		Information: true,
 		Javascript:  true,
 		Musicplayer: true,
-		Roles:       true,
 		Themeify:    true,
 
 		BooruConfig:       booru.NewConfig(),
@@ -104,6 +104,11 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 		s.BuildModule(&general.Module{})
 		log.Println("loaded general module...")
 	}
+	if (config.Inverted && !config.Guildconfig) || (!config.Inverted && config.Guildconfig) {
+		s.CommandRouter.SetCategory("Guildconfig")
+		s.BuildModule(&guildconfig.Module{})
+		log.Println("loaded guildconfig module...")
+	}
 	if (config.Inverted && !config.Images) || (!config.Inverted && config.Images) {
 		s.CommandRouter.SetCategory("Images")
 		if config.ImagesConfig != nil {
@@ -135,11 +140,6 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 			s.BuildModule(&musicplayer.Module{Config: musicplayer.NewConfig()})
 		}
 		log.Println("loaded musicplayer module...")
-	}
-	if (config.Inverted && !config.Roles) || (!config.Inverted && config.Roles) {
-		s.CommandRouter.SetCategory("Roles")
-		s.BuildModule(&roles.Module{})
-		log.Println("loaded roles module...")
 	}
 	if (config.Inverted && !config.Themeify) || (!config.Inverted && config.Themeify) {
 		s.CommandRouter.SetCategory("Themeify")
