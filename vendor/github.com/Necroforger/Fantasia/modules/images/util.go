@@ -1,7 +1,7 @@
 package images
 
 import (
-	"github.com/Necroforger/Fantasia/system"
+	"errors"
 	"image"
 	"image/color"
 	"image/gif"
@@ -12,10 +12,16 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
+
+	"github.com/Necroforger/Fantasia/system"
 
 	"github.com/bwmarrin/discordgo"
 )
+
+// ImageMaxDimensions is the maximum size the image decoder is allowed to decode
+const ImageMaxDimensions = 3840 * 2160
 
 // util.go : provides various utility functions
 var urlRegex = regexp.MustCompile(`(http|ftp|https):\/\/([\w\-_]+(?:(?:\.[\w\-_]+)+))([\w\-\.,@?^=%&amp;:/~\+#]*[\w\-\@?^=%&amp;/~\+#])?`)
@@ -172,7 +178,28 @@ func ImageFromURL(URL string) (image.Image, error) {
 	}
 	defer resp.Body.Close()
 
-	img, _, err := image.Decode(resp.Body)
+	rd, wr := io.Pipe()
+	rd2, wr2 := io.Pipe()
+
+	go func() {
+		mw := io.MultiWriter(wr, wr2)
+		io.Copy(mw, resp.Body)
+		wr.Close()
+		wr2.Close()
+	}()
+
+	// Read from first reader
+	config, _, err := image.DecodeConfig(rd)
+	if err != nil {
+		return nil, err
+	}
+
+	if config.Width*config.Height >= ImageMaxDimensions {
+		return nil, errors.New("Image is too big: maximum dimensions: " + strconv.Itoa(ImageMaxDimensions))
+	}
+
+	// Read from second reader
+	img, _, err := image.Decode(rd2)
 	return img, err
 }
 
