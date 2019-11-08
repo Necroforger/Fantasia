@@ -16,7 +16,7 @@ func NewWebhookSink(hook *discordgo.Webhook) *WebhookSink {
 }
 
 // Send sends content over the webhook
-func (w *WebhookSink) Send(s *discordgo.Session, message *discordgo.WebhookParams) error {
+func (w *WebhookSink) Send(s *discordgo.Session, message *discordgo.WebhookParams) (*discordgo.Message, error) {
 	return s.WebhookExecute(w.Webhook.ID, w.Webhook.Token, false, message)
 }
 
