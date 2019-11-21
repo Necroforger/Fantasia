@@ -1,13 +1,11 @@
 package musicplayer
 
 import (
-	"bufio"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
-	"net/url"
 	"os"
 	"os/exec"
 	"strings"
@@ -272,25 +270,26 @@ func (r *Radio) SongInfoEmbed(index int) (*dream.Embed, error) {
 func QueueFromURL(URL, addedBy string, queue *SongQueue, progress chan *Song) error {
 	// Analyze the URL and use the proper method to obtain
 	// Information about it.
-	u, err := url.Parse(URL)
-	if err != nil {
-		return err
-	}
+	// u, err := url.Parse(URL)
+	// if err != nil {
+	// 	return err
+	// }
 
+	// TODO: I don't think the regular youtube extractor works anymore.
 	// If the youtube link does not contain a link, use the golang youtube
 	// Extractor to obtain the media information. This is significantly faster
 	// Than using youtube-dl.
-	if (u.Host == "youtube.com" || u.Host == "youtu.be") && u.Query().Get("list") == "" {
-		song, err := SongFromYTDL(URL, addedBy)
-		if err != nil {
-			return err
-		}
-		if progress != nil {
-			progress <- song
-		}
-		queue.Add(song)
-		return nil
-	}
+	// if (u.Host == "youtube.com" || u.Host == "youtu.be") && u.Query().Get("list") == "" {
+	// 	song, err := SongFromYTDL(URL, addedBy)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	if progress != nil {
+	// 		progress <- song
+	// 	}
+	// 	queue.Add(song)
+	// 	return nil
+	// }
 
 	ytdl := exec.Command("youtube-dl", "-j", "-i", URL)
 	ytdl.Stderr = os.Stdout
@@ -298,30 +297,23 @@ func QueueFromURL(URL, addedBy string, queue *SongQueue, progress chan *Song) er
 	if err != nil {
 		return err
 	}
-	reader := bufio.NewReader(ytdlout)
-	err = ytdl.Start()
-	if err != nil {
+
+	if err = ytdl.Start(); err != nil {
+		log.Println(err)
 		return err
 	}
-	var (
-		line      []byte
-		isPrefix  bool
-		totalLine []byte
-	)
+
+	decoder := json.NewDecoder(ytdlout)
+
 	err = nil
 	for err == nil {
-		// Scan each line for song information
-		line, isPrefix, err = reader.ReadLine()
-		if err != nil && err != io.EOF {
-			fmt.Println("SCANNER ERROR: ", err)
-		}
-		totalLine = append(totalLine, line...)
-		if isPrefix {
-			continue
-		}
 		song := &Song{}
-		er := json.Unmarshal(totalLine, song)
-		if er != nil {
+		err := decoder.Decode(&song)
+		if err != nil {
+			if err == io.EOF {
+				log.Println("done adding songs to playlist...")
+				break
+			}
 			log.Println("musicplayer: error unmarshaling song json: ", err)
 			continue
 		}
@@ -334,8 +326,6 @@ func QueueFromURL(URL, addedBy string, queue *SongQueue, progress chan *Song) er
 		if progress != nil {
 			progress <- song
 		}
-
-		totalLine = []byte{}
 	}
 	if err != nil && err != io.EOF {
 		return err
