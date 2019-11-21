@@ -1,6 +1,7 @@
 package images
 
 import (
+	"bytes"
 	"errors"
 	"image"
 	"image/color"
@@ -8,6 +9,7 @@ import (
 	_ "image/jpeg" // Needed to decode jpegs
 	"image/png"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -178,18 +180,14 @@ func ImageFromURL(URL string) (image.Image, error) {
 	}
 	defer resp.Body.Close()
 
-	rd, wr := io.Pipe()
-	rd2, wr2 := io.Pipe()
-
-	go func() {
-		mw := io.MultiWriter(wr, wr2)
-		io.Copy(mw, resp.Body)
-		wr.Close()
-		wr2.Close()
-	}()
+	body, err := ioutil.ReadAll(io.LimitReader(resp.Body, 100000000)) // read a maximum of 100mb
+	if err != nil {
+		return nil, err
+	}
+	bodyBuf := bytes.NewReader(body)
 
 	// Read from first reader
-	config, _, err := image.DecodeConfig(rd)
+	config, _, err := image.DecodeConfig(bodyBuf)
 	if err != nil {
 		return nil, err
 	}
@@ -198,8 +196,11 @@ func ImageFromURL(URL string) (image.Image, error) {
 		return nil, errors.New("Image is too big: maximum dimensions: " + strconv.Itoa(ImageMaxDimensions))
 	}
 
+	// restore to the original dimensions
+	bodyBuf.Seek(0, io.SeekStart)
+
 	// Read from second reader
-	img, _, err := image.Decode(rd2)
+	img, _, err := image.Decode(bodyBuf)
 	return img, err
 }
 
