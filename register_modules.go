@@ -4,14 +4,12 @@ import (
 	"log"
 
 	"github.com/Necroforger/Fantasia/modules/booru"
-	"github.com/Necroforger/Fantasia/modules/channelpipe"
 	"github.com/Necroforger/Fantasia/modules/dashboard"
 	"github.com/Necroforger/Fantasia/modules/eval"
 	"github.com/Necroforger/Fantasia/modules/general"
 	"github.com/Necroforger/Fantasia/modules/guildconfig"
 	"github.com/Necroforger/Fantasia/modules/images"
 	"github.com/Necroforger/Fantasia/modules/information"
-	"github.com/Necroforger/Fantasia/modules/javascript"
 	"github.com/Necroforger/Fantasia/modules/musicplayer"
 	"github.com/Necroforger/Fantasia/modules/themeify"
 
@@ -27,21 +25,18 @@ import (
 type ModuleConfig struct {
 	Inverted    bool
 	Booru       bool
-	Channelpipe bool
 	Dashboard   bool
 	Eval        bool
 	General     bool
 	Guildconfig bool
 	Images      bool
 	Information bool
-	Javascript  bool
 	Musicplayer bool
 	Themeify    bool
 
 	BooruConfig       *booru.Config
 	DashboardConfig   *dashboard.Config
 	ImagesConfig      *images.Config
-	JavascriptConfig  *javascript.Config
 	MusicplayerConfig *musicplayer.Config
 }
 
@@ -50,21 +45,18 @@ func NewModuleConfig() ModuleConfig {
 	return ModuleConfig{
 		Inverted:    false,
 		Booru:       true,
-		Channelpipe: true,
 		Dashboard:   true,
 		Eval:        true,
 		General:     true,
 		Guildconfig: true,
 		Images:      true,
 		Information: true,
-		Javascript:  true,
 		Musicplayer: true,
 		Themeify:    true,
 
 		BooruConfig:       booru.NewConfig(),
 		DashboardConfig:   dashboard.NewConfig(),
 		ImagesConfig:      images.NewConfig(),
-		JavascriptConfig:  javascript.NewConfig(),
 		MusicplayerConfig: musicplayer.NewConfig(),
 	}
 }
@@ -79,11 +71,6 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 			s.BuildModule(&booru.Module{Config: booru.NewConfig()})
 		}
 		log.Println("loaded booru module...")
-	}
-	if (config.Inverted && !config.Channelpipe) || (!config.Inverted && config.Channelpipe) {
-		s.CommandRouter.SetCategory("Channelpipe")
-		s.BuildModule(&channelpipe.Module{})
-		log.Println("loaded channelpipe module...")
 	}
 	if (config.Inverted && !config.Dashboard) || (!config.Inverted && config.Dashboard) {
 		s.CommandRouter.SetCategory("Dashboard")
@@ -122,15 +109,6 @@ func RegisterModules(s *system.System, config ModuleConfig) {
 		s.CommandRouter.SetCategory("Information")
 		s.BuildModule(&information.Module{})
 		log.Println("loaded information module...")
-	}
-	if (config.Inverted && !config.Javascript) || (!config.Inverted && config.Javascript) {
-		s.CommandRouter.SetCategory("Javascript")
-		if config.JavascriptConfig != nil {
-			s.BuildModule(&javascript.Module{Config: config.JavascriptConfig})
-		} else {
-			s.BuildModule(&javascript.Module{Config: javascript.NewConfig()})
-		}
-		log.Println("loaded javascript module...")
 	}
 	if (config.Inverted && !config.Musicplayer) || (!config.Inverted && config.Musicplayer) {
 		s.CommandRouter.SetCategory("Musicplayer")
